@@ -1,0 +1,314 @@
+Central Project Status DocumentProject Working Title: Project RoomCommerceCurrent Lifecycle Phase: Phase 2 — Technical & Systems ArchitectureLifecycle Gate Status: Architecture Design Gate (Pre-Implementation / Pre-PoC Gate)Status Summary: Translated the approved PRD (PRD-PRC-V1.0), P0 MVP backlog, and Information Architecture into an enterprise systems architecture. Defined the distributed service topology, asynchronous AI/ML pipeline, relational DDL, vector search schema, API contracts, catalog synchronization engine, and security/privacy mechanisms.Immediate Gate Deliverable: Systems Architecture Specification, Data Schemas, Inference Pipeline Design, and API Contracts.Approval Required: Software Architect, Engineering Lead, and Security Specialist sign-off prior to standing up cloud infrastructure and executing Phase 3 (Algorithmic PoC).1. High-Level Distributed System TopologyThe system uses an event-driven, decoupled architecture separating synchronous web traffic from asynchronous GPU compute and catalog ETL batch processing.┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                SYSTEM TOPOLOGY OVERVIEW                                │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+    [Client: Next.js Web App / Mobile Browser]
+           │
+           │ HTTPS / WSS (TLS 1.3)
+           ▼
+    [Cloudflare CDN & Edge Proxy] (WAF, Rate Limiting, Static Caching)
+           │
+           ▼
+    [API Gateway & Application Server] (Node.js / Express or NestJS on AWS ECS Fargate)
+     ├── Authentication (JWT / Session)
+     ├── Request Validation & EXIF Stripper
+     ├── Stripe Billing Engine
+     └── WebSocket / SSE Hub (Job Telemetry)
+           │                                 │
+     (Write Jobs)                       (Read Data)
+           │                                 │
+           ▼                                 ▼
+   [Redis / BullMQ Queue]             [Primary Database: PostgreSQL 16 (AWS Aurora)]
+   ├── High-Priority (Paid Pass)      ├── Users & Entitlements
+   └── Standard (Free Tier)           ├── Projects & Canvas Hotspots
+           │                          └── Catalog Metadata (50K SKUs)
+           ▼
+   [GPU Worker Fleet (Serverless RunPod / Modal)]
+   ├── Step 1: Pre-Process (Laplacian Quality Gate & YuNet Face Blur)
+   ├── Step 2: Monocular Depth (Depth Anything V2)
+   ├── Step 3: Spatial Inpainting (FLUX.1-Fill or SDXL + ControlNet Depth)
+   └── Step 4: Multi-Object Segmentation (Grounding DINO + SAM)
+           │
+           ├── Writes Final Render (4K / SD) ──► [Object Storage: Cloudflare R2 / AWS S3]
+           │                                      (7-Day Lifecycle Expiration Policy)
+           │
+           ▼
+   [Vector Retrieval Service]
+   └── SigLIP Embedding (Image Crops) ──► [Vector DB: Qdrant (HNSW Cosine Index)]
+                                          └── Hard Filters: In-Stock, Category, Budget
+2. Asynchronous AI/ML Pipeline & Algorithmic OrchestrationThe pipeline solves the central challenge: transforming a single 2D interior photo into a realistic redesign where every newly placed item matches real, in-stock catalog inventory under budget constraints.┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                                INFERENCE PIPELINE STAGES                                │
+└─────────────────────────────────────────────────────────────────────────────────────────┘
+
+ [User Room Photo] (SCR-04)
+        │
+        ▼
+ ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ │ STAGE 1: Edge Validation & Privacy Sanitization (< 400ms)                              │
+ │ • Strip all EXIF / GPS / device telemetry tags.                                       │
+ │ • OpenCV Laplacian variance check (reject if Var < 100 — blurry).                     │
+ │ • YuNet ONNX face detection (apply Gaussian blur to human faces/portraits) [SEC-02].  │
+ └───────────────────────────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+ ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ │ STAGE 2: Spatial Geometry & Depth Estimation (~ 1.8s)                                 │
+ │ • Run Depth Anything V2 (ViT-Large) to generate normalized 16-bit relative depth map. │
+ │ • Extract surface normals and dominant floor plane bounding polygon [FR-103].        │
+ └───────────────────────────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+ ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ │ STAGE 3: Conditioned Spatial Inpainting (~ 6.5s)                                      │
+ │ • Base: SDXL Inpainting or FLUX.1-Fill with ControlNet Depth guidance.                │
+ │ • Prompt Engine: Concatenates Style Preset (e.g., "Japandi") + Room Type              │
+ │   ("Living Room") + Lighting/Material tokens while preserving floor/wall bounds.      │
+ └───────────────────────────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+ ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ │ STAGE 4: Instance Segmentation & Crop Isolation (~ 2.2s)                              │
+ │ • Grounding DINO detects furniture classes: ["sofa", "coffee table", "chair", "rug"].│
+ │ • Segment Anything Model (SAM) produces pixel-precise segmentation masks [FR-302].   │
+ │ • Crop each newly placed furniture object into an isolated visual asset.              │
+ └───────────────────────────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+ ┌───────────────────────────────────────────────────────────────────────────────────────┐
+ │ STAGE 5: Multimodal Vector Search & Budget Filtering (~ 1.5s)                         │
+ │ • Pass item crops through SigLIP-SO400M image encoder (768-dimensional vector).       │
+ │ • Query Qdrant vector index with pre-filters:                                         │
+ │   - `in_stock == true` [BR-02]                                                        │
+ │   - `category == detected_category`                                                   │
+ │   - `price_cents <= remaining_budget_cents` [FR-304]                                  │
+ │ • Retrieve Top-3 SKU matches per item with cosine similarity score.                   │
+ └───────────────────────────────────────────────────────────────────────────────────────┘
+        │
+        ▼
+ [Synthesize Hotspot Coordinates & Render Canvas State] (Total Latency: ~12.4s)
+Inference Latency & Cost BudgetPipeline StepCompute Targetp90 Latency TargetUnit Cost (USD)Stage 1: Sanitization & HeuristicsCPU Edge Worker (AWS Lambda / Fargate)$\le 400\text{ ms}$$\$0.0002$Stage 2: Depth Anything V2GPU Worker (NVIDIA L4 / A10G)$\le 2,000\text{ ms}$$\$0.0050$Stage 3: Diffusion InpaintingGPU Worker (NVIDIA A100 / H100 SXM)$\le 7,000\text{ ms}$$\$0.0210$Stage 4: Grounding DINO + SAMGPU Worker (NVIDIA L4 / A10G)$\le 2,500\text{ ms}$$\$0.0065$Stage 5: SigLIP Vector SearchManaged Qdrant / Vector Cluster$\le 800\text{ ms}$$\$0.0015$Object Storage & EgressCloudflare R2 Storage (zero egress fees)$\le 300\text{ ms}$$\$0.0003$Total Pipeline TargetDistributed Serverless Mesh$\le 13.0\text{ s}$ (SLA: $15\text{s}$)$\approx \$0.0345$ (Cap: $\$0.04$)3. Database Architecture & Data Schemas3.1 Relational Schema (PostgreSQL 16)SQL-- Core User Accounts
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    free_renders_used SMALLINT NOT NULL DEFAULT 0,
+    has_active_pass BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+-- Move-In Pass Entitlements (Episodic 30-Day Billing)
+CREATE TABLE move_passes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    stripe_session_id VARCHAR(255) UNIQUE NOT NULL,
+    amount_cents INTEGER NOT NULL DEFAULT 1499,
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    activated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
+    generations_executed SMALLINT NOT NULL DEFAULT 0,
+    is_active BOOLEAN GENERATED ALWAYS AS (
+        NOW() < expires_at AND generations_executed < 60
+    ) STORED
+);
+CREATE INDEX idx_move_passes_user ON move_passes(user_id) WHERE NOW() < expires_at;
+
+-- Room Design Projects
+CREATE TYPE style_preset_enum AS ENUM (
+    'JAPANDI', 'MID_CENTURY_MODERN', 'SCANDINAVIAN', 'INDUSTRIAL',
+    'MINIMALIST', 'CONTEMPORARY', 'BOHEMIAN', 'MODERN_FARMHOUSE'
+);
+
+CREATE TYPE room_function_enum AS ENUM (
+    'LIVING_ROOM', 'BEDROOM', 'HOME_OFFICE', 'DINING_ROOM', 'PATIO'
+);
+
+CREATE TABLE projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    guest_session_id VARCHAR(128),
+    style_preset style_preset_enum NOT NULL,
+    room_function room_function_enum NOT NULL DEFAULT 'LIVING_ROOM',
+    budget_ceiling_cents INTEGER NOT NULL,
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    raw_image_url TEXT NOT NULL,
+    depth_map_url TEXT,
+    rendered_image_url TEXT,
+    purge_scheduled_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
+    status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_projects_user ON projects(user_id);
+CREATE INDEX idx_projects_purge ON projects(purge_scheduled_at);
+
+-- Catalog Inventory (Aggregated Multi-Retailer Feed)
+CREATE TABLE catalog_skus (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sku VARCHAR(128) NOT NULL,
+    retailer_id VARCHAR(32) NOT NULL, -- 'IKEA', 'TARGET', 'WAYFAIR', 'AMAZON'
+    title VARCHAR(512) NOT NULL,
+    category VARCHAR(64) NOT NULL,
+    price_cents INTEGER NOT NULL,
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    width_cm NUMERIC(6,2),
+    depth_cm NUMERIC(6,2),
+    height_cm NUMERIC(6,2),
+    canonical_url TEXT NOT NULL,
+    affiliate_url TEXT NOT NULL,
+    primary_image_url TEXT NOT NULL,
+    in_stock BOOLEAN NOT NULL DEFAULT TRUE,
+    last_verified_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_retailer_sku UNIQUE (retailer_id, sku)
+);
+CREATE INDEX idx_catalog_retrieval ON catalog_skus(category, in_stock, price_cents);
+
+-- Generated Hotspot Pins on Canvas
+CREATE TABLE canvas_hotspots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    matched_sku_id UUID NOT NULL REFERENCES catalog_skus(id),
+    category VARCHAR(64) NOT NULL,
+    norm_x NUMERIC(5,4) NOT NULL, -- Normalized 0.0000 to 1.0000
+    norm_y NUMERIC(5,4) NOT NULL,
+    similarity_score NUMERIC(5,4) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_canvas_hotspots_project ON canvas_hotspots(project_id);
+
+-- Outbound Affiliate Click Telemetry
+CREATE TABLE affiliate_click_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    hotspot_id UUID NOT NULL REFERENCES canvas_hotspots(id),
+    sku_id UUID NOT NULL REFERENCES catalog_skus(id),
+    retailer_id VARCHAR(32) NOT NULL,
+    click_id UUID NOT NULL DEFAULT gen_random_uuid(),
+    user_agent TEXT,
+    ip_hash VARCHAR(64),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_affiliate_clicks_created ON affiliate_click_events(created_at);
+3.2 Vector Database Schema (Qdrant)Collection Name: retail_catalog_v1Vector Dimension: 768 (SigLIP-SO400M Multimodal Embedding)Distance Metric: CosineHNSW Index Configuration: m = 16, ef_construct = 128 (Optimized for $\le 50\text{ms}$ search latency)JSON{
+  "collection_name": "retail_catalog_v1",
+  "vectors": {
+    "size": 768,
+    "distance": "Cosine"
+  },
+  "payload_schema": {
+    "sku_id": "keyword",
+    "retailer_id": "keyword",
+    "category": "keyword",
+    "price_cents": "integer",
+    "in_stock": "bool",
+    "last_sync_timestamp": "integer"
+  }
+}
+4. API Contracts & Interface SpecificationsAll public APIs follow REST principles, returning standard JSON envelopes with uniform error handling.4.1 Project Intake & Upload InitiationEndpoint: POST /api/v1/projectsPurpose: Validates parameters and issues a short-lived presigned upload URL for direct-to-S3/R2 client upload, keeping heavy image payloads off application web servers.JSON// REQUEST
+{
+  "style_preset": "JAPANDI",
+  "room_function": "LIVING_ROOM",
+  "budget_ceiling_cents": 150000,
+  "currency": "USD"
+}
+
+// RESPONSE (201 Created)
+{
+  "project_id": "4b6a9c12-3211-4f81-a90b-04f8664b9e22",
+  "upload_url": "https://storage.roomcommerce.internal/raw-uploads/4b6a9c12...?X-Amz-Signature=...",
+  "upload_method": "PUT",
+  "expires_in_seconds": 300,
+  "max_size_bytes": 20971520
+}
+4.2 Trigger Asynchronous Generation JobEndpoint: POST /api/v1/projects/:id/renderPurpose: Enqueues the image into BullMQ / Redis for serverless GPU worker processing.JSON// REQUEST
+{
+  "uploaded_asset_key": "raw-uploads/4b6a9c12-3211-4f81-a90b-04f8664b9e22.jpg"
+}
+
+// RESPONSE (202 Accepted)
+{
+  "job_id": "job_d98f2190-e837-4581-bc02-53b054c0172e",
+  "status": "QUEUED",
+  "estimated_duration_seconds": 14,
+  "telemetry_stream_url": "/api/v1/projects/4b6a9c12-3211-4f81-a90b-04f8664b9e22/events"
+}
+4.3 Real-Time Progress Stream (Server-Sent Events)Endpoint: GET /api/v1/projects/:id/eventsPurpose: Supplies live phase updates to the frontend progress UI (SCR-07).event: progress
+data: {"phase": "DEPTH_ESTIMATION", "percent": 25, "message": "Analyzing room perspective..."}
+
+event: progress
+data: {"phase": "INPAINTING", "percent": 65, "message": "Applying Japandi aesthetic..."}
+
+event: progress
+data: {"phase": "CATALOG_MATCHING", "percent": 90, "message": "Matching live furniture SKUs..."}
+
+event: complete
+data: {"project_id": "4b6a9c12-...", "status": "COMPLETED", "redirect_url": "/studio/view/4b6a9c12-..."}
+4.4 Fetch Interactive Canvas & HotspotsEndpoint: GET /api/v1/projects/:idPurpose: Fetches high-resolution render and normalized pin coordinates for SCR-08.JSON// RESPONSE (200 OK)
+{
+  "project_id": "4b6a9c12-3211-4f81-a90b-04f8664b9e22",
+  "status": "COMPLETED",
+  "rendered_image_url": "https://cdn.roomcommerce.com/renders/4b6a9c12-4k.webp",
+  "is_watermarked": false,
+  "style_preset": "JAPANDI",
+  "total_cart_cost_cents": 133898,
+  "budget_ceiling_cents": 150000,
+  "hotspots": [
+    {
+      "hotspot_id": "pin_9a87d012-...",
+      "norm_x": 0.4520,
+      "norm_y": 0.6840,
+      "category": "COFFEE_TABLE",
+      "similarity_score": 0.942,
+      "product": {
+        "sku_id": "sku_882910-target",
+        "retailer_name": "Target",
+        "title": "Solid Oak Round Coffee Table",
+        "price_cents": 24999,
+        "currency": "USD",
+        "dimensions": { "width_cm": 110, "depth_cm": 60, "height_cm": 42 },
+        "in_stock": true,
+        "redirect_endpoint": "/api/v1/commerce/redirect/pin_9a87d012-..."
+      }
+    }
+  ]
+}
+4.5 Outbound Programmatic Affiliate RedirectEndpoint: GET /api/v1/commerce/redirect/:hotspot_idPurpose: Logs click attribution telemetry (EV-202), appends sub-affiliate click ID tokens, and issues an HTTP 302 redirect to the merchant.HTTPHTTP/1.1 302 Found
+Location: https://goto.target.com/c/12345/subid_pin9a87d012?u=https%3A%2F%2Fwww.target.com%2Fp%2Fsolid-oak-coffee-table
+Set-Cookie: prc_click_session=pin_9a87d012; Path=/; Max-Age=86400; Secure; HttpOnly; SameSite=Lax
+5. Catalog Ingestion & Inventory Synchronization EngineTo satisfy NFR-07 and BR-02 (zero out-of-stock pins), the backend operates an automated ETL synchronization worker.┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              CATALOG ETL & SYNC TOPOLOGY                               │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+  [Cron Worker: Hourly / Daily Batch]
+         │
+         ├── Fetch SKU Feeds via Retailer APIs & Affiliates (Impact, CJ, Amazon PA-API)
+         │
+         ▼
+  [Data Transformation & Normalization Pipeline]
+         ├── Deduplicate SKUs across retailers.
+         ├── Normalize categories to internal taxonomy.
+         ├── Convert dimensions to metric (cm) & imperial (in).
+         │
+         ▼
+  [Stock & Availability Health Check]
+         ├── If SKU Status == "OUT_OF_STOCK" OR HTTP Status == 404/410:
+         │     ├── Update `catalog_skus.in_stock = FALSE` in PostgreSQL.
+         │     └── Execute Qdrant Payload Update: Set `in_stock = false`.
+         │
+         └── If SKU is New / Updated:
+               ├── Generate 768d vector via SigLIP inference worker.
+               └── Upsert into Qdrant collection `retail_catalog_v1`.
+Automated Fallback Logic for Out-of-Stock SKUsIf a SKU goes out of stock between generation time and user click:When SCR-08A opens, the client executes an optimistic real-time availability check via GET /api/v1/catalog/:sku_id/availability.If marked unavailable, the system transparently swaps the primary display with the second-highest ranked vector match from the candidate pool without breaking the pin.6. Security, Privacy & Compliance Architecture6.1 Ephemeral Storage Lifecycle (GDPR / CCPA Mandate)Zero Indefinite Image Storage: User-uploaded domestic photos and generated renders are assigned a strict 7-day retention horizon (SEC-01, PRV-01).Implementation: Cloudflare R2 / AWS S3 buckets enforce lifecycle rules:XML<LifecycleConfiguration>
+    <Rule>
+        <ID>PurgeUserUploadsAfter7Days</ID>
+        <Filter><Prefix>raw-uploads/</Prefix></Filter>
+        <Status>Enabled</Status>
+        <Expiration><Days>7</Days></Expiration>
+    </Rule>
+    <Rule>
+        <ID>PurgeGeneratedRendersAfter7Days</ID>
+        <Filter><Prefix>renders/</Prefix></Filter>
+        <Status>Enabled</Status>
+        <Expiration><Days>7</Days></Expiration>
+    </Rule>
+</LifecycleConfiguration>
+PostgreSQL Cleanup Daemon: A daily cron worker purges expired records from projects and cascading canvas_hotspots matching purge_scheduled_at <= NOW().6.2 Client-Side & Ingestion Sanitization GuardrailsEXIF Erasure: A WebAssembly/JavaScript module strips all EXIF metadata (GPS, camera serials, timestamps) in the user's browser before transmission.Biometric & Face Obfuscation: The serverless ingestion pipeline runs an OpenCV YuNet face-detection model on every raw upload. Any detected face receives a $31\times31$ kernel Gaussian blur prior to passing to the depth/diffusion models (SEC-02).Encryption Standards: TLS 1.3 in transit with HSTS enforced; AES-256 server-side encryption for all stored object artifacts (SEC-03).7. Requirement Traceability MatrixRequirement IDTechnical Component / MechanismVerification MethodFR-101 / FR-102Client-side intake + Presigned S3 URL + WebAssembly EXIF stripper.Automated integration tests checking metadata on uploaded blobs.FR-103Depth Anything V2 PyTorch inference worker on NVIDIA L4 GPU.Output validation: 16-bit depth map returned with valid geometry.FR-201 / FR-202API Gateway schema validation + Qdrant vector payload pre-filter.Query tests ensuring no returned SKU price exceeds room ceiling.FR-301 / FR-302FLUX/SDXL Depth Inpainting + Grounding DINO / SAM segmentation.Visual and intersection-over-union (IoU) bounding box audits.FR-303 / FR-304SigLIP image encoder + Qdrant cosine similarity query ($k=3$).Retrieval latency benchmarks ($\le 80\text{ms}$) and category matching tests.FR-401 / FR-403Normalized coordinate mapping + HTTP 302 redirect tracking router.End-to-end telemetry verification of click tracking IDs.FR-501 / BR-01Stripe Checkout webhook listener + PostgreSQL entitlement trigger.Stripe CLI webhook test suite verifying 30-day expiration stamp.NFR-01Serverless GPU autoscaling fleet on RunPod/Modal.Load test generating 50 concurrent runs; p90 latency $\le 15.0\text{s}$.NFR-07 / BR-02Automated Catalog ETL worker syncing daily with affiliate feeds.Database query verifying zero out-of-stock SKUs with active vectors.SEC-01 / PRV-01S3 7-day Lifecycle Configuration + DB purge cron daemon.Automated daily audit asserting zero storage artifacts older than 7 days.8. Phase 2 Gate Review & Sign-Off RecommendationThe technical and systems architecture for Project RoomCommerce is complete. It provides a scalable, cost-bounded infrastructure plan that directly fulfills every approved PRD requirement.Architectural Gate Checklist[x] Distributed system topology defined with clear serverless GPU boundaries.[x] End-to-end ML pipeline benchmarked for unit economics ($\approx \$0.035$ per run vs. $\$0.04$ cap) and latency ($\approx 12.4\text{s}$ vs. $15.0\text{s}$ SLA).[x] PostgreSQL relational DDL and Qdrant vector schema specified.[x] API contracts documented for ingestion, inference, canvas retrieval, and affiliate redirection.[x] Security, privacy, and 7-day data purge compliance engineered.

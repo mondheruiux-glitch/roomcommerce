@@ -1,0 +1,274 @@
+# .github/workflows/deploy-staging.yml
+# Scope: Continuous deployment to staging on merge to main (Step 9.2)
+# Requirements: NFR-04, SEC-03
+
+name: "Deploy Staging"
+
+on:
+  push:
+    branches:
+      - main
+
+# Cancel any in-progress staging deploy when a newer commit arrives
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: roomcommerce-staging
+  WEB_SERVICE: roomcommerce-web-staging
+  API_SERVICE: roomcommerce-api-staging
+  WEB_TASK_FAMILY: roomcommerce-web-staging
+  API_TASK_FAMILY: roomcommerce-api-staging
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 1: Build and push staging images tagged with commit SHA
+  # ─────────────────────────────────────────────────────────────────────────
+  build-and-push:
+    name: "Build & Push Staging Images"
+    runs-on: ubuntu-latest
+    outputs:
+      registry: ${{ steps.login-ecr.outputs.registry }}
+      image_tag: staging-${{ github.sha }}
+      web_image: ${{ steps.login-ecr.outputs.registry }}/roomcommerce-web:staging-${{ github.sha }}
+      api_image: ${{ steps.login-ecr.outputs.registry }}/roomcommerce-api:staging-${{ github.sha }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push Next.js web image (staging)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/roomcommerce-web:staging-${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/roomcommerce-web:staging-latest
+          cache-from: type=gha,scope=web-staging
+          cache-to: type=gha,scope=web-staging,mode=max
+          provenance: false
+
+      - name: Build & push NestJS API image (staging)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/roomcommerce-api:staging-${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/roomcommerce-api:staging-latest
+          cache-from: type=gha,scope=api-staging
+          cache-to: type=gha,scope=api-staging,mode=max
+          provenance: false
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 2: Run database migrations on staging before service rollout
+  # ─────────────────────────────────────────────────────────────────────────
+  run-migrations:
+    name: "Run Staging Migrations"
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run Drizzle migration task on staging ECS
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition roomcommerce-api-migrate-staging \
+            --launch-type FARGATE \
+            --overrides "{
+              \"containerOverrides\": [{
+                \"name\": \"api\",
+                \"image\": \"${{ needs.build-and-push.outputs.api_image }}\",
+                \"command\": [\"node\", \"dist/scripts/migrate.js\"]
+              }]
+            }" \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.ECS_STAGING_SUBNET_IDS }}],securityGroups=[${{ secrets.ECS_STAGING_SECURITY_GROUP_ID }}],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          echo "[*] Staging migration task: $TASK_ARN"
+          aws ecs wait tasks-stopped \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks "$TASK_ARN"
+
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "::error::Staging migration failed (exit $EXIT_CODE). Aborting deploy."
+            exit 1
+          fi
+          echo "[✓] Staging migrations applied."
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 3: Rolling ECS deployment to staging cluster
+  # ─────────────────────────────────────────────────────────────────────────
+  deploy-staging:
+    name: "Deploy to ECS Staging"
+    needs: [run-migrations, build-and-push]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Register new staging task definitions
+        run: |
+          WEB_TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.WEB_TASK_FAMILY }} \
+            --query 'taskDefinition' \
+            --output json | \
+            jq --arg IMAGE "${{ needs.build-and-push.outputs.web_image }}" \
+               'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.placementConstraints,.compatibilities,.registeredAt,.registeredBy) |
+                .containerDefinitions[0].image = $IMAGE')
+
+          WEB_TASK_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$WEB_TASK_DEF" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          API_TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.API_TASK_FAMILY }} \
+            --query 'taskDefinition' \
+            --output json | \
+            jq --arg IMAGE "${{ needs.build-and-push.outputs.api_image }}" \
+               'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.placementConstraints,.compatibilities,.registeredAt,.registeredBy) |
+                .containerDefinitions[0].image = $IMAGE')
+
+          API_TASK_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$API_TASK_DEF" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "WEB_TASK_ARN=$WEB_TASK_ARN" >> $GITHUB_ENV
+          echo "API_TASK_ARN=$API_TASK_ARN" >> $GITHUB_ENV
+
+      - name: Rolling deploy to ECS staging cluster
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.WEB_SERVICE }} \
+            --task-definition "$WEB_TASK_ARN" \
+            --force-new-deployment
+
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.API_SERVICE }} \
+            --task-definition "$API_TASK_ARN" \
+            --force-new-deployment
+
+          echo "[*] Waiting for staging services to reach steady state..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.WEB_SERVICE }} ${{ env.API_SERVICE }}
+          echo "[✓] Staging ECS deployment stable."
+
+      - name: Verify deep health endpoints
+        run: |
+          echo "[*] Probing API health endpoint: ${{ secrets.STAGING_API_URL }}/api/v1/health"
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.STAGING_API_URL }}/api/v1/health" || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "[✓] Staging API health check passed (HTTP 200)."
+              exit 0
+            fi
+            echo "Waiting for health check... (attempt $i/12, status: $STATUS)"
+            sleep 5
+          done
+          echo "::error::Staging health check timed out"
+          exit 1
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 4: Playwright smoke tests against live staging environment
+  # ─────────────────────────────────────────────────────────────────────────
+  smoke-test-staging:
+    name: "Playwright Smoke Tests (Staging)"
+    needs: [deploy-staging, build-and-push]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
+      # Run the three core user story specs against live staging (not mocked)
+      - name: Run E2E smoke tests against staging
+        env:
+          E2E_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          E2E_API_URL: ${{ secrets.STAGING_API_URL }}
+          E2E_TEST_USER_EMAIL: qa-automation@roomcommerce.internal
+          CI: "true"
+        run: |
+          pnpm exec playwright test \
+            tests/e2e/us01-generation.spec.ts \
+            tests/e2e/us02-procurement.spec.ts \
+            tests/e2e/a11y-audit.spec.ts \
+            --project="Desktop Chrome" \
+            --reporter=list
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-playwright-report-${{ github.sha }}
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Staging deployment summary
+        run: |
+          echo "══════════════════════════════════════════════════════════"
+          echo "  ✅ Staging deploy + smoke tests passed"
+          echo "  Commit : ${{ github.sha }}"
+          echo "  Web    : ${{ needs.build-and-push.outputs.web_image }}"
+          echo "  API    : ${{ needs.build-and-push.outputs.api_image }}"
+          echo "  URL    : ${{ secrets.STAGING_BASE_URL }}"
+          echo "══════════════════════════════════════════════════════════"

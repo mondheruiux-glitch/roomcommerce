@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Atelier Design System — Semantic Token Bindings ────────────────────────── */
+@layer base {
+  :root {
+    /* Background */
+    --bg-canvas: 0 0% 98%;
+    --bg-surface: 0 0% 100%;
+    --bg-subtle: 0 0% 96%;
+
+    /* Ink */
+    --ink-primary: 220 13% 13%;
+    --ink-secondary: 220 9% 35%;
+    --ink-muted: 220 9% 55%;
+    --ink-inverted: 0 0% 100%;
+
+    /* Border */
+    --border-default: 220 13% 90%;
+    --border-strong: 220 13% 75%;
+
+    /* Brand — Terracotta */
+    --brand-terracotta: 15 70% 50%;
+    --brand-terracotta-subtle: 15 70% 95%;
+
+    /* Status */
+    --status-success: 145 63% 42%;
+    --status-warning: 38 92% 50%;
+    --status-danger: 0 72% 51%;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans, system-ui, sans-serif);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Touch-action: none for canvas containers to prevent pull-to-refresh / native zoom */
+  [data-canvas-viewport] {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    overscroll-behavior: none;
+  }
+}
+
+@layer utilities {
+  .font-sans {
+    font-family: var(--font-sans, system-ui, sans-serif);
+  }
+  .font-mono {
+    font-family: var(--font-mono, 'Courier New', monospace);
+  }
+
+  /* Screen-reader-only utility */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}

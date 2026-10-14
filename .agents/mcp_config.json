@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "context7": {
+      "serverUrl": "https://mcp.context7.com/mcp"
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp"
+    },
+    "serena": {
+      "command": "npx",
+      "args": ["-y", "@oraios/serena-mcp"]
+    }
+  }
+}

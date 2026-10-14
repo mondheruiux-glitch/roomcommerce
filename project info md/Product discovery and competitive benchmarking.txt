@@ -1,0 +1,108 @@
+Central Project Status DocumentProject Working Title: Project RoomCommerceCurrent Lifecycle Phase: Phase 0 — Strategic Foundation & Business ArchitectureLifecycle Gate Status: Strategy Review Gate (Pre-PRD)Status Summary: Product discovery and competitive benchmarking have established market demand and identified structural competitor flaws (single-brand lock-in vs. non-shoppable synthetic hallucination). Business model architecture is defined to reflect consumer purchasing cycles rather than forcing recurring SaaS subscriptions.Immediate Gate Deliverable: Comprehensive Business Strategy & Strategic Roadmap.Approval Required: Executive sign-off on the business model, unit economic thresholds, and 6–12 month strategic roadmap prior to generating Phase 1 Product Requirements Documents (PRDs).1. Product Vision & MissionVision: To become the universal spatial commerce engine where any living space can be reimagined, visually validated, and completely furnished with real-world products in a single tap.Mission: To eliminate the friction, spatial uncertainty, and manual research between home design inspiration and retail checkout by bridging generative spatial intelligence with live, multi-retailer inventory.2. Strategic Positioning & Unique Value Proposition (UVP)Positioning StatementFor renters and new homeowners who are overwhelmed by the tedious, fragmented process of designing and furnishing a living space, Project RoomCommerce is a vendor-agnostic spatial design app that transforms real room photos into cohesive, dimension-accurate room designs fully populated with purchasable, in-stock products across leading retailers.Unlike Wayfair Decorify or IKEA Kreativ, which trap users in single-brand walled gardens, and unlike novelty generative AI apps (RoomsGPT, Interior AI), which render fictional products that cannot be purchased, Project RoomCommerce provides an instant, cross-retailer shopping cart tailored to the user’s exact room geometry and budget.Core Value Proposition PillarsZero Hallucinations, 100% Shoppable: Every rendered decor element maps to a verified, in-stock retail SKU.Universal Cart, Zero Brand Lock-In: Combine an IKEA rug, a Target lamp, and a West Elm sofa within the same harmonized room aesthetic.Budget & Dimension Guardrails: Generative outputs are constrained by the user's spending limits and monocular room depth to reduce size-mismatch returns.3. Target Market & Beachhead Customer SegmentTotal Addressable ContextThe global virtual interior design services market sits at $10.44 billion in 2026 (projected to reach $18.06 billion by 2031 at an 11.58% CAGR). However, the app sits at the intersection of home design and global furniture e-commerce, where return rates hover between 15% and 25%, predominantly driven by spatial mismatches and aesthetic second-guessing.The Beachhead Customer Segment: "The Transitional Mover"Demographic: Urban renters and first-time home buyers aged 25–38 moving into an unfurnished or partially furnished space within the US/UK markets.Behavioral Profile:Active life inflection event: Lease signed or home closed within 30 days.Time-compressed: Needs to furnish a living room or bedroom within 2–4 weeks.Budget-constrained: Has a hard ceiling of $1,000–$3,500 total spend.High digital affinity: Regularly uses mobile platforms for shopping and visual curation.Why this beachhead: Transitional movers exhibit an acute, high-intent purchasing window. They are actively spending capital—unlike passive casual decorators—making them the ideal cohort to validate affiliate checkout velocity and transactional willingness to pay.4. Business Model & Revenue Engine ArchitectureThe Anti-Subscription RationaleConsumer SaaS recurring subscriptions ($14.99/month) are the default business model for AI apps, but they are structurally misaligned with consumer home decor behavior:Home redecorating is an episodic, event-driven need, not a monthly habit.Once a transitional mover furnishes their living room, their utility for the tool drops to zero for months or years.Forcing a monthly subscription creates artificial cancellation friction, leading to immediate churn (industry benchmarks for casual consumer utility apps indicate $>80\%$ 60-day churn).Multi-Tiered Revenue ModelThe product will employ a Hybrid Episodic-Transactional + Commerce Take-Rate Model:                       ┌──────────────────────────────────────────────┐
+                       │          Project RoomCommerce Revenue        │
+                       └──────────────────────┬───────────────────────┘
+                                              │
+             ┌────────────────────────────────┴────────────────────────────────┐
+             ▼                                                                 ▼
+┌──────────────────────────────┐                             ┌───────────────────────────────────┐
+│ Stream 1: Direct Consumer    │                             │ Stream 2: B2B Commerce Take-Rate  │
+│ Event Passes & Micro-Credits │                             │ Performance Commissions           │
+├──────────────────────────────┤                             ├───────────────────────────────────┤
+│ • "Move-In Pass" (30-day     │                             │ • Dynamic Affiliate Take-Rate     │
+│   unlimited episodic access) │                             │   (4%–10% blended commission      │
+│ • Pay-As-You-Go Credit Packs │                             │   on verified retail checkouts)   │
+│   (for single-room refresh)  │                             │ • Sponsored Retail Placements     │
+│ • High-Res Dimension Export  │                             │   (Native CPC/CPA brand placement │
+│   (CAD/Spec PDF generation)  │                             │   in Phase 2)                     │
+└──────────────────────────────┘                             └───────────────────────────────────┘
+Detailed Revenue StreamsThe "Move-In Project Pass" (Primary Consumer Direct Stream):A flat $14.99 one-time purchase granting 30 days of unlimited renders, multi-room unlocks, anchor-item locking, and precision dimension breakdowns.Aligns directly with the user’s 30-day moving window without trapping them in a subscription.Pay-As-You-Go Render Packs (Casual Consumer Stream):Free tier grants 3 low-resolution renders with shoppable links (watermarked).Credit packs: $4.99 for 5 high-resolution renders for users tackling a quick, single-item or single-nook refresh.Affiliate Take-Rate on Gross Merchandise Value (GMV):Through programmatic affiliate integrations (Impact, CJ Affiliate, Skimlinks, Amazon Associates), the platform captures 4% to 10% commission on downstream checkout baskets.   E-commerce home decor average order values (AOV) range from $200 to $800+; a converted $500 cart yields $20 to $50 in high-margin affiliate revenue.Sponsored SKU In-Placement (Medium-Term B2B Stream — Post-Scale):Once monthly active room generations reach scale, mid-tier direct-to-consumer (DTC) brands (e.g., Article, Castlery, Burrow) pay a premium Cost-Per-Click (CPC) or Cost-Per-Acquisition (CPA) to have their catalog items prioritized in AI styling selections when matching style/budget constraints.5. Pricing Hypotheses & Willingness-to-Pay (WTP) ExperimentsCore Pricing Hypotheses[PRICING HYPOTHESIS 1]: Users view a $14.99 one-time "Move-In Pass" as a negligible cost relative to a $1,500 furniture budget, yielding a higher conversion rate than a $9.99/month auto-renewing subscription.[PRICING HYPOTHESIS 2]: A hard paywall on "Export Shoppable Shopping List with Direct Retail Links" will generate higher willingness-to-pay than a paywall on the visual render itself.WTP Experimental Protocols┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              WTP EXPERIMENTATION MATRIX                                │
+├─────────────────────────┬──────────────────────────────┬───────────────────────────────┤
+│ Experiment Format       │ Pricing Variations Tested    │ Target Metric & Gate          │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ A/B Test: Monolith Pass │ A: $14.99 30-Day Move Pass   │ Paywall checkout initiation   │
+│ vs. Subscription        │ B: $9.99/mo Auto-Renew Sub   │ Gate: Pass conversion must    │
+│                         │ C: $4.99 5-Credit Pack       │ exceed Sub conversion by ≥30% │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Feature Gate Elasticity │ A: Paywall on 4K Render      │ Click-through on paywall gate │
+│ (Van Westendorp Survey) │ B: Paywall on Dimension Spec │ Target: Identify acceptable   │
+│                         │ C: Paywall on Shopping Links │ price floor and resistance    │
+└─────────────────────────┴──────────────────────────────┴───────────────────────────────┘
+6. Initial Cost Categories & Operational RequirementsTo ensure unit economics remain structurally positive, compute and infrastructure costs must be modeled against expected lifetime revenue per user (LTV).Estimated Revenue per Converted Mover:
+• 30-Day Pass: $14.99
+• Affiliate Yield (10% of users buy $400 basket @ 6% commission): $2.40 blended
+• Expected Gross Revenue per Active User: ~$17.39
+Cost Structure TaxonomyCost CategoryDriver / Scaling UnitOperational Constraint / TargetGPU Inference ComputeServerless diffusion runs (e.g., RunPod, Replicate, AWS Bedrock)Target $\le \$0.04$ per generation. Capped at 50 renders per Project Pass to enforce a $2.00 compute ceiling.Multimodal Vector SearchEmbedding generation + vector database queries (Pinecone / Qdrant)Target $\le \$0.005$ per visual search query across catalog embeddings.Data Ingestion & Catalog APIsProduct feed scrapers, affiliate data pipelines, currency convertersFixed server baseline ($250–$500/month) during pilot.Storage & Spatial CachingCloud object storage (AWS S3 / Cloudflare R2) for user room photosAggressive TTL: Unsaved transient user photos purged after 7 days; cached feature maps retained.Payment Gateway FeesStripe / Apple App Store / Google Play in-app purchase (IAP) fees15%–30% platform tax on IAP; 2.9% + $0.30 on web Stripe transactions.Operational & Legal RequirementsAffiliate Licensing Agreements: Onboarding onto primary affiliate networks (Impact, CJ Affiliate, Awin, Rakuten, Amazon Associates).FTC / Commercial Compliance: Built-in dynamic disclaimers: "As an affiliate partner, we earn from qualifying purchases at no additional cost to you."Spatial Privacy Protocols: Automatic client-side EXIF/metadata stripping and face/document blurring prior to cloud pipeline ingestion.7. Growth & Retention Engine (AARM Hypotheses)Acquisition (Paid Social & Organic Before/After)
+   │
+   ▼
+Activation (First Photo Upload to Shoppable Render in <30s)
+   │
+   ▼
+Retention (30-Day Moving Window: Multi-Room Projects & Price Watch Alerts)
+   │
+   ▼
+Monetization (Move-In Pass Purchase + Outbound Affiliate Checkout)
+Growth HypothesesAcquisition Hypothesis: High-contrast "Before & After" room transformations (split-screen slider video ads showing a cluttered room turning into a shoppable Japandi space) will achieve a Customer Acquisition Cost (CAC) under $4.50 on TikTok and Instagram Reels.Activation Hypothesis: If a user achieves "First Shoppable Render" in under 20 seconds from app launch, day-1 project creation rates will exceed 45%.Retention Hypothesis (Within the 30-Day Window): While long-term 12-month retention is naturally low due to episodic furnishing, 30-day cohort engagement can be sustained by supporting multi-room projects (e.g., Living Room $\rightarrow$ Bedroom $\rightarrow$ Balcony) and automated "Price Drop / Back-in-Stock" push alerts on saved basket items.Monetization Hypothesis: Presenting an itemized "Total Room Cost" breakdown with a single "Copy Universal Shopping List" button will drive a 3x higher outbound affiliate conversion than isolated product cards.8. Strategic Objectives & Key Results (OKRs)┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 STRATEGIC OKR FRAMEWORK                                │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ OBJECTIVE 1: Validate Technical & Commercial Feasibility (Months 1–3)                  │
+│ • KR 1.1: Achieve ≥80% perceived visual match accuracy in user panel tests.            │
+│ • KR 1.2: Maintain end-to-end rendering and SKU retrieval latency under 15 seconds.    │
+│ • KR 1.3: Achieve ≥30% outbound affiliate link click-through rate in prototype testing.│
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ OBJECTIVE 2: Establish Unit Economic Viability in Pilot Market (Months 4–6)            │
+│ • KR 2.1: Maintain average GPU inference cost under $0.05 per generation.              │
+│ • KR 2.2: Achieve blended Customer Acquisition Cost (CAC) < $5.00 in US launch pilot.  │
+│ • KR 2.3: Reach a minimum 8% conversion rate from free trial to the $14.99 Move Pass.  │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ OBJECTIVE 3: Scale Commerce Engine & Retailer Breadth (Months 7–12)                    │
+│ • KR 3.1: Index >250,000 active SKUs across 5 major retailers (IKEA, Target, Amazon,  │
+│           Wayfair, West Elm).                                                          │
+│ • KR 3.2: Drive $250,000 in monthly tracked Gross Merchandise Value (GMV).             │
+│ • KR 3.3: Reduce out-of-stock / dead redirect links to <2% of catalog inventory.      │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+9. Critical Business Risks & Strategic Dependencies┌───────────────────────────────────────────────┬───────────────────────────────────────────────┐
+│              STRATEGIC RISKS                  │            CRITICAL DEPENDENCIES              │
+├───────────────────────────────────────────────┼───────────────────────────────────────────────┤
+│ 1. Affiliate Cookie Window Mismatch:          │ 1. Upstream Retailer API Stability:           │
+│    Users research in-app but purchase on a    │    Dependency on affiliate networks for       │
+│    desktop 3 weeks later, bypassing cookie    │    accurate, real-time product price and      │
+│    attribution.                               │    inventory feeds.                           │
+│ 2. Inventory Churn / Dead Links:              │ 2. Visual Embedding Accuracy:                 │
+│    Retailers rotate furniture collections     │    Reliance on multimodal models (e.g.,       │
+│    seasonally, causing matched links to       │    SigLIP/CLIP) to minimize subjective        │
+│    break or run out of stock.                 │    discrepancy between render and SKU.        │
+│ 3. App Store Commission Friction:             │ 3. Paid Channel Performance:                  │
+│    Apple/Google claiming 15–30% of Move-In    │    Dependency on Meta/TikTok advertising unit │
+│    Pass sales, suppressing digital margin.    │    costs to sustain paid acquisition CAC.     │
+└───────────────────────────────────────────────┴───────────────────────────────────────────────┘
+10. Prioritized 6–12 Month Strategic RoadmapAll roadmap initiatives are governed by explicit, labeled assumptions that must be validated at preceding phase gates.M1-M2: Foundation & Algorithmic PoC
+├── Build Monocular Depth + Inpainting Pipeline
+├── Ingest 25K SKU Starter Catalog (IKEA, Target, Wayfair)
+└── Validate 80% Visual Similarity Threshold
+    [ASSUMPTION: Serverless diffusion can execute depth-aware inpainting in <12s]
+
+M3-M4: Alpha Pilot (Web & iOS MVP)
+├── Launch Closed Alpha to 500 Transitional Movers (US Market)
+├── Deploy $14.99 "Move-In Pass" & Outbound Affiliate Tagging
+└── Validate Affiliate Click-Through & Cookie Attribution
+    [ASSUMPTION: Outbound affiliate CTR will exceed 25% on cohesive room carts]
+
+M5-M6: Public Beta & Commercial Hardening
+├── Integrate Dynamic Inventory Verification (Purge Out-of-Stock SKUs)
+├── Implement "Anchor-Item Locking" (Keep existing sofa/flooring)
+└── Launch Paid User Acquisition Engine (Target CAC < $5.00)
+    [ASSUMPTION: "Before/After" ad creatives sustain sub-$5 blended CAC at scale]
+
+M7-M9: Catalog Expansion & Cross-Retailer Optimization
+├── Expand Catalog Index to 250K SKUs (Add Amazon Home, West Elm, CB2)
+├── Deploy Multi-Currency & UK Geo-Routing Engine
+└── Implement "Universal Basket Export" (One-click shopping list)
+    [ASSUMPTION: Geo-routing APIs can seamlessly swap SKUs without degrading aesthetic match]
+
+M10-M12: Scale & B2B Monetization Exploration
+├── Pilot Sponsored Brand In-Placement with Direct DTC Furniture Brands
+├── Launch Collaborative Multi-User Projects (Couples/Roommates)
+└── Evaluate Phase 2 Hyper-Local Service Expansion (Contractor Leads)
+    [ASSUMPTION: Retailers are willing to pay direct CPC/CPA premiums for algorithm priority]
+11. Required Evidence Still MissingBefore financial return models can be treated as validated operating forecasts, the business requires empirical data points on:True Downstream Conversion Rate: What percentage of users who click an outbound affiliate link actually complete a checkout within the retailer's cookie window (typically 0.8% to 1.8% industry average)?Gross Affiliate Yield per User: What is the realized net revenue per active user once returns and broken attribution tracking are accounted for?Paywall Conversion on Episodic Passes: Will consumers pay $14.99 upfront for a project pass when low-utility generative AI novelty apps offer free freemium tiers?

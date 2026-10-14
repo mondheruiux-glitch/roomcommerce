@@ -1,0 +1,354 @@
+```markdown
+# File: 15_phase1_visual_direction_design_system_foundation.md
+# Project: Project RoomCommerce
+# Lifecycle Phase: Phase 1 — Visual Direction & Design System Foundation
+# Author: Principal Product Designer & Art Director
+# Status: Complete / Pending Executive & Design Governance Sign-Off
+
+---
+
+## Central Project Status Document
+
+* **Project Working Title:** Project RoomCommerce
+* **Current Lifecycle Phase:** Phase 1 — Visual Direction & Design System Foundation
+* **Lifecycle Gate Status:** Visual Direction Review Gate (Pre-Figma Component Library / Pre-Implementation)
+* **Status Summary:** Established brand personality, foundational design tokens, spatial canvas styling, and accessibility-compliant interaction models. Formulated three distinct, professionally grounded visual directions tailored to transitional movers and room remodelers, avoiding generic generative AI cliches (e.g., purple neon glow, cosmic gradients, magic-wand decorations).
+* **Immediate Gate Deliverable:** Visual Architecture Specification, Comparative Direction Trade-Off Analysis, Token Master System, and Design Sign-Off Request.
+* **Approval Required:** CPO, Lead Product Designer, and Engineering Lead sign-off on the selected visual direction prior to generating the production design system and component UI kit.
+
+---
+
+## 1. Brand Personality & Core Visual Principles
+
+Project RoomCommerce operates at the intersection of **architectural utility** and **real-world commerce**. The interface must serve as a quiet, precise gallery frame for high-resolution spatial imagery rather than competing with it.
+
+### Brand Personality Attributes
+* **Architectural & Grounded:** Rooted in physical materials, structural proportions, and spatial geometry. Avoids ethereal "magic AI" tropes; behaves like an expert architect's working studio.
+* **Radically Transparent:** Every visual element maps to a real-world object with physical dimensions, an unvarnished price, and verifiable retailer stock.
+* **Effortless & Tactile:** Micro-interactions feel deliberate, responsive, and physical—resembling physical blueprints, fabric swatches, and material spec sheets.
+
+### Core Visual Principles
+1. **The Canvas is the Hero:** The room photograph is the primary artifact. Chrome, toolbars, and controls exist on low-contrast structural surfaces that recede, letting interior lighting and materials dominate the viewport.
+2. **Precision Over Decoration:** No arbitrary floating shapes, decorative blur blobs, or gratuitous glassmorphism. Visual accents must communicate functional state, spatial coordinates, or inventory availability.
+3. **Typographic Decisiveness:** Typography establishes clear hierarchy through structural weight and scale rather than decorative novelty, maintaining high readability on complex photography.
+4. **Physicality in Feedback:** Interactive canvas hotspots use subtle, physical pulsing states that indicate coordinate depth without obscuring underlying furniture upholstery or wood grain.
+
+---
+
+## 2. Reference Products & Design Inspiration
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                INSPIRATION BENCHMARK MAP                               │
+├─────────────────────────┬──────────────────────────────┬───────────────────────────────┤
+│ Benchmark Entity        │ Domain / Archetype           │ Design Attributes Borrowed    │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Vitsoe / Dieter Rams    │ Industrial Shelving Systems  │ Modular grid rigor, neutral   │
+│                         │                              │ framing, timeless typography  │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Arc / The Browser Co.   │ Modern Software Craft        │ Tactile spring physics, calm  │
+│                         │                              │ canvas containment            │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Kinfolk / Cereal Mag    │ Editorial Interior Design    │ Generous negative space, warm │
+│                         │                              │ neutral palettes, serif notes │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Linear                  │ High-Performance Utility     │ Monospace spec callouts, zero │
+│                         │                              │ visual bloat, tight hierarchy │
+└─────────────────────────┴──────────────────────────────┴───────────────────────────────┘
+
+```
+
+---
+
+## 3. Comparative Visual Directions & Trade-Offs
+
+We evaluated three coherent visual directions designed specifically for the consumer spatial-commerce workflow.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              THREE VISUAL DIRECTIONS OVERVIEW                          │
+│                                                                                        │
+│  [Direction A: Editorial Atelier]    ──► Warm architectural minimalism; tactile,       │
+│                                          editorial, premium yet accessible.            │
+│                                                                                        │
+│  [Direction B: Bauhaus Studio]       ──► Ultra-clean Swiss functionalism; high         │
+│                                          contrast, monospace data, pure utility.       │
+│                                                                                        │
+│  [Direction C: Modern Domestic]      ──► Soft consumer tech; rounded corners, warm     │
+│                                          terracotta, friendly and approachable.        │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+```
+
+### Detailed Direction Evaluation
+
+| Attribute | Direction A: Editorial Atelier *(RECOMMENDED)* | Direction B: Bauhaus Studio | Direction C: Modern Domestic |
+| :--- | :--- | :--- | :--- |
+| **Concept** | "The Architectural Specifier" | "The Precision Workspace" | "The Friendly Home Companion" |
+| **Tone** | Sophisticated, quiet, tactile, trustworthy | Strict, engineering-led, ultra-efficient | Welcoming, casual, accessible, soft |
+| **Color Base** | Alabaster (`#F9F8F6`), Charcoal (`#1A1A18`), Warm Gray | Pure White (`#FFFFFF`), Stark Carbon (`#0F0F11`) | Warm Cream (`#FBF9F5`), Deep Bronze (`#2E2724`) |
+| **Accent Hue** | Terre Battue (`#B85D3A`) & Sage (`#5B6E58`) | International Klein Blue (`#004BE8`) | Clay Ochre (`#D07C45`) & Soft Sage |
+| **Typography** | Editorial Sans (`Plus Jakarta Sans`) + Mono metadata | Swiss Neutral Sans (`Inter` / `PP Neue Montreal`) | Soft Rounded Sans (`Geist` / `Outfit`) |
+| **Radii System** | Subtle, tailored ($4\text{px} - 8\text{px}$) | Sharp, architectural ($0\text{px} - 4\text{px}$) | Generous, friendly ($8\text{px} - 16\text{px}$) |
+| **Pros** | Elevated aesthetic matches home decor; evokes quality; cushions high-ticket items. | Extreme scannability; appeals to technical users; lowest render overhead. | High consumer warmth; feels non-intimidating to casual shoppers. |
+| **Cons** | Requires disciplined photography pairing to avoid feeling overly precious. | Can feel cold, clinical, or like a B2B CAD tool for non-technical movers. | Lacks the high-end polish needed to validate $1,500+ room purchases. |
+
+### Strategic Direction Selection
+**Direction A (Editorial Atelier) is recommended.** Furnishing a living space represents a high-emotion, high-capital transaction ($1,000–$3,500 budget). Direction A balances the precision of an architectural drafting tool with the warm editorial confidence of an architectural publication, creating the credibility required for consumers to click outbound purchase links.
+
+---
+
+## 4. Master Design System Tokens (Direction A: Editorial Atelier)
+
+### 4.1 Color Palette & Semantic System
+
+The color architecture uses physical material analogs (sand, stone, linen, charcoal, steel) rather than synthetic digital tones.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                COLOR PALETTE HIERARCHY                                 │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+[SURFACES / BACKGROUNDS]
+├── Canvas Background (Alabaster):    #F9F8F6   (HSL 40°, 14%, 97%)
+├── Surface Elevated (Bleached Linen):#FFFFFF   (HSL 0°,   0%, 100%)
+├── Surface Subtle (Warm Stone):      #F2EFEB   (HSL 36°, 18%, 93%)
+└── Surface Muted (Sandstone):        #E6E2DC   (HSL 38°, 13%, 88%)
+
+[TEXT & INK]
+├── Ink Primary (Charcoal Ash):       #1A1917   (HSL 40°,  6%, 10%)  [Contrast: 15.8:1]
+├── Ink Secondary (Slate Stone):      #57534E   (HSL 36°,  5%, 33%)  [Contrast: 6.8:1]
+├── Ink Muted (Dry Clay):             #8C857B   (HSL 37°,  7%, 52%)  [Contrast: 4.6:1]
+└── Ink Inverted (Pure Cream):        #FAF8F5   (HSL 40°, 20%, 97%)
+
+[BRAND & FUNCTIONAL ACCENTS]
+├── Brand Terracotta (Terre Battue):  #B85D3A   (Primary CTA & Pass Badges)
+├── Terracotta Dark (Hover State):    #984B2E   (Hover/Active Press)
+├── Terracotta Light (Tint Base):     #F7EBE6   (Subtle Badge Backgrounds)
+└── Blueprint Olive (Spatial Scale):  #4E5E4A   (Dimension Indicators & Bounding Box)
+
+[SEMANTIC SIGNALS]
+├── Success / In-Stock:               #2E6945   (Stock confirmed, verified checkout)
+├── Warning / Low Stock:              #A16207   (Only 2 left at retailer)
+├── Error / Validation Failure:       #B91C1C   (Blurry upload, failed payment)
+└── Information / Depth Guide:        #2563EB   (Camera framing guidelines)
+
+```
+
+#### Contrast Ratios (WCAG 2.1 AA Compliance)
+* `Ink Primary` (`#1A1917`) on `Canvas Background` (`#F9F8F6`): **15.8:1** (Exceeds 7.0:1 AAA standard).
+* `Ink Secondary` (`#57534E`) on `Canvas Background` (`#F9F8F6`): **6.8:1** (Exceeds 4.5:1 AA standard).
+* `Brand Terracotta` (`#B85D3A`) on White (`#FFFFFF`): **4.6:1** (Exceeds 4.5:1 AA standard for UI buttons).
+
+---
+
+### 4.2 Typography & Scale System
+
+The typographic stack pairs a clean modern geometric grotesk for UI clarity with a precision tabular monospace for architectural specifications, pricing, and dimensional measurements.
+
+#### Type Families
+* **Primary UI & Editorial Sans:** `Plus Jakarta Sans` (Fallback: `Inter`, `-apple-system`, `BlinkMacSystemFont`, `sans-serif`)
+* **Technical Spec & Tabular Mono:** `JetBrains Mono` (Fallback: `SF Mono`, `Menlo`, `Consolas`, `monospace`)
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 TYPOGRAPHY SCALE HIERARCHY                             │
+├───────────────┬────────────┬─────────────┬───────────┬──────────────┬──────────────────┤
+│ Token Name    │ Font Size  │ Line Height │ Weight    │ Tracking     │ Usage Context    │
+├───────────────┼────────────┼─────────────┼───────────┼──────────────┼──────────────────┤
+│ `type-d1`     │ 36px (2.25)│ 44px (1.22) │ Bold (700)│ -0.025em     │ Hero landing     │
+│ `type-h1`     │ 28px (1.75)│ 36px (1.28) │ Semi (600)│ -0.020em     │ Screen headings  │
+│ `type-h2`     │ 22px (1.37)│ 28px (1.27) │ Semi (600)│ -0.015em     │ Modal titles     │
+│ `type-h3`     │ 18px (1.12)│ 24px (1.33) │ Med (500) │ -0.010em     │ Section headers  │
+│ `type-body`   │ 15px (0.94)│ 22px (1.46) │ Reg (400) │ 0.000em      │ Primary text     │
+│ `type-body-sm`│ 13px (0.81)│ 18px (1.38) │ Reg (400) │ +0.005em     │ Helper / drawer  │
+│ `type-mono-sm`│ 12px (0.75)│ 16px (1.33) │ Med (500) │ +0.020em     │ Price, HxWxD cm  │
+│ `type-label`  │ 11px (0.68)│ 14px (1.27) │ Semi (600)│ +0.040em     │ Badges, FTC tags │
+└───────────────┴────────────┴─────────────┴───────────┴──────────────┴──────────────────┘
+
+```
+
+---
+
+### 4.3 Layout Grid & 8pt Spacing Scale
+
+The layout adheres to a strict **8-point linear spatial system**, utilizing a 4pt sub-grid exclusively for icon padding and micro-component alignments.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    SPACING SCALE                                       │
+├────────────┬──────────┬────────────────────────────────────────────────────────────────┤
+│ Token      │ Size     │ Typical Spatial Application                                    │
+├────────────┼──────────┼────────────────────────────────────────────────────────────────┤
+│ `space-1`  │ 4px      │ Micro-padding, badge vertical padding, focus ring offsets       │
+│ `space-2`  │ 8px      │ Icon-to-text spacing, button horizontal padding (compact)       │
+│ `space-3`  │ 12px     │ Form input vertical padding, chip spacing                      │
+│ `space-4`  │ 16px     │ Default container inner padding, card gaps                     │
+│ `space-5`  │ 24px     │ Drawer inner padding, desktop column gutters                   │
+│ `space-6`  │ 32px     │ Section spacing, modal header-to-content distance              │
+│ `space-8`  │ 48px     │ Major section separation on desktop viewports                  │
+│ `space-12` │ 64px     │ Hero container vertical padding                                │
+└────────────┴──────────┴────────────────────────────────────────────────────────────────┘
+
+```
+
+#### Grid Specifications
+* **Desktop ($\ge 1024\text{px}$):** 12-column grid, $24\text{px}$ gutters, max layout width $1440\text{px}$. The spatial canvas dynamically occupies an $8\text{-column}$ block ($66.6\%$) with a persistent $4\text{-column}$ inspector drawer ($33.3\%$).
+* **Tablet ($768\text{px} - 1023\text{px}$):** 8-column grid, $16\text{px}$ gutters. Split canvas with slide-over drawer modal.
+* **Mobile ($320\text{px} - 767\text{px}$):** 4-column grid, $16\text{px}$ margins, $12\text{px}$ gutters. Full-viewport canvas with expandable bottom drawer sheet ($60\% - 90\%$ viewport height).
+
+---
+
+### 4.4 Iconography System
+
+* **Icon Library Standard:** `Lucide Icons` (Custom tuned to $1.75\text{px}$ optical stroke).
+* **Grid Basis:** $24 \times 24\text{px}$ bounding box (aligned to the 8pt scale). Compact variants set at $16 \times 16\text{px}$.
+* **Optical Weight & Corners:** Clean geometric strokes with slightly rounded caps and joins (`stroke-linecap="round"`, `stroke-linejoin="round"`).
+* **Icon Application Rules:**
+  * Icons never appear as isolated decoration; every icon represents an actionable control (e.g., `Scan`, `Maximize`, `Share`, `Close`, `Sliders`) or a critical semantic status (`CheckCircle2`, `AlertTriangle`).
+  * Canvas hotspot pins use a concentric focal geometry: an outer solid ring ($28\text{px}$) surrounding an inner optical coordinate dot ($8\text{px}$).
+
+---
+
+### 4.5 Surfaces, Borders, Radii, and Shadows
+
+To preserve an architectural, tangible character, elevation is established primarily through **structural borders and subtle surface value shifts** rather than diffuse multi-layered drop shadows.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              SURFACE & ELEVATION SPECIFICATION                         │
+├───────────────┬──────────────────────────────┬─────────────────────────────────────────┤
+│ Layer Level   │ Border Treatment             │ Shadow Treatment                        │
+├───────────────┼──────────────────────────────┼─────────────────────────────────────────┤
+│ Base Canvas   │ None                         │ None (Flat #F9F8F6)                     │
+│ Card / Panel  │ 1px solid #E6E2DC            │ 0 1px 2px rgba(26, 25, 23, 0.04)        │
+│ Drawer / Sheet│ 1px solid #D6D1CA            │ 0 8px 24px -4px rgba(26, 25, 23, 0.08)  │
+│ Modal Dialog  │ 1px solid #1A1917 (10% alpha)│ 0 16px 48px -8px rgba(26, 25, 23, 0.16) │
+│ Hotspot Pin   │ 1.5px solid #FFFFFF          │ 0 2px 6px rgba(0, 0, 0, 0.25)           │
+└───────────────┴──────────────────────────────┴─────────────────────────────────────────┘
+
+```
+
+#### Corner Radii Scale
+* **`radius-none` (`0px`):** Image cropping bounds, table cells, full-screen canvas edges.
+* **`radius-sm` (`4px`):** Form input fields, budget sliders, specification badges, tooltips.
+* **`radius-md` (`8px`):** Product drawer cards, project summary thumbnails, desktop modal dialogs.
+* **`radius-lg` (`16px`):** Mobile slide-up sheet top corners.
+* **`radius-full` (`9999px`):** Hotspot pins, pill-shaped style toggle chips, primary action buttons.
+
+---
+
+### 4.6 Imagery & Illustration Direction
+
+* **Room Photography Treatment:** Original room uploads and AI-rendered spaces are presented without color filters, artificial vignettes, or saturation tampering. The viewer must see realistic natural lighting, material finishes, and shadow boundaries.
+* **Catalog Product Assets:** Retail product cutouts rendered in the product drawer must use standardized isolated white or neutral-toned backgrounds (`#F9F8F6`), scaled proportionally within uniform $1:1$ bounding containers.
+* **Illustration Policy (Strict Elimination of Kitsch):**
+  * **Zero 3D Cartoon / Claymorphism Assets:** Strictly forbidden. They destroy credibility for serious homeowners and movers.
+  * **Zero Glowing Magic Wands / AI Sparkles:** Replaced by clean architectural drafting glyphs, crosshairs, and spatial grid markers.
+  * **Empty State Graphic Treatment:** Technical line-drawn orthographic projections showing room coordinate planes with clean dashed boundaries.
+
+---
+
+### 4.7 Motion & Interaction Principles
+
+Micro-interactions must feel physical, damped, and purposeful—avoiding whimsical or bouncy game-like physics.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 MOTION TIMING & CURVES                                 │
+├─────────────────┬──────────┬─────────────────────────────┬─────────────────────────────┤
+│ Interaction     │ Duration │ Cubic Bezier Easing         │ Behavioral Intent           │
+├─────────────────┼──────────┼─────────────────────────────┼─────────────────────────────┤
+│ Pin Hover/Pulse │ 2400ms   │ Ease-in-out (Looping)       │ Gentle beacon signal        │
+│ Drawer Slide-In │ 280ms    │ cubic-bezier(0.16, 1, 0.3, 1│ Snappy deceleration (Spring)│
+│ State Fade/Swap │ 150ms    │ cubic-bezier(0.4, 0, 0.2, 1)│ Instant visual response     │
+│ Progress Bar    │ Linear   │ Matches SSE stream intervals│ Honest pipeline feedback    │
+└─────────────────┴──────────┴─────────────────────────────┴─────────────────────────────┘
+
+```
+
+#### Spatial Hotspot Pin States
+1. **Idle State:** Solid terracotta core ($8\text{px}$) with an outer semi-transparent white-bordered ring ($24\text{px}$). Subtle looping pulse expands from $24\text{px}$ to $32\text{px}$ with opacity fading from $0.6$ to $0.0$.
+2. **Hover State (Desktop):** Ring expands immediately to $32\text{px}$ with high contrast; cursor shifts to `pointer`; mini specification tooltip reveals retailer logo and price within $80\text{ms}$.
+3. **Selected State:** Ring locks to $36\text{px}$ with an active charcoal border (`#1A1917`); inner core turns crisp white; corresponding drawer slides in simultaneously.
+
+---
+
+### 4.8 Responsive Design & Viewport Adaptation
+
+
+```
+
+DESKTOP STUDIO VIEW (≥ 1024px)
+┌───────────────────────────────────────────────────────────────────┬──────────────────┐
+│ [← Projects]   Japandi Living Room   [$1,340 / $1,500]            │ SELECTED ITEM    │
+├───────────────────────────────────────────────────────────────────┼──────────────────┤
+│                                                                   │ Target           │
+│                         (o Area Rug)                              │ Solid Oak Coffee │
+│                                                                   │ Table            │
+│                 (o Sofa)          [SELECTED PIN]                  │ $249.99          │
+│                                  +--------------+                 │ 110W x 60D x 42H │
+│                                  | (o Table)    |                 │                  │
+│                                  +--------------+                 │ [View at Target] │
+│                                                                   │                  │
+│ [Hotspots: On]    [Accessible List View]             [Export 4K]  │ FTC Disclosure   │
+└───────────────────────────────────────────────────────────────────┴──────────────────┘
+
+MOBILE VIEW (< 768px)
+┌──────────────────────────────────────────────────────────────────┐
+│ [←] Japandi Living Room                         [List]  [Export] │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│                     (o Sofa)      (o Table)                      │
+│                                                                  │
+├──────────────────────────────────────────────────────────────────┤
+│ ═══ SLIDE UP: 4 Items Matched ($1,340 Total) ═══════════════════ │
+│ [IMG]  Solid Oak Coffee Table • Target • $249.99                 │
+│        [ View at Target -> ]                                     │
+└──────────────────────────────────────────────────────────────────┘
+
+```
+
+* **Mobile-First Touch Ergonomics:** All interactive targets (pins, filter pills, drawer action triggers) enforce a strict **minimum bounding box of $48 \times 48\text{pt}$**.
+* **One-Handed Thumb Zone:** On mobile viewports, all primary CTAs (`View at Retailer`, `Redesign`, `Budget Slider`) are anchored in the lower $40\%$ of the screen.
+
+---
+
+### 4.9 Accessibility & Contrast Verification (WCAG 2.1 AA)
+
+* **Contrast Ratios:** Every interactive surface and typographic token meets or exceeds WCAG 2.1 AA standards ($4.5:1$ for normal body text, $3.0:1$ for large headings and core functional UI components).
+* **Non-Color Dependence:** System states never rely exclusively on color. Stock confirmations combine green tokens (`#2E6945`) with explicit text labels (`"In Stock"`) and checkmark glyphs (`Check`). Out-of-stock items feature clear strikethrough typography and explicit badges.
+* **Focus State Mechanics:** All focusable interactive elements feature a high-visibility, dual-layer focus ring (`2px` solid `#1A1917` offset by `2px` white space) that guarantees visibility across dark and light room photography alike.
+
+---
+
+## 5. Visual Direction Gate Decision Request
+
+The visual architecture for **Project RoomCommerce** is defined and grounded in real-world furniture commerce dynamics.
+
+### Deliverables Summary
+* [x] Brand personality and anti-hype visual principles defined.
+* [x] Three comparative visual directions analyzed with clear trade-off rationale.
+* [x] **Direction A (Editorial Atelier)** selected and codified into master design tokens.
+* [x] WCAG 2.1 AA contrast ratios, typography scale, 8pt spatial grid, and motion curves locked.
+* [x] Spatial hotspot pin mechanics and mobile/desktop responsive behaviors specified.
+
+**Recommendation:** Formally approve **Direction A (Editorial Atelier)** as the design baseline to unlock production component creation in Figma and Tailwind CSS token definitions in Phase 4.
+
+Do you approve Direction A to proceed?
+
+```

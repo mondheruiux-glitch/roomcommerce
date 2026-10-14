@@ -1,0 +1,196 @@
+Product Requirements Document (PRD)Document Reference: PRD-PRC-V1.0Project Working Title: Project RoomCommerceAuthor: Senior Product Management LeadDocument Status: Pending Executive & Technical Stakeholder ApprovalTarget Release: MVP Phase 1 (Alpha / Public Web & iOS Beta)1. Product Overview & Problem Statement1.1 Executive OverviewProject RoomCommerce is an AI-powered spatial redesign and multi-retailer commerce engine. It enables users to photograph any domestic interior space and receive a photorealistic, physically plausible redesign populated entirely with verified, in-stock, purchasable furniture and decor from major retail catalogs (e.g., IKEA, Target, Wayfair, Amazon, West Elm). Every newly rendered object functions as an interactive hotspot providing real-time pricing, spatial dimensions, and localized direct-checkout affiliate links.1.2 Problem StatementConsumers redecorating or moving into a living space experience severe friction between spatial discovery and commercial procurement:The Inspiration Dead-End: Generative design tools (e.g., Midjourney, RoomsGPT) synthesize fictional furniture that cannot be purchased, creating unmet consumer expectations.The Walled-Garden Constraint: Retailer-specific visualizers (e.g., IKEA Kreativ, Wayfair Decorify) restrict recommendations to a single brand catalog, failing the real-world consumer behavior of mixing and matching items across price points and vendors.The Spatial Fit Failure: E-commerce furniture returns average 15% to 25%, with the leading driver being dimensional and aesthetic mismatch ("it looked smaller online" or "it clashed with the existing room").The Curation Labor Tax: Manually cross-referencing floor measurements, matching color swatches, hunting for visually similar in-stock SKUs, and tracking a holistic budget across multiple tabs creates cognitive fatigue and high cart abandonment.2. Target Users & User Needs┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                TARGET PERSONA TAXONOMY                                 │
+├─────────────────────────┬──────────────────────────────┬───────────────────────────────┤
+│ Persona Segment         │ Core Context & Trigger       │ Primary Unmet Needs           │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Primary: The            │ Moving into a new apartment/ │ • Cohesive room styling from  │
+│ Transitional Mover      │ house within 30 days; empty  │   scratch under a hard budget │
+│ (Renters & New Owners)  │ or semi-empty living spaces. │ • Direct multi-retailer cart  │
+│                         │ Age: 25–40.                  │ • Fast delivery confidence    │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Secondary: The          │ Upgrading an existing room   │ • "Anchor locking": keeping   │
+│ Incremental Refresher   │ around fixed items (sofa,    │   existing core pieces        │
+│ (Homeowners/Renters)    │ flooring, paint).            │ • Accent matching (rugs,      │
+│                         │ Age: 28–50.                  │   lighting, decor, tables)    │
+└─────────────────────────┴──────────────────────────────┴───────────────────────────────┘
+3. Product Goals & Success Metrics3.1 Primary Business ObjectivesBO-01: Validate that users convert on multi-retailer affiliate shopping links generated directly from spatial AI renders.BO-02: Establish positive unit economics where digital pass revenue and affiliate referral fees exceed GPU inference and vector search costs.3.2 Key Performance Indicators (KPIs) & Target MetricsMetric CategoryMetric NameTarget Threshold (MVP)Measurement WindowActivationPhoto-to-Render Completion Rate$\ge 65\%$ of users who uploadDay 1EngagementProduct Pin Interaction Rate$\ge 45\%$ of sessions tap $\ge 1$ itemPer generationCommerceOutbound Affiliate CTR$\ge 25\%$ of users click external retail link30-day moving windowMonetizationFree-to-Pass Conversion Rate$\ge 7.0\%$ of active usersWithin 14 days of signupTechnicalEnd-to-End Generation Latency$\le 15.0\text{ seconds}$ (p90)Global averageCatalogOut-of-Stock Hotspot Rate$\le 3.0\%$ of rendered itemsReal-time verification4. User Roles & Permission Matrix┌───────────────────────┬────────────┬──────────────────┬─────────────────┬──────────────┐
+│ Role                  │ Anonymous  │ Registered Free  │ Project Pass    │ System Admin │
+│ Feature Capability    │ Guest      │ Tier             │ Paid ($14.99)   │ / Operator   │
+├───────────────────────┼────────────┼──────────────────┼─────────────────┼──────────────┤
+│ Upload Photo & View   │ Yes (Max 1 │ Yes (Max 3       │ Unlimited       │ Unlimited    │
+│ Watermarked Render    │ render)    │ renders total)   │ (30-day window) │ (Test mode)  │
+├───────────────────────┼────────────┼──────────────────┼─────────────────┼──────────────┤
+│ Interactive SKU Pins  │ Yes (1 SKU)│ Yes (All SKUs)   │ Yes (All SKUs)  │ Yes          │
+├───────────────────────┼────────────┼──────────────────┼─────────────────┼──────────────┤
+│ Anchor Item Locking   │ No         │ No               │ Yes             │ Yes          │
+├───────────────────────┼────────────┼──────────────────┼─────────────────┼──────────────┤
+│ 4K Image & PDF Export │ No         │ No               │ Yes             │ Yes          │
+├───────────────────────┼────────────┼──────────────────┼─────────────────┼──────────────┤
+│ Catalog Ingestion Tool│ No         │ No               │ No              │ Full Access  │
+└───────────────────────┴────────────┴──────────────────┴─────────────────┴──────────────┘
+5. Functional Requirements (FR)Status Taxonomy: [Approved] = Formally accepted; [Proposed] = Under PM review; [Unresolved] = Pending business/technical rule definition.5.1 Image Capture, Spatial Pre-Processing & AnchoringFR-101 [Approved] Image Upload & Validation: The system must accept JPG, PNG, and HEIC room photos up to 20MB via direct upload or mobile camera capture.FR-102 [Approved] Automated EXIF & Metadata Scrubbing: All client-side metadata, device telemetry, and geolocation GPS tags must be stripped before image transmission to cloud object storage.FR-103 [Approved] Monocular Depth & Room Geometry Estimation: The backend must compute a relative depth map and semantic wall/floor segmentation mask from a single 2D input image to enforce boundary surfaces.FR-104 [Proposed] Object Detection & Anchor Locking (Keep Existing Items): The UI must allow users to tap detected bounding boxes (e.g., current sofa, existing hardwood floor) to "lock" them, preventing the inpainting model from altering those designated regions.FR-105 [Proposed] Quality Gate Validation: The system must detect and reject photos that lack recognizable room surfaces, are excessively blurry, or are under-illuminated, returning actionable remediation guidance.5.2 Style, Budget & Constraint ConfigurationFR-201 [Approved] Aesthetic Style Selector: Users must select from a fixed taxonomy of at least 8 curated style presets: Mid-Century Modern, Japandi, Scandinavian, Industrial, Minimalist, Contemporary, Bohemian, and Modern Farmhouse.FR-202 [Approved] Total Room Budget Guardrail: Users must be able to specify a total room expenditure ceiling (range: $300 to $10,000 in local currency).FR-203 [Proposed] Room Function Selection: Users must select the target functional room type: Living Room, Bedroom, Home Office, Dining Room, or Patio/Balcony.FR-204 [Unresolved] Retailer Filter Exclusion: Ability for users to toggle specific retailers on or off (e.g., "Exclude Amazon" or "IKEA Only"). (Unresolved: Evaluating whether retailer exclusion degrades vector match density in small budgets).5.3 Inpainting, Rendering & Visual-to-SKU MatchingFR-301 [Approved] Depth-Guided Spatial Inpainting: The generative pipeline must synthesize a restyled interior maintaining wall boundaries, window locations, lighting direction, and floor plane perspective.FR-302 [Approved] Multi-Object Instance Segmentation: The system must segment all newly placed furniture and decor assets into discrete item bounding masks.FR-303 [Approved] Multimodal Vector Similarity Search: Each segmented item crop must query a pre-indexed vector catalog (using SigLIP/CLIP embeddings) to retrieve the top 3 highest-similarity real-world SKUs.FR-304 [Approved] Dimension & Budget Post-Filtering: The search retrieval engine must filter candidate SKUs against estimated bounding dimensions and verify that individual item prices do not breach the cumulative room budget ceiling.FR-305 [Proposed] Alternative Match Carousel: Tapping a product hotspot must display the primary match and allow the user to swipe through at least two viable alternative SKUs (e.g., "Budget Alternative" and "Premium Alternative").5.4 Shoppable Canvas & Outbound CommerceFR-401 [Approved] Interactive Hotspot Canvas: The rendered output must display interactive, pulsing pin markers over each newly generated piece of furniture.FR-402 [Approved] Product Detail Modal: Tapping an interactive pin must present:Product Title and Brand/Retailer Logo.Live Retail Price and Currency Symbol.Physical Dimensions (Height, Width, Depth).Perceived Similarity Confidence Score (e.g., "Exact SKU" vs. "92% Visual Match").Primary CTA: "View at [Retailer Name]".FR-403 [Approved] Programmatic Affiliate Deep-Linking: Tapping the outbound CTA must route the user through the appropriate affiliate tracker (e.g., Impact, CJ, Amazon Associates) with active click IDs and redirect to the canonical product listing page in a new browser tab.FR-404 [Proposed] Universal Room Basket View: The system must provide a slide-up summary sheet displaying the itemized total cost of all rendered items relative to the user's budget ceiling, with a "Copy All Links" action.5.5 Monetization & Entitlements EngineFR-501 [Approved] "Move-In Project Pass" Purchase Flow: Integration with Stripe (Web) and In-App Purchases (iOS StoreKit 2) to purchase a $14.99 30-day episodic pass.FR-502 [Approved] Pay-as-You-Go Credit Packs: Integration allowing users to purchase a 5-render credit pack for $4.99.FR-503 [Approved] Watermark Enforcement: Non-paying users (Free Tier) receive rendered images with a semi-transparent diagonal Project RoomCommerce watermark and standard definition resolution (1080p maximum).FR-504 [Approved] Paid Entitlement Unlocks: Active Pass holders receive watermark-free 4K downloads, anchor locking capabilities, and unlimited generations (governed by fair-use throttling).6. Non-Functional Requirements (NFR)6.1 Performance & LatencyNFR-01 [Approved] Generation Turnaround Time: End-to-end pipeline latency (photo upload $\rightarrow$ depth pass $\rightarrow$ inpainting $\rightarrow$ segmentation $\rightarrow$ vector query $\rightarrow$ hotspot render) must complete in $\le 15.0\text{ seconds}$ for the 90th percentile under normal network conditions.NFR-02 [Approved] Hotspot Interaction Latency: Tapping a product pin must render the product detail sheet in $\le 150\text{ milliseconds}$.NFR-03 [Approved] Vector Database Query Latency: Candidate SKU embedding search across $\ge 250,000$ catalog items must execute in $\le 80\text{ milliseconds}$ per object.6.2 Availability, Scalability & ReliabilityNFR-04 [Approved] Service Uptime: Core web application and API endpoints must maintain $99.9\%$ monthly availability (excluding scheduled maintenance windows).NFR-05 [Approved] Auto-Scaling Inference Workers: GPU inference worker pools must auto-scale horizontally to support a burst load of at least 50 concurrent room generation requests without queue timeouts.NFR-06 [Proposed] Graceful Degradation Under Load: If GPU inference queue wait time exceeds 25 seconds, the system must display an asynchronous polling notification: "High rendering demand; your room is being processed. We will notify you when ready."6.3 Data Freshness & Catalog AccuracyNFR-07 [Approved] Catalog Price & Stock Synchronicity: Retailer SKU pricing and in-stock flags must be refreshed via automated feed crawlers at least once every 24 hours.NFR-08 [Approved] Broken Link Prevention: Outbound affiliate redirect endpoints must validate target URL HTTP response codes daily; dead URLs (404/410) must be automatically suppressed from the vector retrieval pool.7. Business Rules & Workflows7.1 Business Rules (BR)BR-01 [Approved] Fair Use Cap on 30-Day Passes: To protect against commercial scraping or abuse, a $14.99 Move-In Pass is limited to a fair-use ceiling of 60 high-resolution generations per 30-day period. Generations beyond 60 require an additional credit pack.BR-02 [Approved] In-Stock Guarantee Threshold: The system must never assign a product pin to a SKU marked as "Out of Stock" or "Discontinued" in the catalog database at the time of query execution.BR-03 [Approved] Mandatory FTC Affiliate Disclosure: Every screen presenting shoppable links must display prominent legal disclosure text: "We may earn an affiliate commission from qualifying purchases made via links on this page."BR-04 [Unresolved] Return Policy on Digital Passes: If a user purchases a Move-In Pass but the AI fails to generate acceptable rooms due to repeated edge-case photo errors, what is the automated refund policy window (e.g., 7 days if fewer than 3 renders executed)?7.2 Core End-to-End User Generation Workflow[User Uploads Room Photo]
+          │
+          ▼
+[Client-Side Privacy Sanitization: EXIF Scrubber & Face Blur]
+          │
+          ▼
+[Input Validation Gate (FR-105): Resolution, Blur, Room Check]
+   ├── Fail ──► [Display Guided Capture Error State]
+   └── Pass ──► Proceed
+          │
+          ▼
+[User Configures Style, Budget Slider, & Selects Anchor Items]
+          │
+          ▼
+[Orchestrator Dispatches Inference Task to GPU Pool]
+   ├── Step 1: Monocular Depth Map & Segmentation
+   ├── Step 2: Masked Inpainting Guided by Style Prompt
+   └── Step 3: Segment New Furniture Items into Crops
+          │
+          ▼
+[Multimodal Vector Search Pipeline (FR-303)]
+   ├── Generate SigLIP Embeddings for Crops
+   ├── Filter by Category, Dimension Bounds, & Live Stock Status
+   └── Rank Top 3 SKU Matches per Item
+          │
+          ▼
+[Deliver Rendered Interactive Canvas with Hotspot Pins]
+          │
+          ▼
+[User Taps Pin ──► Opens SKU Sheet ──► Clicks Outbound Affiliate Link]
+8. Integrations & Data Requirements8.1 Third-Party External Integrations┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              EXTERNAL INTEGRATIONS                                     │
+├─────────────────────────┬──────────────────────────────┬───────────────────────────────┤
+│ Integration Partner     │ Integration Purpose          │ Communication Mechanism       │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Affiliate Networks      │ Deep-linking, attribution    │ REST API & Server-to-Server   │
+│ (Impact, CJ, Amazon)    │ tracking, click attribution  │ Postback webhooks             │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Stripe & Apple IAP      │ Payment processing for       │ Stripe SDK & Apple StoreKit 2 │
+│                         │ Passes and Credit Packs      │ Webhook transaction sync      │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Serverless GPU Cloud    │ Depth estimation & diffusion │ gRPC / Asynchronous HTTPS     │
+│ (RunPod / Replicate)    │ model inpainting pipeline    │ worker queues                 │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Managed Vector DB       │ High-dimensional multimodal  │ Managed Vector API client     │
+│ (Qdrant / Pinecone)     │ similarity search (SigLIP)   │ (Cosine similarity index)     │
+└─────────────────────────┴──────────────────────────────┴───────────────────────────────┘
+8.2 Canonical Product Catalog Schema (Relational Representation)JSON{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CatalogProductItem",
+  "type": "object",
+  "properties": {
+    "sku_id": { "type": "string" },
+    "retailer_id": { "type": "string", "enum": ["IKEA", "TARGET", "WAYFAIR", "AMAZON", "WEST_ELM"] },
+    "title": { "type": "string" },
+    "category": { "type": "string", "enum": ["sofa", "coffee_table", "accent_chair", "rug", "floor_lamp", "wall_art", "decor"] },
+    "price_cents": { "type": "integer" },
+    "currency": { "type": "string", "maxLength": 3 },
+    "dimensions_cm": {
+      "type": "object",
+      "properties": {
+        "height": { "type": "number" },
+        "width": { "type": "number" },
+        "depth": { "type": "number" }
+      },
+      "required": ["height", "width", "depth"]
+    },
+    "in_stock": { "type": "boolean" },
+    "canonical_url": { "type": "string", "format": "uri" },
+    "affiliate_url": { "type": "string", "format": "uri" },
+    "primary_image_url": { "type": "string", "format": "uri" },
+    "embedding_vector_id": { "type": "string" },
+    "last_stock_verified_at": { "type": "string", "format": "date-time" }
+  },
+  "required": ["sku_id", "retailer_id", "title", "price_cents", "currency", "in_stock", "affiliate_url"]
+}
+9. System States & Edge-Case Behaviors9.1 Matrix of System States┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              SYSTEM STATE DEFINITIONS                                  │
+├───────────────────┬────────────────────────────────────────────────────────────────────┤
+│ State Type        │ Explicit System Behavior & UX Rules                                │
+├───────────────────┼────────────────────────────────────────────────────────────────────┤
+│ 1. Validation     │ Triggered if photo is blurry, pitch-black, or non-interior.        │
+│    State          │ Message: "We couldn't detect clear walls or floors. Stand in the   │
+│                   │ corner of the room and retake with the lights on."                 │
+├───────────────────┼────────────────────────────────────────────────────────────────────┤
+│ 2. Loading State  │ Multi-stage progress indicator: "Analyzing room depth..." (0–4s)   │
+│                   │ ➔ "Applying Japandi styling..." (5–10s) ➔ "Matching real-world     │
+│                   │ catalog inventory..." (11–14s). Cancel button always accessible.   │
+├───────────────────┼────────────────────────────────────────────────────────────────────┤
+│ 3. Empty State    │ If user selects "Industrial" style with an ultra-low $300 budget:  │
+│                   │ "No complete sets found under $300 for Industrial. Adjust your     │
+│                   │ budget slider to at least $650 to view viable matching sets."      │
+├───────────────────┼────────────────────────────────────────────────────────────────────┤
+│ 4. Success State  │ High-definition canvas displayed with pulsating pins, total cost   │
+│                   │ banner, and floating CTA: "Explore 5 Matched Items."               │
+├───────────────────┼────────────────────────────────────────────────────────────────────┤
+│ 5. Failure State  │ GPU worker timeout (exceeding 30 seconds):                         │
+│                   │ Message: "Generation timed out. Your credits were not deducted.    │
+│                   │ [Retry Now Button]."                                               │
+├───────────────────┼────────────────────────────────────────────────────────────────────┤
+│ 6. Recovery State │ Network drop during upload: Exponential backoff client retry (3    │
+│                   │ attempts) before presenting offline toast: "Connection lost. Tap   │
+│                   │ to resume upload."                                                 │
+└───────────────────┴────────────────────────────────────────────────────────────────────┘
+10. Security, Privacy & Accessibility10.1 Security RequirementsSEC-01 [Approved] Ephemeral Raw Photo Storage: Original raw interior photographs uploaded by users must be permanently purged from cloud storage after 7 days, retaining only the processed spatial feature vectors and final generated renders.SEC-02 [Approved] Automated Facial & PII Obfuscation: The server-side intake pipeline must automatically apply a Gaussian blur to any detected human faces, family portraits, or text-heavy documents captured in room photos prior to running inpainting.SEC-03 [Approved] End-to-End Encryption: All spatial imagery and API payload transmissions must be encrypted in transit via TLS 1.3 and at rest via AES-256 encryption.10.2 Privacy & Regulatory CompliancePRV-01 [Approved] GDPR / CCPA Zero-Model-Training Guarantee: User-submitted domestic interior imagery must be explicitly quarantined and excluded from training public foundation models without affirmative opt-in consent.PRV-02 [Approved] Right to Full Erasure: The user profile settings must provide a one-click "Delete All Project Data & Room Photos" action that executes hard deletion across databases, S3 buckets, and vector indices within 24 hours.10.3 Accessibility RequirementsACC-01 [Approved] WCAG 2.1 Level AA Compliance: The web and mobile interfaces must conform to WCAG 2.1 AA standards, including color contrast ratios of at least 4.5:1 for all text elements.ACC-02 [Approved] Screen-Reader Compatible Shoppable List: Because spatial image pins are purely visual, the system must provide an accessible, structured DOM table/list alternative presenting each item's name, brand, price, and affiliate URL labeled with clear aria attributes.11. Dependencies, Constraints & Risk Matrix┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              TRACEABLE RISK MATRIX                                     │
+├─────────┬───────────────────────┬────────┬─────────────────────────────────────────────┤
+│ Risk ID │ Identified Risk Event │ Impact │ Engineered Mitigation Architecture          │
+├─────────┼───────────────────────┼────────┼─────────────────────────────────────────────┤
+│ RSK-01  │ Upstream retailer API │ High   │ Daily automated availability scrapers;      │
+│         │ changes or SKUs go    │        │ automatic substitution of secondary ranked  │
+│         │ out of stock.         │        │ vector match if primary SKU is unavailable. │
+├─────────┼───────────────────────┼────────┼─────────────────────────────────────────────┤
+│ RSK-02  │ Spatial distortion:   │ High   │ Hard bounding constraint: Inpainting        │
+│         │ AI places oversized   │        │ pipeline is bounded by monocular depth      │
+│         │ items in small nooks. │        │ estimation meshes to reject physical clips. │
+├─────────┼───────────────────────┼────────┼─────────────────────────────────────────────┤
+│ RSK-03  │ High GPU compute unit │ Medium │ Serverless cold-start mitigation, dynamic   │
+│         │ costs exceed blended  │        │ step scheduling (25 steps vs. 50 steps),    │
+│         │ customer revenue.     │        │ and edge caching for identical styles.      │
+├─────────┼───────────────────────┼────────┼─────────────────────────────────────────────┤
+│ RSK-04  │ Short affiliate       │ Medium │ "Save Room Project" bookmarking with        │
+│         │ cookie expiration     │        │ automated email/push price-drop alerts to   │
+│         │ windows (24h–30d).    │        │ re-trigger affiliate click sessions.        │
+└─────────┴───────────────────────┴────────┴─────────────────────────────────────────────┘
+12. MVP Scope vs. Explicit Exclusions┌───────────────────────────────────────────────┬───────────────────────────────────────────────┐
+│              IN-SCOPE (MVP PHASE 1)           │        EXPLICIT EXCLUSIONS (POST-MVP)         │
+├───────────────────────────────────────────────┼───────────────────────────────────────────────┤
+│ • 2D Room photo capture & depth estimation    │ • Real-time interactive 3D WebGL/LiDAR walk-  │
+│ • 8 Curated aesthetic design style presets    │   throughs (deferred to Phase 2).             │
+│ • 1 Starter catalog index (50K SKUs across    │ • Local contractor & handyman booking         │
+│   IKEA, Target, Wayfair, Amazon US)           │   marketplace (deferred to Phase 3).          │
+│ • Single anchor-item locking (keep couch)     │ • Multi-user collaborative design rooms.      │
+│ • Interactive canvas with pulsing product pins│ • AR "View in Room" camera pass-through.      │
+│ • Outbound programmatic affiliate deep-links  │ • Native universal in-app unified cart        │
+│ • $14.99 Move-In Pass & $4.99 Credit Packs    │   (all checkouts occur on retailer sites).    │
+│ • Web (Responsive Desktop/Mobile) & iOS App   │ • Android Native App (Web responsive only     │
+│                                               │   during initial US pilot).                   │
+└───────────────────────────────────────────────┴───────────────────────────────────────────────┘
+13. User Stories & Testable Acceptance CriteriaUS-01: First-Time Room Transformation & Hotspot GenerationAs a transitional mover furnishing an apartment,I want to take a photo of my empty living room and pick a design style and budget,So that I get an inspirational redesign filled with real products I can actually buy.Scenario 1: Successful end-to-end generationGiven a user has uploaded a clear photo of an indoor living room,When they select the "Japandi" style and set a budget of "$1,500",Then the system returns a redesigned render in less than 15 seconds,And displays between 3 and 7 interactive product pins,And the sum of all primary matched items does not exceed $1,500.Scenario 2: Low-quality or non-room photo rejectedGiven a user uploads an image of an outdoor highway or a heavily blurred photo,When the validation gate analyzes the image,Then the image is rejected before invoking the GPU inpainting model,And an error message is displayed explaining how to frame a valid room photo.US-02: Outbound Product Procurement via Pin InteractionAs a prospective buyer,I want to tap a coffee table in the redesigned room image,So that I can view its price, brand, and dimensions, and click through to purchase it on the retailer's store.Scenario 1: Tapping an in-stock product pinGiven a generated room render with visible pins,When the user taps the pin located on the coffee table,Then a product card slides up in under 150ms showing the product title, retailer name, price, dimensions, and similarity rating,When the user clicks "View at Retailer",Then a new browser tab opens navigating to the retailer's canonical page with the affiliate tracking parameters appended.Scenario 2: Viewing alternative optionsGiven the product card is open for an item,When the user swipes left on the card,Then the card displays an alternative SKU that matches the same category and style within the budget.US-03: Anchor Item Locking (Preserving Existing Furniture)As an incremental room refresher,I want to lock my existing leather sofa in place,So that the AI designs around it rather than replacing it with a new sofa.Scenario 1: Masking an anchor itemGiven a user with an active Move-In Pass has uploaded a room containing a sofa,When the user taps the detected bounding box of the sofa and toggles "Keep This Item",Then the sofa region is masked from the diffusion inpainting prompt,And the resulting render retains the original sofa with updated surrounding rugs, tables, lighting, and decor.14. Analytics & Event-Tracking SchemaTo evaluate the conversion funnel and affiliate attribution velocity, client and server applications must instrument the following tracking events:┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              TELEMETRY EVENT TAXONOMY                                  │
+├─────────┬──────────────────────────┬──────────────────┬────────────────────────────────┤
+│ ID      │ Event Name               │ Trigger Moment   │ Context Payload Properties     │
+├─────────┼──────────────────────────┼──────────────────┼────────────────────────────────┤
+│ EV-101  │ `room_photo_uploaded`    │ File validated   │ file_format, file_size_kb,     │
+│         │                          │ client-side      │ resolution, capture_source     │
+├─────────┼──────────────────────────┼──────────────────┼────────────────────────────────┤
+│ EV-102  │ `generation_initiated`   │ User clicks      │ style_preset, budget_ceiling,  │
+│         │                          │ "Redesign Room"  │ anchor_items_count, pass_tier  │
+├─────────┼──────────────────────────┼──────────────────┼────────────────────────────────┤
+│ EV-103  │ `generation_completed`   │ Render canvas    │ duration_ms, items_detected,   │
+│         │                          │ presented to user│ total_cart_val, gpu_worker_id  │
+├─────────┼──────────────────────────┼──────────────────┼────────────────────────────────┤
+│ EV-201  │ `product_pin_tapped`     │ User taps pin on │ sku_id, retailer_id, price,    │
+│         │                          │ visual canvas    │ similarity_score, category     │
+├─────────┼──────────────────────────┼──────────────────┼────────────────────────────────┤
+│ EV-202  │ `affiliate_outbound_clk` │ User taps CTA to │ sku_id, retailer_id, price,    │
+│         │                          │ open retail site │ affiliate_network, click_id    │
+├─────────┼──────────────────────────┼──────────────────┼────────────────────────────────┤
+│ EV-301  │ `pass_paywall_viewed`    │ Paywall screen   │ trigger_source, days_since_reg │
+│         │                          │ displayed        │ renders_used_count             │
+├─────────┼──────────────────────────┼──────────────────┼────────────────────────────────┤
+│ EV-302  │ `pass_purchased`         │ Stripe/IAP       │ transaction_id, revenue_cents, │
+│         │                          │ success webhook  │ pass_type ("30_day" / "credit")│
+└─────────┴──────────────────────────┴──────────────────┴────────────────────────────────┘
+15. Open Questions & Approvals RequiredThe following architectural and business questions remain unresolved and require formal executive determination:OQ-01 Catalog Ingestion Policy: Should MVP catalog scraping rely on third-party aggregator APIs (e.g., Datafiniti, Rainforest API) or direct custom scrapers for the initial 4 launch retailers?Tradeoff: Aggregator APIs reduce maintenance overhead but introduce a 2–4% link staleness risk.OQ-02 Free-Tier Watermark Density: Is a single corner watermark sufficient to prevent unauthorized commercial reuse of free renders, or is a semi-transparent diagonal pattern across the canvas necessary?OQ-03 International Geo-IP Redirect Fallbacks: If a European user generates a room on the US-focused MVP, should the system display US dollar prices with an international disclaimer, or disable outbound links entirely for un-indexed locales?

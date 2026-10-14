@@ -1,0 +1,11 @@
+{
+  "name": "@roomcommerce/gpu-runner",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "typecheck": "echo 'Python package — no TypeScript typecheck'",
+    "lint": "echo 'Use ruff for Python linting'",
+    "build": "echo 'Python build handled by Poetry/Docker'",
+    "clean": "rm -rf __pycache__ .ruff_cache"
+  }
+}

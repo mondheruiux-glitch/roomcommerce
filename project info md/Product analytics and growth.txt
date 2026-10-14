@@ -1,0 +1,455 @@
+```markdown
+# File: 24_phase6_product_analytics_and_growth_specification.md
+# Project: Project RoomCommerce
+# Lifecycle Phase: Phase 6 — Product Analytics, Growth Instrumentation & Feature Governance
+# Author: Product Analytics & Growth Lead
+# Status: Complete / Ready for PostHog & Telemetry Pipeline Implementation
+
+---
+
+## Central Project Status Document
+
+* **Project Working Title:** Project RoomCommerce
+* **Current Lifecycle Phase:** Phase 6 — Measurement, Growth & Product Operations
+* **Target Release:** `v1.0.0-rc.3` (Canary Rollout)
+* **Lifecycle Gate Status:** Analytics & Experimentation Framework Complete
+* **Primary Objective:** Establish the complete measurement framework, telemetry event schemas, dashboard hierarchy, experimentation portfolio, and feature-lifecycle governance rules to evaluate real-world product performance.
+* **Core Governance Mandate:** Distinguish unverified assumptions and aspirational benchmarks from empirical production data. Enforce zero-PII ingestion across all telemetry pipelines.
+
+---
+
+# 1. North Star Metric & Executive KPI Hierarchy
+
+Because Project RoomCommerce operates a dual monetization engine (episodic digital passes + downstream commerce affiliate commissions), the North Star Metric must measure **commercial discovery velocity** rather than raw social media virality or passive render counts.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                  NORTH STAR METRIC (NSM)                               │
+│                                                                                        │
+│               Qualified Shoppable Outbound Sessions (QSOS) per Active Mover            │
+│                                                                                        │
+│  "The number of unique user sessions in which a user transforms a real room photo,     │
+│   inspects at least one in-stock product hotspot, and clicks through to an authorized  │
+│   retailer with an active affiliate tracking parameter."                               │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+```
+
+### Why QSOS Aligns User Value with Business Viability
+1. **Validates Core User Value:** A user only executes an outbound click if the AI room design is aesthetically compelling, physically plausible, and populated with items that match their taste and budget.
+2. **Drives Dual Revenue:** Outbound clicks directly monetize via affiliate commission cookies (4%–10% GMV) while signaling high user engagement, which drives conversion to the $14.99 30-Day Move-In Pass.
+3. **Rejects False Engagement:** Filtering out passive renders prevents the team from optimizing for novelty users who view generations as free entertainment with zero purchase intent.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              EXECUTIVE KPI HIERARCHY TREE                              │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+```
+                           [NORTH STAR METRIC]
+                  Qualified Shoppable Outbound Sessions (QSOS)
+                                   │
+    ┌──────────────────────────────┼──────────────────────────────┐
+    ▼                              ▼                              ▼
+
+```
+
+[L1: Acquisition]            [L1: Activation]               [L1: Monetization]
+Qualified Visitor Intake     Photo-to-Shoppable Render      Blended Net Revenue / User
+Cost per Acquisition (CAC)   Rate (First Run in <25s)       (Pass Sales + Affiliate Yield)
+│                              │                              │
+├─ Blended Organic / Paid CAC  ├─ EXIF/Upload Success Rate    ├─ Pass Paywall Conversion
+└─ Landing-to-Intake CTR       ├─ Quality Gate Pass Rate      ├─ Outbound Affiliate CTR
+└─ End-to-End Inference Latency└─ Tracked Retailer GMV
+
+```
+
+---
+
+# 2. Full-Funnel Metric Taxonomy & Mathematical Formulations
+
+All product metrics are documented below with their exact mathematical numerators and denominators to eliminate ambiguity in tracking implementations.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       FULL-FUNNEL METRIC TAXONOMY                                      │
+├───────────────┬────────────────────────────┬─────────────────────────────┬─────────────────────────────┤
+│ Lifecycle Tier│ Metric Name                │ Mathematical Formula        │ Target Benchmark (MVP)      │
+├───────────────┼────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Activation    │ First-Time Upload Rate     │ (Unique Users Uploading) /  │ ≥ 35.0% of Landing Visitors │
+│               │                            │ (Unique Landing Visitors)   │                             │
+├───────────────┼────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Activation    │ Photo-to-Render Completion │ (Successful Renders) /      │ ≥ 70.0% of Photo Uploads    │
+│               │ Rate (Time-to-Value)       │ (Valid Upload Initiations)  │                             │
+├───────────────┼────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Engagement    │ Hotspot Exploration Depth  │ (Total Pin Taps) /          │ ≥ 2.4 Pins Tapped / Render  │
+│               │                            │ (Completed Renders)         │                             │
+├───────────────┼────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Engagement    │ Catalog Budget Alignment   │ 1 - |Budget - Cart Sum| /   │ ≥ 90.0% Adherence to User   │
+│               │ Accuracy                   │ User Budget Ceiling         │ Budget Ceiling              │
+├───────────────┼────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Retention     │ 30-Day Project Multi-Room  │ (Users Redesigning ≥ 2 Rooms│ ≥ 28.0% of Active Pass      │
+│               │ Velocity (Episodic Cohort) │ in 30 Days) / (Pass Holders)│ Holders                     │
+├───────────────┼────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Conversion    │ Outbound Affiliate Click-  │ (Users Clicking Outbound) / │ ≥ 25.0% of Render Viewers   │
+│               │ Through Rate (CTR)         │ (Users Viewing Render)      │                             │
+├───────────────┼────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Conversion    │ Free-to-Pass Paywall       │ (Move-In Pass Purchases) /  │ ≥ 7.0% of Users Exhausting  │
+│               │ Conversion Rate            │ (Users Hitting Paywall Gate)│ 2 Free Renders              │
+├───────────────┼────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Revenue       │ Average Revenue Per User   │ (Stripe Gross Pass Rev +    │ ≥ $2.10 Blended Across All  │
+│               │ (ARPU - Blended)           │ Tracked Affiliate Rev) / MAU│ Active Users                │
+├───────────────┼────────────────────────────┼─────────────────────────────┼─────────────────────────────┤
+│ Revenue       │ Affiliate Yield per Room   │ (Total Affiliate Rev) /     │ ≥ $1.80 Tracked Commission  │
+│               │ Generation                 │ (Total Generated Rooms)     │ per Render                  │
+└───────────────┴────────────────────────────┴─────────────────────────────┴─────────────────────────────┘
+
+```
+
+### Clarification on Episodic Retention vs. SaaS Retention
+Standard SaaS apps measure 30/60/90-day recurring retention. Because home furnishing is **episodic** (occurring during a 30-day move-in window once every 1–3 years), measuring 12-month cohort retention as a core KPI creates misleading churn metrics. Instead, the team tracks:
+* **30-Day Moving Window Velocity:** The number of distinct rooms (Living Room $\rightarrow$ Bedroom $\rightarrow$ Balcony) redesigned during the active pass period.
+* **Long-Term Reactivation Rate:** Dormant users returning after 12+ months when signing a new lease or moving homes.
+
+---
+
+# 3. Reliability, Infrastructure & Support Operational Metrics
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                               OPERATIONAL, SRE & SUPPORT METRIC BOUNDARIES                             │
+├─────────────────────┬──────────────────────────┬──────────────────────┬────────────────────────────────┤
+│ Category            │ Metric Name              │ Production SLA Target│ Critical Breach Threshold      │
+├─────────────────────┼──────────────────────────┼──────────────────────┼────────────────────────────────┤
+│ Latency             │ Warm Inference Latency   │ ≤ 13.0s (Average)    │ > 18.0s (Triggers auto-scale)  │
+│                     │ Pipeline p90 Latency     │ ≤ 15.0s (p90)        │ > 22.0s                        │
+├─────────────────────┼──────────────────────────┼──────────────────────┼────────────────────────────────┤
+│ Infrastructure Unit │ GPU Compute Cost per Run │ ≤ $0.0350 USD / run  │ > $0.0450 USD / run            │
+│ Economics           │ Vector Search Query Lat. │ ≤ 25ms (p95) in Qdrant│ > 80ms                         │
+├─────────────────────┼──────────────────────────┼──────────────────────┼────────────────────────────────┤
+│ Catalog Freshness   │ Out-of-Stock Pin Rate    │ 0.0% (Guaranteed)    │ > 1.0% (ETL sync bug)          │
+│                     │ Broken Redirect 404 Rate │ < 0.1% of clicks     │ > 0.5% (Triggers partner alert)│
+├─────────────────────┼──────────────────────────┼──────────────────────┼────────────────────────────────┤
+│ Support & Ops       │ Support Ticket Escalation│ < 1.5% of completed  │ > 3.0% of user sessions        │
+│                     │ Rate                     │ generations          │                                │
+│                     │ Stripe Dispute / Refund  │ < 1.0% of total pass │ > 2.5% of total transactions   │
+│                     │ Rate                     │ purchases            │                                │
+└─────────────────────┴──────────────────────────┴──────────────────────┴────────────────────────────────┘
+
+```
+
+---
+
+# 4. Privacy-Conscious Telemetry & Event Schema Specification
+
+The telemetry framework is built around **strict privacy-by-design principles**. In compliance with GDPR Article 5 (Data Minimization) and CCPA, the event stream never ingests domestic room imagery, raw photo URLs, family names, precise GPS coordinates, or unmasked IP addresses.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              TELEMETRY SANITIZATION GATEWAY                            │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+[Client / Backend Event Trigger]
+│
+▼
+[Sanitization Middleware]
+├── Strip all image binaries, presigned URLs, and base64 strings.
+├── Mask email addresses (`m***@example.com`).
+├── Hash user IP addresses using SHA-256 with a daily rotating salt.
+└── Normalize monetary figures to integers in USD cents (`price_cents`).
+│
+▼
+[PostHog / Mixpanel Ingestion Endpoint]
+
+```
+
+### Standardized Event Dictionary (`EV-101` to `EV-302`)
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       CANONICAL EVENT SCHEMA DICTIONARY                                │
+├─────────┬──────────────────────────┬─────────────┬─────────────────────────────────────────────────────┤
+│ Event ID│ Event Name               │ Layer       │ Documented Payload Properties                       │
+├─────────┼──────────────────────────┼─────────────┼─────────────────────────────────────────────────────┤
+│ EV-101  │ `room_photo_uploaded`    │ Client      │ `file_format` ("jpeg"|"png"|"heic"), `file_size_kb`,│
+│         │                          │             │ `resolution_w`, `resolution_h`, `source` ("camera") │
+├─────────┼──────────────────────────┼─────────────┼─────────────────────────────────────────────────────┤
+│ EV-102  │ `generation_initiated`   │ API         │ `project_id`, `style_preset`, `room_function`,      │
+│         │                          │             │ `budget_ceiling_cents`, `pass_tier` ("free"|"paid") │
+├─────────┼──────────────────────────┼─────────────┼─────────────────────────────────────────────────────┤
+│ EV-103  │ `generation_completed`   │ API         │ `project_id`, `duration_ms`, `items_detected`,      │
+│         │                          │             │ `total_cart_cents`, `budget_adherence_ratio`        │
+├─────────┼──────────────────────────┼─────────────┼─────────────────────────────────────────────────────┤
+│ EV-104  │ `generation_failed`      │ API         │ `project_id`, `error_code`, `stage_failed`,         │
+│         │                          │             │ `duration_ms`, `credits_restored` (boolean)         │
+├─────────┼──────────────────────────┼─────────────┼─────────────────────────────────────────────────────┤
+│ EV-201  │ `product_pin_tapped`     │ Client      │ `project_id`, `hotspot_id`, `category`,             │
+│         │                          │             │ `retailer_name`, `price_cents`, `similarity_score`  │
+├─────────┼──────────────────────────┼─────────────┼─────────────────────────────────────────────────────┤
+│ EV-202  │ `affiliate_outbound_clk` │ API/302     │ `hotspot_id`, `sku_id`, `retailer_name`,            │
+│         │                          │             │ `affiliate_network`, `click_id`, `position_rank`    │
+├─────────┼──────────────────────────┼─────────────┼─────────────────────────────────────────────────────┤
+│ EV-203  │ `accessible_list_viewed` │ Client      │ `project_id`, `interaction_source` ("skip_nav"|"btn")│
+├─────────┼──────────────────────────┼─────────────┼─────────────────────────────────────────────────────┤
+│ EV-301  │ `pass_paywall_viewed`    │ Client      │ `trigger_reason` ("limit_reached"|"4k_export"),     │
+│         │                          │             │ `renders_used_prior`, `days_since_first_visit`      │
+├─────────┼──────────────────────────┼─────────────┼─────────────────────────────────────────────────────┤
+│ EV-302  │ `pass_purchased`         │ API/Webhook │ `stripe_session_id`, `amount_cents`, `currency`,    │
+│         │                          │             │ `payment_method_type`, `user_lifetime_generations`  │
+└─────────┴──────────────────────────┴─────────────┴─────────────────────────────────────────────────────┘
+
+```
+
+---
+
+# 5. Dashboard Topology & Reporting Cadence
+
+Analytics are organized into four dedicated operational dashboards in PostHog and Datadog, paired with structured review cadences to drive team alignment.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              DASHBOARD TOPOLOGY ARCHITECTURE                           │
+├─────────────────────────┬──────────────────────────────┬───────────────────────────────┤
+│ Dashboard Name          │ Target Audience              │ Core Visualizations & Metrics │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ 1. Executive Growth &   │ CPO, Business Strategist,    │ • QSOS Trend & 30-Day Moving  │
+│    Monetization         │ Growth Lead                  │   Pass Revenue Velocity       │
+│                         │                              │ • Funnel: Landing ➔ Upload ➔  │
+│                         │                              │   Render ➔ Pin Tap ➔ Checkout │
+│                         │                              │ • Blended ARPU & CAC Payback  │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ 2. Studio Funnel & UX   │ Senior Product Designer,     │ • Drop-off at Quality Gate    │
+│    Diagnostics          │ UX Researcher, Lead PM       │ • Style Preset Popularity &   │
+│                         │                              │   Budget Slider Distribution  │
+│                         │                              │ • Pin Interaction Heatmap     │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ 3. ML Pipeline & Cloud  │ Engineering Lead, Machine    │ • p50, p90, p99 Pipeline      │
+│    Unit Economics (SRE) │ Learning Lead, SRE Lead      │   Latency Breakdown by Stage  │
+│                         │                              │ • GPU Cost per Render ($)     │
+│                         │                              │ • Worker Cold vs Warm Starts  │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ 4. Catalog Health &     │ Commercial Partnership Lead, │ • Outbound CTR by Retailer    │
+│    Affiliate Operations │ Catalog Operations Specialist│ • 404 Broken Redirect Tracker │
+│                         │                              │ • Out-of-Stock Daily Purge Vol│
+└─────────────────────────┴──────────────────────────────┴───────────────────────────────┘
+
+```
+
+### Structured Review Cadence
+* **Daily Operational Pulse (Asynchronous, 09:00 UTC):** SRE and Growth review automated Slack alerts on daily pipeline p90 latency, error rates, and previous day's Pass conversion rate.
+* **Weekly Growth & Product Review (Tuesdays, 45 Mins):** Cross-functional team reviews the funnel conversion drop-offs, active experiment readouts, and top customer friction points.
+* **Monthly Business Review (MBR):** Executive assessment of blended customer acquisition cost (CAC), gross affiliate earnings reconciled against partner networks, and serverless compute expenditure.
+
+---
+
+# 6. Empirical Baselines & Target-Setting Methodology
+
+Target metrics must not be plucked from thin air. The team uses a **Comparative Category Benchmarking Model** cross-referenced against e-commerce and generative utility standards:
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                TARGET-SETTING METHODOLOGY                              │
+├─────────────────────┬──────────────────────┬───────────────────────────────────────────┤
+│ Metric Category     │ Benchmark Basis      │ Empirical Derivation & Modeling Logic     │
+├─────────────────────┼──────────────────────┼───────────────────────────────────────────┤
+│ Intake Conversion   │ Consumer Mobile Web  │ Mobile web dropzones average 25%–40% on   │
+│ (Landing ➔ Upload)  │ Photo Utilities      │ camera intake. Target set at 35.0% based  │
+│                     │                      │ on low-friction guest preview mode.       │
+├─────────────────────┼──────────────────────┼───────────────────────────────────────────┤
+│ Outbound Affiliate  │ High-Intent Visual   │ Traditional affiliate content converts at │
+│ Click-Through (CTR) │ Commerce Platforms   │ 1%–3%. Spatial room renders pre-qualify   │
+│                     │ (Houzz / Pinterest)  │ purchase intent; target set at 25.0%.     │
+├─────────────────────┼──────────────────────┼───────────────────────────────────────────┤
+│ Free-to-Pass        │ Event-Driven Utility │ Episodic utility apps (e.g., tax/moving   │
+│ Conversion Rate     │ Applications         │ tools) achieve 6%–10% conversion when pay-│
+│                     │                      │ walled at the completion of initial value.│
+├─────────────────────┼──────────────────────┼───────────────────────────────────────────┤
+│ GPU Compute Cost    │ Cloud Provider Spot  │ Benchmark hardware: NVIDIA L4 @ $0.80/hr. │
+│ Ceiling             │ & Serverless Tariffs │ Average 11.2s execution = $0.0025 + S3/DB │
+│                     │                      │ overhead. Target ceiling set at $0.035.   │
+└─────────────────────┴──────────────────────┴───────────────────────────────────────────┘
+
+```
+
+---
+
+# 7. Prioritized Growth Experimentation Backlog
+
+Every product hypothesis is ranked using the **RICE Scoring Framework** (Reach $\times$ Impact $\times$ Confidence $\div$ Effort) before engineering resources are allocated.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    PRIORITIZED EXPERIMENTATION MATRIX                                  │
+├──────┬────────────────────────────────┬──────┬────────┬────────────┬────────┬───────┬──────────────────┤
+│ ID   │ Experiment Title               │ Reach│ Impact │ Confidence │ Effort │ Score │ Primary Target   │
+├──────┼────────────────────────────────┼──────┼────────┼────────────┼────────┼───────┼──────────────────┤
+│ EXP-1│ One-Click "Add All to Cart"    │ 100% │ 3.0    │ 80% (High) │ 2.0    │ 120.0 │ Outbound CTR &   │
+│      │ Universal Retailer Clip        │      │ (High) │            │ (Med)  │       │ Affiliate GMV    │
+├──────┼────────────────────────────────┼──────┼────────┼────────────┼────────┼───────┼──────────────────┤
+│ EXP-2│ Dynamic Budget Ceiling Guidance│ 85%  │ 2.0    │ 90% (V.High│ 1.0    │ 153.0 │ Generation Comp- │
+│      │ based on Room Square Footage   │      │ (Med)  │            │ (Low)  │       │ letion Rate      │
+├──────┼────────────────────────────────┼──────┼────────┼────────────┼────────┼───────┼──────────────────┤
+│ EXP-3│ Progressive Style Onboarding   │ 100% │ 1.5    │ 70% (Med)  │ 1.0    │ 105.0 │ Time-to-First-   │
+│      │ (A/B Test 8 Cards vs 4 Archetypes)    │ (Low)  │            │ (Low)  │       │ Render Latency   │
+├──────┼────────────────────────────────┼──────┼────────┼────────────┼────────┼───────┼──────────────────┤
+│ EXP-4│ Pre-Redesign Split-Screen      │ 70%  │ 2.5    │ 60% (Med)  │ 3.0    │ 35.0  │ Free-to-Pass     │
+│      │ Slider Preview in Free Mode    │      │ (Med)  │            │ (High) │       │ Paywall Conv.    │
+└──────┴────────────────────────────────┴──────┴────────┴────────────┴────────┴───────┴──────────────────┘
+
+```
+
+### Detailed Experiment Specifications
+
+#### `EXP-1`: Universal "Copy Shopping List & Open Retailers" Basket
+* **Hypothesis:** Presenting a single action that copies all item specifications to the clipboard and opens external retailer tabs in sequence will increase downstream basket completion by $35\%$ compared to forcing users to click each individual hotspot pin sequentially.
+* **Control:** User taps pin $\rightarrow$ opens drawer $\rightarrow$ clicks outbound link one item at a time.
+* **Variant:** User clicks `"Open All 4 In-Stock Retailer Items"` $\rightarrow$ modal prompts clipboard copy and opens merchant tabs in order.
+* **Sample Size Requirement:** $N = 1,200$ completed renders per variant ($\alpha = 0.05$, $1-\beta = 0.80$).
+
+#### `EXP-2`: Real-Time Price-Tier Floor Indicators
+* **Hypothesis:** Warning users when their selected budget ceiling is mathematically too low for their chosen aesthetic (e.g., setting $350 for an Industrial Living Room with an iron credenza) will reduce empty-result fallback generations by $50\%$ and improve user satisfaction.
+* **Control:** Slider moves freely from $300 to $10,000 without dynamic hints.
+* **Variant:** Slider displays dynamic minimum floor tags (e.g., *"Recommended min for Industrial: $550"*).
+* **Sample Size Requirement:** $N = 800$ configurations per variant.
+
+---
+
+# 8. Customer Feedback Collection & Prioritization Framework
+
+Qualitative signals contextualize quantitative metric anomalies. Feedback is gathered systematically via micro-interactions embedded directly within core workflows:
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              QUALITATIVE FEEDBACK CHANNELS                             │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+[Channel A: Micro-CSAT on Canvas] (SCR-08)
+├── Trigger: 5 seconds after render load.
+└── Prompt: "How accurately does this redesign match your taste?" (1 to 5 Stars).
+└── If 1–2 Stars: "What fell short?" [Checkbox: Sizing | Style Clashed | Too Expensive].
+└── If 4–5 Stars: Prompt to save room or share with roommate.
+
+[Channel B: Paywall Exit-Intent Prompt] (SCR-09)
+├── Trigger: User closes the $14.99 Move-In Pass modal without purchasing.
+└── Prompt: "What held you back from unlocking unlimited passes?"
+└── Options: [Too expensive | Only need 1 room | Wanted to see more items | Moving later].
+
+[Channel C: Dead-Link / Out-of-Stock User Flag] (SCR-08A)
+├── Trigger: Persistent discrete icon in Product Drawer: "Report incorrect item or price".
+└── Action: Submits SKU ID to Catalog Operations queue for instant re-crawling.
+
+```
+
+### Qualitative Prioritization Matrix
+User feedback issues are scored weekly using an **Impact-Frequency Rubric**:
+1. **Critical Cluster (Frequency $\ge 5\%$ of respondents):** Escalated directly to sprint backlog (e.g., *"The rug color in the image doesn't look like the Target photo"*).
+2. **Niche Request (Frequency $< 1\%$):** Logged in product discovery research backlog without engineering action.
+
+---
+
+# 9. Feature Governance: Scale, Revise, or Sunset Thresholds
+
+To prevent feature bloat and maintain high team velocity, every functional module is subject to explicit, pre-defined kill-criteria.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 FEATURE LIFECYCLE DECISION FRAMEWORK                                   │
+├───────────────────────┬──────────────────────────┬──────────────────────────────┬──────────────────────┤
+│ Product Feature       │ Scale Criteria           │ Revision Criteria            │ Sunsetting Criteria  │
+│ / Module              │ (Promote & Expand)       │ (Refactor & Re-test)         │ (Deprecate & Remove) │
+├───────────────────────┼──────────────────────────┼──────────────────────┼──────────────────────┤
+│ 8 Curated Design Style│ Style preset accounts for│ Style preset accounts for    │ Style preset accounts│
+│ Presets (`FR-201`)    │ ≥ 15% of total selections│ 5%–14% of selections;        │ for < 5.0% of total  │
+│                       │ and ≥ 25% outbound CTR.  │ outbound CTR between 15%–24%.│ selections over 60d. │
+├───────────────────────┼──────────────────────────┼──────────────────────────────┼──────────────────────┤
+│ 30-Day Move-In Pass   │ Paywall conversion rate  │ Paywall conversion rate      │ Conversion < 3.0%;   │
+│ ($14.99 Tier)         │ ≥ 7.0%; refund rate      │ 3.0%–6.9%; low comprehension │ users demand micro-  │
+│                       │ < 1.0%.                  │ of non-subscription terms.   │ transactions only.   │
+├───────────────────────┼──────────────────────────┼──────────────────────────────┼──────────────────────┤
+│ Pay-As-You-Go Render  │ Pack sales contribute    │ Low awareness of pack option;│ Cannibalizes Move-In │
+│ Credit Packs ($4.99)  │ ≥ 20% of digital gross   │ pricing resistance on 5-pack │ Pass without growing │
+│                       │ revenue with low churn.  │ volume.                      │ net gross margin.    │
+├───────────────────────┼──────────────────────────┼──────────────────────┼──────────────────────┤
+│ WCAG 2.1 AA Accessible│ Used by assistive tech;  │ Usability errors reported in │ Zero usage; non-     │
+│ Table View (`SCR-08B`)│ zero accessibility faults│ screen-reader navigation.    │ compliant (CANNOT BE │
+│                       │ (MANDATORY REGULATORY).  │ (NEVER REMOVED — LEGAL REQ). │ REMOVED BY POLICY).  │
+└───────────────────────┴──────────────────────────┴──────────────────────────────┴──────────────────────┘
+
+```
+
+---
+
+# 10. Strategic 6-Month Data-Driven Growth Roadmap
+
+The operational roadmap is governed by empirical milestone gates. Progression requires satisfying quantitative evidence thresholds from the preceding phase.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              6-MONTH STRATEGIC GROWTH ROADMAP                          │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+MONTHS 1–2: Canary Validation & Conversion Funnel Hardening
+├── Goal: Validate baseline unit economics and North Star conversion velocity.
+├── Key Initiatives:
+│   ├── Deploy PostHog production telemetry tracking (`EV-101` to `EV-302`).
+│   ├── Validate Warm Inference SLA (p90 ≤ 15s) and Unit Cost (≤ $0.035/run).
+│   └── Execute EXP-2: Dynamic Budget Ceiling Floor Guidance.
+└── Exit Gate Criteria:
+• Verify ≥ 25% Outbound Affiliate CTR in US pilot market.
+• Free-to-Pass paywall conversion stabilizes at ≥ 7.0%.
+
+MONTHS 3–4: Commercial Expansion & Multi-Retailer Breadth
+├── Goal: Expand catalog vector index and optimize shopping basket completion.
+├── Key Initiatives:
+│   ├── Expand Qdrant catalog from 50,000 to 150,000 SKUs (add West Elm, CB2).
+│   ├── Execute EXP-1: Universal "Copy Shopping List & Open Retailers" Basket.
+│   └── Implement Automated Price-Drop Re-engagement Push Notifications.
+└── Exit Gate Criteria:
+• Out-of-Stock pin rate remains strictly at 0.0%.
+• Blended ARPU exceeds $2.10 across active monthly users.
+
+MONTHS 5–6: Multi-Region Localization & Monetization Diversification
+├── Goal: Scale platform globally and unlock high-margin B2B partnerships.
+├── Key Initiatives:
+│   ├── Deploy Geo-IP routing and catalog ingestion for UK & European retailers.
+│   ├── Pilot Sponsored DTC SKU In-Placement with direct furniture brands.
+│   └── Evaluate Phase 2 Anchor-Item Locking (Keep existing sofa/flooring).
+└── Exit Gate Criteria:
+• Monthly Gross Merchandise Value (GMV) tracked exceeds $250,000 USD.
+• Blended Customer Acquisition Cost (CAC) sustains payback within 14 days.
+
+```
+
+---
+
+## Analytics & Growth Sign-Off Request
+
+The Product Analytics, Growth Measurement, and Feature Governance Specification for **Project RoomCommerce** is complete and mapped to approved business objectives.
+
+**Recommendation:** Approve this specification to authorize configuration of **PostHog production tracking boards**, Datadog telemetry monitors, and the immediate launch of Canary Growth Experiment `EXP-2`.
+
+```

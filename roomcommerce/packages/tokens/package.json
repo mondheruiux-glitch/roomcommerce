@@ -1,0 +1,49 @@
+{
+  "name": "@roomcommerce/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./tailwind-plugin": {
+      "import": {
+        "types": "./dist/tailwind-plugin.d.ts",
+        "default": "./dist/tailwind-plugin.js"
+      },
+      "require": {
+        "types": "./dist/tailwind-plugin.d.cts",
+        "default": "./dist/tailwind-plugin.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean && tsup src/tailwind-plugin.ts --format esm,cjs --no-dts --out-dir dist && cp src/tailwind-plugin.d.ts dist/",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "test": "vitest run",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "tailwindcss": "^3.4.0"
+  },
+  "devDependencies": {
+    "@roomcommerce/config": "workspace:*",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

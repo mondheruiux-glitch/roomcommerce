@@ -1,0 +1,132 @@
+{
+  "family": "roomcommerce-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/roomcommerce-api-task-role",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/roomcommerce-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 4000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "NODE_ENV",             "value": "production" },
+        { "name": "PORT",                 "value": "4000" },
+        { "name": "AWS_REGION",           "value": "us-east-1" },
+        { "name": "MODAL_MOCK_MODE",      "value": "false" },
+        { "name": "MODAL_COST_WARN_USD",  "value": "0.04" },
+        { "name": "APP_VERSION",          "value": "${APP_VERSION}" }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/DATABASE_URL"
+        },
+        {
+          "name": "REDIS_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/REDIS_URL"
+        },
+        {
+          "name": "QDRANT_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/QDRANT_URL"
+        },
+        {
+          "name": "QDRANT_API_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/QDRANT_API_KEY"
+        },
+        {
+          "name": "JWT_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/JWT_SECRET"
+        },
+        {
+          "name": "CLOUDFLARE_R2_ACCESS_KEY_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/R2_ACCESS_KEY_ID"
+        },
+        {
+          "name": "CLOUDFLARE_R2_SECRET_ACCESS_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/R2_SECRET_ACCESS_KEY"
+        },
+        {
+          "name": "MODAL_API_ENDPOINT",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/MODAL_API_ENDPOINT"
+        },
+        {
+          "name": "MODAL_API_TOKEN",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/MODAL_API_TOKEN"
+        },
+        {
+          "name": "STRIPE_SECRET_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/STRIPE_SECRET_KEY"
+        },
+        {
+          "name": "STRIPE_WEBHOOK_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/STRIPE_WEBHOOK_SECRET"
+        },
+        {
+          "name": "CLOUDFLARE_R2_ACCOUNT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/R2_ACCOUNT_ID"
+        },
+        {
+          "name": "CLOUDFLARE_R2_BUCKET_NAME",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/R2_BUCKET_NAME"
+        },
+        {
+          "name": "IMPACT_RADIUS_API_TOKEN",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/IMPACT_RADIUS_API_TOKEN"
+        },
+        {
+          "name": "CJ_AFFILIATE_TOKEN",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/CJ_AFFILIATE_TOKEN"
+        },
+        {
+          "name": "POSTHOG_API_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/POSTHOG_API_KEY"
+        },
+        {
+          "name": "COOKIE_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/COOKIE_SECRET"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/roomcommerce-api",
+          "awslogs-region":        "us-east-1",
+          "awslogs-stream-prefix": "api"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:4000/api/v1/health || exit 1"
+        ],
+        "interval":    30,
+        "timeout":     10,
+        "retries":     3,
+        "startPeriod": 90
+      },
+      "readonlyRootFilesystem": false,
+      "user": "1001:1001",
+      "ulimits": [
+        {
+          "name": "nofile",
+          "softLimit": 65536,
+          "hardLimit": 65536
+        }
+      ]
+    }
+  ],
+  "tags": [
+    { "key": "Project",     "value": "RoomCommerce" },
+    { "key": "Environment", "value": "production" },
+    { "key": "Component",   "value": "api" }
+  ]
+}

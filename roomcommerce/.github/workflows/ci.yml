@@ -1,0 +1,148 @@
+name: Monorepo CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1 — Typecheck, lint, unit tests, build
+  # ---------------------------------------------------------------------------
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Monorepo Typecheck & Lint
+        run: pnpm turbo run typecheck lint
+
+      - name: Unit & Contract Tests
+        run: pnpm turbo run test
+
+      - name: Production Build Check
+        run: pnpm turbo run build
+
+  # ---------------------------------------------------------------------------
+  # Job 2 — Playwright E2E + a11y (runs after validate passes)
+  # ---------------------------------------------------------------------------
+  e2e:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: roomcommerce_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/roomcommerce_test?schema=public
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci_jwt_secret_at_least_32_characters_long
+      COOKIE_SECRET: ci_cookie_secret
+      CLOUDFLARE_R2_ACCOUNT_ID: mock_account_id
+      CLOUDFLARE_R2_ACCESS_KEY_ID: mock_access_key
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: mock_secret_key
+      CLOUDFLARE_R2_BUCKET_NAME: roomcommerce-ci-test
+      CLOUDFLARE_R2_PUBLIC_DOMAIN: https://cdn.roomcommerce.internal
+      QDRANT_URL: http://localhost:6333
+      QDRANT_API_KEY: mock_qdrant_key
+      STRIPE_SECRET_KEY: sk_test_mock_stripe_key
+      STRIPE_WEBHOOK_SECRET: whsec_mock_stripe_webhook_secret
+      MODAL_API_ENDPOINT: https://api.modal.run/v1/roomcommerce/render
+      MODAL_API_TOKEN: mock_modal_token
+      # ── E2E-specific: disable live GPU calls & configure frontend base URL ──
+      MODAL_MOCK_MODE: 'true'
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Browsers (Chromium + WebKit)
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      - name: Start API Dev Server (background)
+        run: pnpm --filter @roomcommerce/api dev &
+        env:
+          PORT: 4000
+          MODAL_MOCK_MODE: 'true'
+
+      - name: Start Web Dev Server (background)
+        run: pnpm --filter @roomcommerce/web dev &
+        env:
+          PORT: 3000
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+
+      - name: Wait for servers to be ready
+        run: |
+          pnpm exec wait-on http://localhost:4000/api/v1/health http://localhost:3000 --timeout 60000
+
+      - name: Run Playwright E2E Tests (Desktop Chrome + Mobile Safari)
+        run: pnpm exec playwright test --reporter=github
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

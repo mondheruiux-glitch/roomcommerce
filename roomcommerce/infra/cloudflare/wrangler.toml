@@ -1,0 +1,25 @@
+name = "roomcommerce-canary-router"
+main = "infra/cloudflare/canary-router.worker.js"
+compatibility_date = "2024-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Route: intercept all traffic to app.roomcommerce.com
+routes = [
+  { pattern = "app.roomcommerce.com/*", zone_name = "roomcommerce.com" }
+]
+
+[[kv_namespaces]]
+binding = "CANARY_CONFIG"
+id      = "REPLACE_WITH_KV_NAMESPACE_ID"          # set in CI via wrangler secret
+preview_id = "REPLACE_WITH_KV_PREVIEW_NAMESPACE_ID"
+
+[env.staging]
+name = "roomcommerce-canary-router-staging"
+routes = [
+  { pattern = "staging.roomcommerce.com/*", zone_name = "roomcommerce.com" }
+]
+
+[[env.staging.kv_namespaces]]
+binding    = "CANARY_CONFIG"
+id         = "REPLACE_WITH_STAGING_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_STAGING_KV_PREVIEW_NAMESPACE_ID"

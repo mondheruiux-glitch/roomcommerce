@@ -1,0 +1,4 @@
+{
+  "name": "supabase",
+  "description": "Supabase database, auth, and edge functions management via MCP"
+}

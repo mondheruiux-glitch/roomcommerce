@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+**/node_modules/
+.pnp
+.pnp.js
+
+# Turborepo
+.turbo/
+**/.turbo/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+.next/
+**/.next/
+out/
+**/out/
+
+# Test artifacts & coverage
+coverage/
+**/coverage/
+playwright-report/
+**/playwright-report/
+test-results/
+**/test-results/
+
+# Environment files
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# OS files
+.DS_Store
+**/.DS_Store
+Thumbs.db
+**/*.swp
+**/*.swo
+**/*~
+
+# Logs
+logs/
+**/logs/
+*.log
+**/*.log
+
+# Python
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+**/venv/
+**/.venv/
+*.whl
+
+# IDE & Editor files
+.idea/
+.vscode/
+.kombai/
+
+# Misc
+*.tsbuildinfo
+**/*.tsbuildinfo

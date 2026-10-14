@@ -1,0 +1,218 @@
+Central Project Status Document
+Project Working Title: Project RoomCommerce
+
+Current Lifecycle Phase: Phase 1 — Information Architecture & Structural Systems
+
+Lifecycle Gate Status: Information Architecture Review Gate
+
+Status Summary: Derived from the approved PRD (PRD-PRC-V1.0) and P0 MVP boundary definitions. The structure establishes a streamlined, task-oriented hierarchy engineered to move users from image capture to shoppable canvas interactions with minimal navigation overhead.
+
+Immediate Gate Deliverable: Application Sitemap, Navigation Architecture, Content Taxonomy, and Requirement-Mapped Screen Inventory.
+
+Approval Required: Information Architecture sign-off prior to drafting detailed screen-by-screen UX wireframes and interaction flows.
+
+1. Application Sitemap
+The sitemap organizes the P0 web-first application into four functional zones: Public / Discovery, Core Studio (Generation & Canvas), Account & Commerce, and Administrative / System Operations.
+
+PROJECT ROOMCOMMERCE SITEMAP (P0 MVP)
+│
+├── 1.0 PUBLIC ZONE (Unauthenticated / Marketing)
+│   ├── 1.1 Landing / Welcome Page (`/`)
+│   │   ├── Value proposition & interactive before/after showcase
+│   │   ├── Style taxonomy preview (8 core styles)
+│   │   └── Direct "Upload Room" guest intake CTA
+│   ├── 1.2 Authentication Modal / View (`/auth`)
+│   │   ├── Magic Link / Passwordless Email Login
+│   │   └── OAuth Providers (Google, Apple)
+│   ├── 1.3 Legal & Compliance Area
+│   │   ├── 1.3.1 Terms of Service & FTC Affiliate Disclosure (`/legal/terms`)
+│   │   └── 1.3.2 Privacy Policy & Domestic Spatial Data Notice (`/legal/privacy`)
+│   │
+├── 2.0 CORE STUDIO ZONE (Authenticated & Guest Ingestion)
+│   ├── 2.1 Workspace / My Projects Hub (`/studio`)
+│   │   ├── Active project cards (saved renders within 7-day storage window)
+│   │   ├── Render allowance meter (Free: 2 renders; Paid: 30-Day Pass counter)
+│   │   └── Primary Action: "New Redesign"
+│   │
+│   ├── 2.2 Redesign Intake Wizard (`/studio/new`)
+│   │   ├── Step 1: Capture & Upload (`/studio/new/upload`)
+│   │   ├── Step 2: Quality Gate & Crop (`/studio/new/inspect`)
+│   │   └── Step 3: Style & Budget Configuration (`/studio/new/configure`)
+│   │
+│   ├── 2.3 Generation Processing Screen (`/studio/render/:job_id`)
+│   │   └── Multi-step status feedback (Depth Map ➔ Inpainting ➔ SKU Match)
+│   │
+│   └── 2.4 Interactive Design Canvas (`/studio/view/:project_id`)
+│       ├── Main Canvas: Zoomable render with pulsing hotspot pins
+│       ├── Contextual Sheet: Product Detail Drawer (Retailer, SKU, Price, Link)
+│       └── Alternative Tab: WCAG Accessible DOM Shopping List
+│
+├── 3.0 ACCOUNT & COMMERCE ZONE
+│   ├── 3.1 Pass Checkout Flow (`/checkout`)
+│   │   ├── $14.99 "Move-In Pass" Stripe Checkout overlay
+│   │   └── Order confirmation & entitlement grant receipt
+│   └── 3.2 Account Settings & Data Management (`/account`)
+│       ├── Active Pass status & expiration countdown
+│       ├── Profile & email preferences
+│       └── Privacy Controls: "Delete All My Project Data & Photos" (Hard Purge)
+│
+└── 4.0 SYSTEM & ADMINISTRATIVE ZONE (Internal Staff Only)
+    ├── 4.1 Catalog Health Dashboard (`/admin/catalog`)
+    │   ├── 50K SKU sync status by merchant (IKEA, Target, Wayfair, Amazon)
+    │   ├── Broken affiliate link / 404 alert logs
+    │   └── Vector database index performance metrics
+    └── 4.2 Pipeline Worker Telemetry (`/admin/workers`)
+        └── Serverless GPU queue depth, generation latencies, and unit cost tracker
+2. Navigation Architecture
+DESKTOP VIEWPORT (≥ 1024px)
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ [Logo] Project RoomCommerce    [My Projects]    [Style Guide] │ [Pass Status] [Account]│
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                        │
+│                                   MAIN CONTENT AREA                                    │
+│                                                                                        │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ FTC Disclosure: We earn affiliate commissions on qualifying purchases. │ Terms │ Privacy│
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+MOBILE VIEWPORT (< 768px)
+┌──────────────────────────────────────────────────────────┐
+│ [Logo] Project RoomCommerce            [Upgrade / Pass]  │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│                     MAIN CONTENT AREA                    │
+│                                                          │
+├──────────────────────────────────────────────────────────┤
+│   [⊞ Projects]        [⊕ New Room]         [⚙ Account]  │ (Floating Bottom Navigation)
+└──────────────────────────────────────────────────────────┘
+Primary Navigation
+Desktop Top App Bar: Fixed header containing Brand Logo (routes to / or /studio), My Projects (/studio), Pass Status Badge (showing remaining days or free credits left), and Account / Settings Menu (/account).
+
+Mobile Bottom Bar: Three fixed primary targets positioned in the natural thumb zone:
+
+Projects: Lists past room redesigns still within the 7-day retention window.
+
+New Room (Floating Center Action Button): Direct launch into the capture/upload wizard.
+
+Account: Settings, subscription status, and privacy deletion options.
+
+Contextual & Secondary Navigation
+Wizard Step Navigation: Forward/back directional steps (Cancel, Back, Continue) within /studio/new. Prevents accidental tab abandonment while uploading.
+
+Canvas Utility Controls (Floating Canvas Overlay):
+
+[Hotspots Toggle]: Shows or hides pulsing pins on the room render.
+
+[List View Toggle]: Flips between the visual image canvas and the structured WCAG-accessible table view.
+
+[Budget Tracker Bar]: Pinned indicator displaying current total basket cost against the user's defined room ceiling.
+
+Global Footer: Contains mandatory FTC affiliate disclosure copy, links to Terms of Service, Privacy Policy, and system status. On mobile canvas screens, the footer is hidden to prioritize vertical real estate for image manipulation.
+
+3. Page Hierarchy & Structural Relationships
+Level 0: Entry Point
+   └── SCR-01: Landing / Marketing Page
+          │
+Level 1: Core Hubs
+   ├── SCR-02: Authentication Modal
+   ├── SCR-03: Workspace / Project Hub
+   ├── SCR-09: Stripe Move-In Pass Checkout
+   └── SCR-10: Account & Privacy Settings
+          │
+Level 2: Execution Workflows
+   ├── SCR-04: Image Capture & File Intake
+   ├── SCR-05: Spatial Review & Quality Gate
+   ├── SCR-06: Style & Budget Configurator
+   └── SCR-07: Asynchronous Generation Pipeline
+          │
+Level 3: Inspection & Procurement
+   └── SCR-08: Interactive Shoppable Canvas
+          ├── SCR-08A: Product Detail Drawer (Contextual Modal)
+          └── SCR-08B: Accessible DOM Shopping List (View State)
+4. Access Zones & User Role Permission Matrix
+The architecture defines four explicit permission tiers that govern screen access, generation limits, and data retention rules:
+
+┌─────────────────────────────┬──────────────┬──────────────┬──────────────┬─────────────┐
+│ Screen / Functional View    │ Anonymous    │ Registered   │ Move-In Pass │ System      │
+│                             │ Guest        │ Free Tier    │ Holder ($15) │ Admin       │
+├─────────────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┤
+│ SCR-01: Landing Page        │ Full Access  │ Full Access  │ Full Access  │ Full Access │
+│ SCR-03: Workspace Hub       │ View Sample  │ Max 2 Active │ Up to 60     │ Full Access │
+│ SCR-04 to 06: Intake Wizard │ 1 Free Trial │ Up to 2 Free │ Unlimited    │ Test Bypass │
+│ SCR-08: Interactive Canvas  │ Watermarked  │ Watermarked  │ Clean 4K     │ Clean 4K    │
+│ SCR-08A: Product Details    │ 1 Pin Only   │ All Pins     │ All Pins     │ All Pins    │
+│ SCR-09: Pass Checkout       │ CTA Target   │ CTA Target   │ Manage State │ Test Mode   │
+│ SCR-10: Privacy & Purge     │ Session Only │ Full Access  │ Full Access  │ N/A         │
+│ SCR-11 & 12: Admin Consoles │ 404 Blocked  │ 404 Blocked  │ 404 Blocked  │ Full Access │
+└─────────────────────────────┴──────────────┴──────────────┴──────────────┴─────────────┘
+Anonymous Guest: Permitted to upload 1 photo and view a watermarked low-resolution sample render with 1 clickable pin to demonstrate proof-of-value. Prompted to authenticate via magic link to unlock the remaining pins and save the project.
+
+Registered Free User: Granted up to 2 total generations. Renders feature diagonal watermark overlays. Unrestricted access to all product hotspot pins, pricing drawers, and affiliate redirect links.
+
+Move-In Pass Holder: Unrestricted generation access within the 30-day window (subject to fair-use ceiling of 60 runs). Renders are full-resolution 4K with watermark removal.
+
+System Admin / Operator: Restrictive access to backend catalog sync status, dead-link monitoring, and GPU worker telemetry.
+
+5. Content Organization & Naming Conventions
+To maintain semantic clarity across UX copy, technical logs, and customer documentation, all core concepts adhere to a strict naming taxonomy:
+
+┌───────────────────────────┬──────────────────────────────────┬─────────────────────────┐
+│ System Concept            │ Standard User-Facing Term        │ Disallowed Ambiguous    │
+│                           │                                  │ Terms                   │
+├───────────────────────────┼──────────────────────────────────┼─────────────────────────┤
+│ The physical room photo   │ "Original Room Photo"            │ "Input", "Raw Asset"    │
+│ The AI-generated output   │ "Redesign" or "Room Concept"     │ "Hallucination", "Diff" │
+│ The spatial purchase tags │ "Product Pins" or "Hotspots"     │ "Markers", "Ads", "Dots"│
+│ Matched catalog items     │ "Shoppable Furniture" or "SKUs"  │ "Fakes", "Guesses"      │
+│ Spending ceiling          │ "Room Budget Guardrail"          │ "Cap", "Max Filter"     │
+│ The 30-day billing pass   │ "Move-In Pass ($14.99)"          │ "Subscription", "Plan"  │
+│ Visual match rating       │ "Visual Match Score (e.g., 94%)" │ "AI Confidence", "Dist" │
+└───────────────────────────┴───────────────────────────┴─────────────────────────┘
+Content Layout Hierarchy within Core Views
+Interactive Canvas Screen (SCR-08):
+
+Primary Visual Zone: High-resolution room render canvas occupying ≥70% of screen real estate.
+
+Overlay Action Bar: Pinned budget progress gauge, hotspot visibility toggle, and accessible list switcher.
+
+Contextual Drawer (SCR-08A): Product title, retailer logo, verified price, physical dimensions (H × W × D in cm/inches), similarity rating badge, and outbound affiliate CTA button.
+
+Mandatory Compliance Strip: Persistent, readable FTC disclosure text positioned adjacent to the primary CTA.
+
+6. Screen Inventory Mapped to Product Requirements
+Screen ID	Canonical Route	Screen Name & Purpose	Mapped Requirements	Key Handled States
+SCR-01	/	Landing / Welcome Page: Educates users on the multi-retailer shoppable proposition; provides instant guest upload entry point.	BO-01, BR-03	Default, Authenticated Redirect
+SCR-02	/auth	Authentication Modal: Frictionless passwordless email magic link and Google/Apple sign-in.	FR-101, PRV-01	Default, Sending Link, Link Expired, Auth Error
+SCR-03	/studio	Workspace Hub: Overview of user's active projects, remaining pass duration, and trigger for new room redesigns.	FR-504, SEC-01	Empty (No Projects), Active Projects, Expired Pass Banner
+SCR-04	/studio/new/upload	Photo Intake Screen: Camera interface or file drag-and-drop supporting JPG, PNG, and HEIC files up to 20MB.	FR-101, FR-102, SEC-02	Default Drag/Drop, Uploading Progress, Unsupported File Type
+SCR-05	/studio/new/inspect	Quality Gate Review: Automated surface and lighting verification; client-side cropping and alignment confirmation.	FR-103, FR-105	Validating..., Passed, Failed Quality (Blur / Darkness / Non-Room)
+SCR-06	/studio/new/configure	Style & Budget Configurator: Selection of 1 of 8 style presets, room type, and total spend budget slider.	FR-201, FR-202, FR-203	Default Values, Budget Out-of-Bounds Warning ($300–$10,000)
+SCR-07	/studio/render/:job_id	Inference Status Screen: Asynchronous generation pipeline feedback showing phased progress and cancel option.	NFR-01, NFR-06, EV-102	Step Progress (Depth ➔ Inpainting ➔ SKU Search), Timeout Error (>25s)
+SCR-08	/studio/view/:project_id	Interactive Shoppable Canvas: High-resolution render with pulsing hotspot pins and budget tracking summary.	FR-301, FR-401, FR-503	Render Loaded, Pins Hidden, Watermarked (Free), Clean (Paid)
+SCR-08A	Modal Drawer	Product Detail Drawer: Displays SKU metadata, retailer branding, dimensions, and outbound affiliate purchase link.	FR-304, FR-402, FR-403, BR-02	SKU In-Stock, Low Stock Notice, Affiliate Redirect Initiated
+SCR-08B	/studio/view/:id#list	Accessible Shopping List: Full WCAG 2.1 AA compliant DOM table presenting all furniture items and direct links.	ACC-01, ACC-02	Default Data Table, Zero Items Empty State
+SCR-09	/checkout	Stripe Pass Checkout: In-app payment modal for purchasing the $14.99 30-Day Move-In Pass.	FR-501, BR-01	Checkout Ready, Processing Payment, Payment Failed, Success
+SCR-10	/account	Account & Privacy Settings: Manages profile, pass validity, and executes the permanent 1-click data deletion purge.	PRV-02, SEC-01	Active Pass, Free Tier, Purge Confirmation Dialog
+SCR-11	/admin/catalog	Catalog Sync Console: Operational monitoring of 50K indexed SKUs, stock availability, and affiliate link validity.	NFR-07, NFR-08	Sync Healthy, Out-of-Stock Spikes, Dead Link Alerts
+SCR-12	/admin/workers	GPU Telemetry Console: Operational tracking of GPU inference latency, queue backlog, and average run costs.	NFR-04, NFR-05	Normal Queue, High-Latency Alert, Worker Autoscaling
+7. Responsive Navigation & Device Adaptation
+┌───────────────────────────┬──────────────────────────────────┬─────────────────────────┐
+│ Architectural Component   │ Desktop (Large Screens ≥ 1024px) │ Mobile (Touch < 768px)  │
+├───────────────────────────┼──────────────────────────────────┼─────────────────────────┤
+│ Product Detail Layout     │ Right-anchored sliding sidebar   │ Bottom-anchored slide-up│
+│ (`SCR-08A`)               │ drawer (400px fixed width);      │ sheet (modal bottom     │
+│                           │ canvas shifts leftward.          │ sheet covering 50–85%). │
+├───────────────────────────┼──────────────────────────────────┼─────────────────────────┤
+│ Hotspot Pin Interaction   │ Hover state reveals quick chip;  │ Single tap triggers the │
+│ (`SCR-08`)                │ click locks the detail drawer.   │ bottom sheet slide-up.  │
+├───────────────────────────┼──────────────────────────────────┼─────────────────────────┤
+│ Image Navigation & Zoom   │ Mouse-wheel zoom + click-and-drag│ Native two-finger pinch-│
+│                           │ canvas panning.                  │ to-zoom + single-finger.│
+├───────────────────────────┼──────────────────────────────────┼─────────────────────────┤
+│ Primary Intake Entry      │ Drag-and-drop file dropzone with │ Native OS camera capture│
+│ (`SCR-04`)                │ file browser fallback.           │ sheet or photo gallery. │
+└───────────────────────────┴──────────────────────────────────┴─────────────────────────┘
+Phase 1 Sign-Off Request
+The Information Architecture for Project RoomCommerce (MVP Phase 1) is defined and mapped directly to approved PRD requirements.
+
+Please confirm approval of this structure so we can proceed to Detailed User Flows & Wireframe Specifications, mapping out screen-by-screen transition states, edge cases, and interaction mechanics.

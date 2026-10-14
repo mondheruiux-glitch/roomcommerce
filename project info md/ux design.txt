@@ -1,0 +1,270 @@
+Central Project Status DocumentProject Working Title: Project RoomCommerceCurrent Lifecycle Phase: Phase 1 — UX Architecture, Wireframes & Usability SpecificationLifecycle Gate Status: UX Design Review Gate (Pre-High-Fidelity UI & Technical Implementation)Status Summary: Translated the approved PRD (PRD-PRC-V1.0) and Information Architecture into low-fidelity UX wireframes, comprehensive state models, and accessible interaction patterns. All critical user journeys (CUJs) have been audited to eliminate friction, prevent dead ends, and enforce privacy/accessibility compliance.Immediate Gate Deliverable: Critical User Journeys (CUJs), Low-Fidelity Wireframes (SCR-01 to SCR-09), Accessibility Specification, and Usability Validation Protocol.Approval Required: CPO, Lead Product Designer, and Engineering Lead sign-off on user flows, interaction mechanics, and wireframes prior to UI styling and Phase 2 Technical Architecture.1. Critical User Journeys (CUJs)┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              CRITICAL USER JOURNEY OVERVIEW                            │
+│                                                                                        │
+│  [CUJ-01: First-Time Discovery ➔ Upload ➔ Style Config ➔ Shoppable Canvas Interaction] │
+│                                      │                                                 │
+│                                      ▼                                                 │
+│  [CUJ-02: Paywall Gate Trigger ➔ Move-In Pass Purchase ($14.99) ➔ Project Resumption]  │
+│                                      │                                                 │
+│                                      ▼                                                 │
+│  [CUJ-03: Accessible Non-Visual Flow ➔ Screen Reader / Keyboard Navigation]            │
+│                                      │                                                 │
+│                                      ▼                                                 │
+│  [CUJ-04: Ephemeral Privacy Control ➔ One-Click Hard Deletion Purge]                  │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+CUJ-01: First-Time Redesign to Shoppable Pin Outbound ClickPersona: The Transitional Mover (Unauthenticated Guest $\rightarrow$ Registered Free Tier).Goal: Turn an empty/cluttered living room photo into an inspired, purchasable room concept under a $1,500 budget and click through to purchase a matched coffee table.Starting Point: Public Landing Page (SCR-01).[SCR-01: Landing Page] ──► Clicks "Start Free Redesign"
+           │
+           ▼
+[SCR-04: Photo Intake] ──► Drops JPG/PNG/HEIC file
+           │
+           ▼
+[Client-Side Validation] ──(Pass)──► [SCR-05: Spatial Review] ──(Confirm)──►
+           │                                                               │
+        (Fail)                                                             ▼
+           │                                                  [SCR-06: Style & Budget]
+           ▼                                                               │
+    [Error Guidance]                                                       ▼
+                                                              [SCR-07: Asynchronous Loader]
+                                                                           │
+                                                                           ▼
+                                                              [SCR-08: Interactive Canvas]
+                                                                           │
+                                                                           ▼
+                                                              [SCR-08A: Product Drawer]
+                                                                           │
+                                                                           ▼
+                                                              [Outbound Retailer Tab]
+Step-by-Step Logic & StatesIntake (SCR-04):Input: User drags/uploads room photo (or selects device camera).System Action: Client-side EXIF/GPS scrubbing (FR-102) and OpenCV face blur check (SEC-02).State - Loading: Circular upload progress bar (0%–100%).State - Validation Failure: File $>20\text{MB}$ or unsupported format triggers inline toast: "Please upload a JPG, PNG, or HEIC image under 20MB."Spatial Quality Review (SCR-05):System Action: Edge detection and Laplacian variance heuristics inspect room geometry (FR-105).State - Failure (Non-room / Blurry): Screen blocks progression; displays overlay: "We couldn't detect clear walls or floors. Please step back into a corner with good lighting." CTA: [Retake Photo].State - Success: Displays room preview with confirmed boundary indicators. CTA: [Continue to Styling].Style & Budget Configuration (SCR-06):Input: User selects 1 of 8 style cards (e.g., "Japandi") and drags the budget slider ($300 to $10,000, default $1,500) (FR-201, FR-202).State - Disabled: [Generate Room] button disabled until a style card is selected.State - Warning: Slider set under $400 displays: "Budgets under $400 may limit multi-piece room sets."Asynchronous Generation (SCR-07):System Action: Dispatches inference payload to GPU pool (NFR-01).State - Loading Progress: Phased status indicator:Phase 1 (0–4s): "Analyzing room perspective & depth..."Phase 2 (5–10s): "Applying Japandi aesthetic..."Phase 3 (11–14s): "Matching live catalog furniture..."State - Recovery / Timeout (>25s): Graceful failure modal (NFR-06): "High generation demand. Your position is saved. [Keep Waiting] or [Notify Me by Email]."Interactive Canvas (SCR-08 & SCR-08A):System Action: Renders transformed room image with 4–6 pulsing hotspot pins (FR-401).State - Success: Tapping a pin opens SCR-08A (Product Detail Drawer) in $<150\text{ms}$ (NFR-02).User Action: User reviews price, dimensions, and visual match rating, then clicks [View at Target].Outcome: New tab opens via affiliate redirect URL with active attribution click tracking (FR-403).CUJ-02: Paywall Gate Trigger to Move-In Pass ($14.99) PurchasePersona: Transitional Mover who has consumed their 2 free renders.Goal: Purchase the 30-Day Move-In Pass to unlock unlimited room generations, 4K exports, and remove watermarks.Starting Point: Workspace Hub (SCR-03) or Configuration Screen (SCR-06).[User initiates 3rd Redesign] ──► [Entitlement Check: Balance = 0]
+                                                  │
+                                                  ▼
+                                     [SCR-09: Move-In Pass Modal]
+                                                  │
+                                                  ▼
+                                      [Enters Stripe Payment]
+                                                  │
+                                      ┌───────────┴───────────┐
+                                   (Success)               (Fail)
+                                      │                       │
+                                      ▼                       ▼
+                           [Entitlement Granted]    [Inline Payment Error]
+                                      │             [Retry Payment CTA]
+                                      ▼
+                           [Immediate Redesign Start]
+Step-by-Step Logic & StatesPaywall Gate (SCR-09):Trigger: Initiating a generation when free_renders_remaining == 0 and has_active_pass == false.Display: Value proposition breakdown: 30-Day Unlimited Redesigns, Clean 4K Renders, Multi-Retailer Cart, Zero Recurring Subscriptions ($14.99 one-time).Stripe Checkout Interaction:State - Loading: Button displays spinner: "Securing pass..." with inputs disabled.State - Failure (Card Declined): Modal remains open; displays red inline alert: "Your card was declined. Please try another payment method."State - Success: Confirms payment within 800ms; automatically dismisses modal and executes the queued generation job without requiring the user to re-upload photos.CUJ-03: Accessible Non-Visual Flow (Screen Reader / Keyboard Only)Persona: User with visual impairment or motor disability navigating via keyboard and NVDA/VoiceOver.Goal: Review the AI-curated furniture items, verify physical dimensions, and navigate to retail purchase links without using the spatial visual canvas.Starting Point: Interactive Canvas (SCR-08).Step-by-Step Logic & StatesFocus Management: On canvas load, focus is routed to the Skip Link: "Skip visual canvas to accessible product list".List Toggle: Activating the link switches the display to SCR-08B (Accessible Shopping List).Table Navigation: Screen reader announces: "Table: 5 furniture items matched for Japandi Living Room. Total estimated cost: $1,340."Item Inspection: User tabs through structured table columns: Item Category, Product Title, Merchant, Price, Dimensions (H × W × D), and Outbound Link.Action: Pressing Enter on the link triggers the outbound affiliate link with the accessible label: "Buy [Product Title] at [Retailer Name] in a new window."CUJ-04: Ephemeral Privacy Control (One-Click Hard Purge)Persona: Privacy-conscious user who completed their room redesign.Goal: Permanently delete all uploaded interior room photos and generated renders immediately rather than waiting for the automatic 7-day expiration window.Starting Point: Account & Privacy Settings (SCR-10).Step-by-Step Logic & StatesNavigation: User navigates to /account $\rightarrow$ Privacy & Data Controls.Action Trigger: User clicks [Delete All My Project Data & Photos] (PRV-02).Confirmation Modal: Displays explicit destructive warning: "This action cannot be undone. All original room photos, AI renders, and saved shopping lists will be permanently deleted from our servers within 60 seconds."Input: User types DELETE into a confirmation field; [Confirm Permanent Deletion] button enables.Outcome: System issues hard-deletion job across databases and cloud storage buckets; user is redirected to the home screen with a persistent success banner: "All personal room assets have been permanently erased."Friction Audit: Eliminated Unnecessary StepsTo maximize conversion and minimize drop-off, the following friction points were intentionally removed:┌───────────────────────────────────────┬────────────────────────────────────────┐
+│ REMOVED FRICTION STEP                 │ UX RATIONALE                           │
+├───────────────────────────────────────┼────────────────────────────────────────┤
+│ 1. Upfront Registration / Mandatory   │ Allows users to upload and view proof- │
+│    Account Creation before Upload     │ of-concept render before auth friction.│
+├───────────────────────────────────────┼────────────────────────────────────────┤
+│ 2. Manual Room Dimension Tape-Measure │ Replaced by automated monocular depth  │
+│    Form Inputs                        │ estimation and proportional scaling.   │
+├───────────────────────────────────────┼────────────────────────────────────────┤
+│ 3. Complex Free-Text AI Prompting     │ Eliminated hallucination errors via 8  │
+│    Box (e.g., "Describe your vibe")   │ fixed, curated style preset cards.     │
+├───────────────────────────────────────┼────────────────────────────────────────┤
+│ 4. Separate "Save Project" Button     │ Replaced by continuous auto-saving to  │
+│                                       │ avoid lost progress on session drop.   │
+└───────────────────────────────────────┴────────────────────────────────────────┘
+2. Low-Fidelity WireframesWireframe Index & PRD Requirement MappingScreen IDScreen NameMapped PRD Requirement IDsResponsive BehaviorSCR-01Landing / Intake HeroBO-01, BR-03, FR-101Stacks vertically on mobile viewports ($<768\text{px}$).SCR-04Photo Intake DropzoneFR-101, FR-102, SEC-02Native OS camera sheet triggered on mobile devices.SCR-05Quality Gate InspectionFR-103, FR-105Fullscreen viewport preview with edge-guide overlay.SCR-06Style & Budget ConfiguratorFR-201, FR-202, FR-2032-column grid on desktop; single-column scroll on mobile.SCR-07Asynchronous Generation LoaderNFR-01, NFR-06, EV-102Center-locked modal with progress phase feedback.SCR-08Interactive Shoppable CanvasFR-301, FR-401, FR-503Pan/zoom canvas; desktop sidebar vs. mobile bottom sheet.SCR-08AProduct Detail DrawerFR-304, FR-402, FR-403Right-side drawer on desktop; sliding sheet on mobile.SCR-08BAccessible Shopping ListACC-01, ACC-02, BR-03Responsive semantic HTML table converting to cards on mobile.SCR-09Move-In Pass Payment ModalFR-501, BR-01Center modal dialog with embedded Stripe Elements.SCR-01: Landing / Intake Hero Screen+---------------------------------------------------------------------------------------+
+| [Logo] Project RoomCommerce           [My Projects]   [How It Works]  [Pass] [Sign In]|
++---------------------------------------------------------------------------------------+
+|                                                                                       |
+|   REDESIGN YOUR ROOM WITH FURNITURE                                                   |
+|   YOU CAN ACTUALLY BUY TODAY.                                                         |
+|                                                                                       |
+|   Upload your messy room photo. Get a cohesive redesign with                          |
+|   real, in-stock products from IKEA, Target, Wayfair & Amazon.                        |
+|                                                                                       |
+|   +-------------------------------------------------------------------------------+   |
+|   |                      [ DRAG & DROP ROOM PHOTO HERE ]                          |   |
+|   |                                     OR                                        |   |
+|   |                        [ + Upload Photo or Take Picture ]                     |   |
+|   |                                                                               |   |
+|   |   Supports JPG, PNG, HEIC up to 20MB. Photos auto-purged in 7 days for privacy.|  |
+|   +-------------------------------------------------------------------------------+   |
+|                                                                                       |
+|   [ > See Before/After Interactive Demos ]                                            |
+|                                                                                       |
++---------------------------------------------------------------------------------------+
+| FTC Disclosure: We earn affiliate commissions on qualifying purchases. | Privacy|Terms |
++---------------------------------------------------------------------------------------+
+SCR-04 & SCR-05: Photo Intake & Quality Gate ReviewSCREEN: SCR-04 (Intake)                     SCREEN: SCR-05 (Quality Gate Review)
++---------------------------------------+   +---------------------------------------+
+| < Back to Home                        |   | < Retake Photo                        |
++---------------------------------------+   +---------------------------------------+
+|                                       |   |                                       |
+|  Upload Your Room Photo               |   |  Spatial Quality Check                |
+|                                       |   |                                       |
+|  +---------------------------------+  |   |  +---------------------------------+  |
+|  |       [ Camera / Upload Icon ]  |  |   |  | . . . . . . . . . . . . . . . . |  |
+|  |                                 |  |   |  | . [ PREVIEW: Living Room ]    . |  |
+|  |     Drop your image here        |  |   |  | .   [Detected Floor Plane]    . |  |
+|  |     or browse files             |  |   |  | .   [Detected Wall Boundaries]. |  |
+|  +---------------------------------+  |   |  +---------------------------------+  |
+|                                       |   |                                       |
+|  [x] Privacy: Faces blurred, EXIF     |   |  (✓) Room boundaries detected         |
+|      metadata stripped automatically. |   |  (✓) Lighting & resolution passed     |
+|                                       |   |                                       |
+|  [ Choose File From Device ]          |   |  [ Continue to Style & Budget -> ]    |
+|                                       |   |                                       |
++---------------------------------------+   +---------------------------------------+
+SCR-06: Style & Budget Configurator Screen+---------------------------------------------------------------------------------------+
+| < Back to Photo                                                 Step 2 of 3: Settings |
++---------------------------------------------------------------------------------------+
+|                                                                                       |
+|  1. SELECT YOUR DESIGN STYLE                                                          |
+|  +----------------+  +----------------+  +----------------+  +----------------+       |
+|  | [x] Japandi    |  | [ ] Mid-Century|  | [ ] Modern Farm|  | [ ] Scandi     |       |
+|  | Warm wood, zen |  | 60s retro form |  | Rustic wood    |  | Light & airy   |       |
+|  +----------------+  +----------------+  +----------------+  +----------------+       |
+|  +----------------+  +----------------+  +----------------+  +----------------+       |
+|  | [ ] Minimalist |  | [ ] Industrial |  | [ ] Contemporary| | [ ] Bohemian   |       |
+|  | Clean lines    |  | Exposed metal  |  | Sleek & subtle |  | Textured, warm |       |
+|  +----------------+  +----------------+  +----------------+  +----------------+       |
+|                                                                                       |
+|  2. TOTAL ROOM BUDGET GUARDRAIL                                                       |
+|                                                                                       |
+|     Target Spend Ceiling:  [ $ 1,500 ]  (USD)                                         |
+|     [$300] ───────────────[ O ]─────────────────────────────── [$10,000]              |
+|     All matched furniture & decor will fit within this total sum.                     |
+|                                                                                       |
+|  3. ROOM FUNCTION                                                                     |
+|     (•) Living Room    ( ) Bedroom    ( ) Home Office    ( ) Dining Room              |
+|                                                                                       |
+|  +---------------------------------------------------------------------------------+  |
+|  |                                [ REDESIGN MY ROOM -> ]                          |  |
+|  +---------------------------------------------------------------------------------+  |
+|                                                                                       |
++---------------------------------------------------------------------------------------+
+SCR-07: Asynchronous Generation Status Screen+---------------------------------------------------------------------------------------+
+|                                                                                       |
+|                                TRANSFORMING YOUR SPACE                                |
+|                                                                                       |
+|                                     [   68%   ]                                       |
+|                            [====================------]                               |
+|                                                                                       |
+|                  Phase 1: Analyzing room perspective & geometry...  (✓)               |
+|                  Phase 2: Generating cohesive Japandi aesthetic...   (✓)              |
+|                  Phase 3: Matching in-stock retail catalog SKUs...  (IN PROGRESS)     |
+|                                                                                       |
+|                  Average generation time: 12-15 seconds.                              |
+|                                                                                       |
+|                  +-------------------------------------------------+                  |
+|                  |                   [ Cancel ]                    |                  |
+|                  +-------------------------------------------------+                  |
+|                                                                                       |
++---------------------------------------------------------------------------------------+
+SCR-08 & SCR-08A: Interactive Shoppable Canvas & Product Detail DrawerDESKTOP VIEWPORT (Canvas + Right Sidebar Drawer)
++--------------------------------------------------------------------+------------------+
+| < My Projects   Japandi Living Room ($1,340 / $1,500 Budget)       | PRODUCT DETAILS  |
++--------------------------------------------------------------------+------------------+
+|                                                                    | [X Close]        |
+|   +------------------------------------------------------------+   |                  |
+|   |                                                            |   | [ Retailer: Target]
+|   |                         (Wall Art)                         |   |                  |
+|   |                             (o)                            |   | Solid Oak        |
+|   |                                                            |   | Coffee Table     |
+|   |                                                            |   |                  |
+|   |         (Floor Lamp)                     (Accent Chair)    |   | $ 249.99 USD     |
+|   |              (o)                              (o)          |   | (In Stock)       |
+|   |                                                            |   |                  |
+|   |                        [ SELECTED ]                        |   | Dimensions:      |
+|   |                     +--(o Coffee Table)--+                 |   | 110W x 60D x 42H |
+|   |                     |                    |                 |   |                  |
+|   |                     +--------------------+                 |   | Visual Match: 96%|
+|   |                                                            |   |                  |
+|   |                                                            |   | +--------------+ |
+|   |                             (Area Rug)                     |   | | [View at     | |
+|   |                                (o)                         |   | |  Target ->]  | |
+|   |                                                            |   | +--------------+ |
+|   +------------------------------------------------------------+   |                  |
+|                                                                    | FTC: We earn an  |
+|   [ Hotspots: ON ]   [ View Table List (Accessible) ]   [ Export 4K]   commission.    |
++--------------------------------------------------------------------+------------------+
+MOBILE VIEWPORT (Touch Screen + Bottom Sheet Drawer)
++----------------------------------------------------------+
+| [<] Japandi Living Room               [List]  [Export]   |
++----------------------------------------------------------+
+|                                                          |
+|   +--------------------------------------------------+   |
+|   |                                                  |   |
+|   |                    (o Lamp)                      |   |
+|   |                                   (o Chair)      |   |
+|   |               (o Selected: Table)                |   |
+|   |                                                  |   |
+|   +--------------------------------------------------+   |
+|                                                          |
+|   +==================================================+   |
+|   | === SLIDE UP TO VIEW (4 Items Matched - $1,340)  |   |
+|   |                                                  |   |
+|   | [Image]  Solid Oak Coffee Table        $249.99   |   |
+|   |          Target | 96% Visual Match     In Stock  |   |
+|   |                                                  |   |
+|   |          [ View at Target -> (Affiliate Link) ]  |   |
+|   +==================================================+   |
++----------------------------------------------------------+
+SCR-08B: Accessible DOM Shopping List Screen (WCAG 2.1 AA)+---------------------------------------------------------------------------------------+
+| < Back to Visual Canvas                                      Project: Japandi Living Room
++---------------------------------------------------------------------------------------+
+|                                                                                       |
+|  SHOPPABLE FURNITURE SPECIFICATION TABLE                                              |
+|  Total Matched Budget: $1,340.00 USD (Ceiling: $1,500.00 USD)                         |
+|                                                                                       |
+|  +-------------+-----------------------+----------+---------+------------+----------+ |
+|  | Category    | Product Title         | Merchant | Price   | Dimensions | Action   | |
+|  +-------------+-----------------------+----------+---------+------------+----------+ |
+|  | Coffee Table| Solid Oak Round Table | Target   | $249.99 | 110x60x42cm| [Buy ->] | |
+|  | Accent Chair| Linen Curved Armchair | IKEA     | $320.00 | 85x80x78cm | [Buy ->] | |
+|  | Floor Lamp  | Matte Black Arc Lamp  | Amazon   | $89.00  | 40x40x165cm| [Buy ->] | |
+|  | Area Rug    | Textured Jute Rug 8x10| Wayfair  | $289.00 | 240x300cm  | [Buy ->] | |
+|  | Wall Art    | Minimalist Canvas Set | Target   | $79.99  | 60x90cm (x2| [Buy ->] | |
+|  +-------------+-----------------------+----------+---------+------------+----------+ |
+|                                                                                       |
+|  FTC Affiliate Notice: Purchases made via links on this table earn us a commission.   |
+|                                                                                       |
+|  [ Download Table as CSV / PDF ]                                                      |
+|                                                                                       |
++---------------------------------------------------------------------------------------+
+SCR-09: Move-In Pass Payment Modal Screen+---------------------------------------------------------------------------------------+
+|                                    MOVE-IN PASS                                       |
+|                                                                                       |
+|    Furnish your whole home with 30 days of unlimited, photorealistic AI redesigns.    |
+|                                                                                       |
+|    [✓] 30 Days of Unlimited Room Generations (Fair use: up to 60 runs)                |
+|    [✓] High-Definition 4K Renders with Watermark Removed                              |
+|    [✓] Multi-Retailer Shoppable Links (IKEA, Target, Wayfair, Amazon)                 |
+|    [✓] One-Time Purchase: No auto-renewing subscriptions, no hidden fees.            |
+|                                                                                       |
+|    Total Due Today: $14.99 USD                                                        |
+|                                                                                       |
+|    +-------------------------------------------------------------------------------+  |
+|    | Card Number: [ 4242 •••• •••• 4242 ]                   Exp: [ MM / YY ]  CVC  |  |
+|    +-------------------------------------------------------------------------------+  |
+|                                                                                       |
+|    +-------------------------------------------------------------------------------+  |
+|    |                     [ PAY $14.99 & UNLOCK PASS NOW ]                          |  |
+|    +-------------------------------------------------------------------------------+  |
+|                                                                                       |
+|    Secured by Stripe. Instant activation.                                  [Cancel]   |
++---------------------------------------------------------------------------------------+
+3. Responsive Behavior & Interaction SpecificationsBreakpoint MatrixViewport TierWidth RangeLayout AdaptationHotspot InteractionMobile$320\text{px} - 767\text{px}$Single column; bottom navigation bar; intake uses native camera sheet.Tap pin $\rightarrow$ Slide-up modal sheet ($60\%$ viewport height). Two-finger pinch-to-zoom.Tablet$768\text{px} - 1023\text{px}$Fluid canvas; top app bar; floating bottom drawer.Tap pin $\rightarrow$ Floating floating card sheet ($450\text{px}$ width).Desktop$\ge 1024\text{px}$Split workspace: $75\%$ persistent canvas, $25\%$ right-anchored detail panel.Hover pin $\rightarrow$ Mini tooltip; Click pin $\rightarrow$ Locks right detail sidebar drawer.4. Accessibility Specification (WCAG 2.1 Level AA)Visual & Non-Visual ParitySkip Link Implementation: Every render screen contains an invisible skip-nav link focused on first tab: <a href="#accessible-sku-table" class="sr-only focus:not-sr-only">Skip to accessible product list</a>.Contrast Ratios: All body text meets $\ge 4.5:1$ contrast against backgrounds; large titles and action buttons meet $\ge 3.0:1$.Touch Targets: All interactive pins and buttons maintain a minimum tap target of $48 \times 48\text{px}$ with at least $8\text{px}$ spacing between adjacent targets to prevent mis-taps.Keyboard Navigation & Focus TrappingCanvas Pins: Each spatial pin is a focusable <button aria-label="Coffee Table: Solid Oak Round Table, $249.99 at Target">. Tabbing navigates sequentially through pins in reading order (top-left to bottom-right).Modal Sheets (SCR-08A, SCR-09): Focus is trapped inside open modal sheets. Pressing Escape closes the sheet and returns focus directly to the originating pin element.Announcements: Status changes on SCR-07 utilize aria-live="polite" to announce phase transitions without interrupting assistive speech.5. Usability Validation Protocol (High-Risk Journeys)To validate usability before writing frontend code, execute a moderated prototype testing sprint with representative users.┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              USABILITY TEST SPRINT PLAN                                │
+├─────────────────────────┬──────────────────────────────┬───────────────────────────────┤
+│ Dimension               │ Protocol Target              │ Acceptance Threshold          │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Participant Cohort      │ 10 Adults (Ages 25–40) who   │ 100% qualification filter      │
+│                         │ moved in the last 60 days    │ (60% Mobile / 40% Desktop)    │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Task 1: Capture & Config│ Upload room photo, select    │ Completion: ≥90% without      │
+│ (SCR-04 to SCR-06)      │ Japandi style, $1,500 budget │ facilitator intervention      │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Task 2: Pin Interaction │ Discover coffee table and    │ Time-to-first-click: ≤5 sec;  │
+│ (SCR-08 to SCR-08A)     │ locate price & dimensions    │ Zero confusion on retailer    │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Task 3: Outbound Click  │ Navigate to retail checkout  │ Outbound CTR: ≥80%;           │
+│ (SCR-08A to Retailer)   │ via product drawer CTA       │ Understands link leaves app   │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Task 4: Paywall Clarity │ Evaluate $14.99 Move-In Pass │ Comprehension: ≥85% recognize │
+│ (SCR-09)                │ value and terms              │ it is NOT a subscription      │
+└─────────────────────────┴──────────────────────────────┴───────────────────────────────┘
+Test Scenarios & Prompts"You just signed a lease on an unfurnished apartment. Show me how you would use this tool to redesign your living room in a Japandi style with a total budget of $1,500.""You love the coffee table shown in the new design. Find out how much it costs, what it's made of, and where you would purchase it.""You've used your free designs. What are your options now, and how much would it cost to keep using the tool for your move this month?"UX Phase-Gate RecommendationThe low-fidelity UX architecture, responsive layouts, accessibility hooks, and usability test protocol are complete and trace directly to PRD requirements.

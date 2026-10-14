@@ -1,0 +1,539 @@
+```markdown
+# File: 19_phase2_security_privacy_assessment.md
+# Project: Project RoomCommerce
+# Lifecycle Phase: Phase 2 — Application Security & Privacy Architecture Assessment
+# Author: Application Security Architect & Data Privacy Specialist
+# Status: Complete / Pending Executive & Legal Stakeholder Review
+
+---
+
+## Central Project Status Document
+
+* **Project Working Title:** Project RoomCommerce
+* **Current Lifecycle Phase:** Phase 2 — Security & Privacy Architecture Assessment
+* **Lifecycle Gate Status:** Security & Privacy Gate Review (Pre-Implementation Baseline)
+* **Target Standards:** OWASP Top 10 (2021), OWASP Top 10 for LLM/GenAI (2025), GDPR (EU), CCPA/CPRA (California), FTC 16 CFR Part 255 (Affiliate Guides), Illinois BIPA (Biometric Evaluation)
+* **Status Summary:** Completed systematic threat modeling (STRIDE), data classification, attack surface analysis, and privacy compliance mapping for Project RoomCommerce. Defined security boundaries across client intake, Cloudflare R2 object storage, the NestJS API monolith, serverless GPU workers (Modal/RunPod), and third-party affiliate/payment integrations.
+* **Immediate Gate Deliverable:** Threat Model, Prioritized Risk Register, Security & Privacy Architecture Specification, Verification Test Suite, and Release-Blocking Criteria.
+* **Approval Required:** Application Security Lead, Data Privacy Officer (DPO), and Legal Counsel sign-off prior to standing up production cloud infrastructure.
+
+---
+
+# 1. Sensitive Data Classification & Trust Boundaries
+
+The application processes domestic interior photographs that reveal intimate details of users' homes, wealth, family makeup, and physical security layouts. Mismanagement represents a critical regulatory and reputational liability.
+
+### 1.1 Data Classification Matrix
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       DATA CLASSIFICATION MATRIX                                       │
+├───────────────────┬──────────────┬───────────────────────────────┬─────────────────────────────────────┤
+│ Classification    │ Data Assets  │ Sensitivity & Impact          │ Mandated Controls                   │
+├───────────────────┼──────────────┼───────────────────────────────┼─────────────────────────────────────┤
+│ RESTRICTED        │ • Raw room   │ Critical: Contains domestic   │ • Ephemeral storage (7-day hard TTL)│
+│ (Spatial & PII)   │   photos     │ interiors, family portraits,  │ • Client-side EXIF/GPS scrubbing    │
+│                   │ • Depth maps │ high-value assets, layouts.   │ • Server-side OpenCV face blur      │
+│                   │ • Facial     │ Loss = Severe privacy breach, │ • AES-256 at rest, TLS 1.3 transit  │
+│                   │   artifacts  │ stalking, physical burglary.  │ • Strict 1-click hard-purge API     │
+├───────────────────┼──────────────┼───────────────────────────────┼─────────────────────────────────────┤
+│ CONFIDENTIAL      │ • User email │ High: Identity and financial  │ • Encrypted in DB (Aurora AES-256)  │
+│ (Account & Trans) │ • Stripe IDs │ association with personal     │ • PCI-DSS SAQ-A (Stripe Elements)   │
+│                   │ • Move Pass  │ residence; click history.     │ • Tokenized session cookies         │
+│                   │   records    │                               │ • Pseudonymized affiliate click IDs │
+├───────────────────┼──────────────┼───────────────────────────────┼─────────────────────────────────────┤
+│ INTERNAL          │ • Vector IDs │ Medium: Internal operational  │ • Access restricted to internal     │
+│ (System State)    │ • Hotspot XY │ metadata, model inference     │   VPC / service role IAM            │
+│                   │ • Queue jobs │ logs, and catalog mappings.   │ • Redacted application logging      │
+├───────────────────┼──────────────┼───────────────────────────────┼─────────────────────────────────────┤
+│ PUBLIC            │ • Catalog SKU│ Low: Publicly scrapeable or   │ • Public CDN edge caching           │
+│ (Retail Content)  │   metadata   │ syndicated commercial data    │ • Integrity checks on outbound URLs │
+│                   │ • Styles/copy│ from IKEA, Target, Wayfair.   │ • Mandatory FTC disclosure banners  │
+└───────────────────┴──────────────┴───────────────────────────────┴─────────────────────────────────────┘
+
+```
+
+### 1.2 Trust Boundaries & Threat Surface Diagram
+
+
+```
+
+[ UNTRUSTED ZONE: PUBLIC INTERNET ]
+│ User Browser / Mobile Client
+│ (Potentially malicious client, poisoned image files, spoofed headers)
+│
+══════════════════════════════════════════════════════════════════════════════════ [ TRUST BOUNDARY 1 ]
+│ HTTPS (TLS 1.3) + Cloudflare Edge (WAF, DDoS, Rate Limiting, Geo-IP)
+▼
+[ DEMILITARIZED ZONE (DMZ): INGESTION & API GATEWAY ]
+│ Next.js Frontend & NestJS Core API (AWS ECS Fargate)
+│ • Authentication & Session Validation (JWT, HttpOnly Cookies)
+│ • Presigned URL Issuer (Restricted scope, 5-minute TTL)
+│ • Stripe Webhook Signature Verifier
+│ • Outbound 302 Redirect Sanitizer
+│
+├─── Writes to Object Storage (Direct PUT) ─────────────────────────────────┐
+│                                                                           ▼
+════════════════════════════════════════════════════════════════════════════ [ TRUST BOUNDARY 2 ]
+│ Internal VPC Network / Private Service Mesh                               │
+▼                                                                           │
+[ TRUSTED ZONE: SECURE COMPUTE & STATE ]                                      │
+│                                                                           ▼
+├── PostgreSQL 16 (Aurora Private Subnet)                           [ Cloudflare R2 Bucket ]
+│   └── Parameterized queries, AES-256, IAM DB Auth                 • 7-Day Lifecycle Rule
+│                                                                   • No Public List Access
+├── Redis Cluster (Private Subnet)                                  • Encrypted at Rest
+│   └── BullMQ job queues, SSE event bus, TLS auth                          ▲
+│                                                                           │
+════════════════════════════════════════════════════════════════════════════ │ [ TRUST BOUNDARY 3 ]
+│ Secure Mutual TLS / Signed Private Webhooks                               │
+▼                                                                           │
+[ ISOLATED ML WORKER ZONE: SERVERLESS GPU ]                                   │
+│ Modal / RunPod Serverless Fleet (NVIDIA L4 24GB)                          │
+│ • Reads raw image via presigned GET ──────────────────────────────────────┘
+│ • OpenCV YuNet Face Detection + 31x31 Gaussian Blur [SEC-02]
+│ • Depth Anything V2 + SDXL ControlNet Inpainting (Local Safetensors only)
+│ • SigLIP Vector Embeddings (Ephemeral memory, zero customer data retention)
+│ • Writes rendered WebP back to R2
+│
+══════════════════════════════════════════════════════════════════════════════════ [ TRUST BOUNDARY 4 ]
+│ HTTPS API (Encrypted Egress)
+▼
+[ THIRD-PARTY INTEGRATION ZONE ]
+├── Stripe API (PCI DSS SAQ-A Compliant iFrame / Elements)
+├── Qdrant Cloud (Managed Vector Engine with Private API Key)
+└── Affiliate Networks (Impact, CJ, Amazon PA-API — Clean outbound redirects)
+
+```
+
+---
+
+# 2. Threat Model (STRIDE Methodology)
+
+The system's attack surface was evaluated across all six STRIDE categories to identify concrete threat vectors and countermeasures.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                         STRIDE THREAT MODEL MATRIX                                     │
+├───────────────┬───────────────────────────────┬────────┬───────────────────────────────────────────────┤
+│ Category      │ Identified Threat Vector      │ Target │ Protective Countermeasure                     │
+├───────────────┼───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│ Spoofing      │ Attacker crafts forged magic  │ Auth   │ Single-use HMAC-SHA256 tokens; 15-minute hard │
+│               │ link or replays expired auth  │ Module │ expiration; immediate invalidation in Redis   │
+│               │ token to hijack session.      │        │ upon first consumption.                       │
+│               ├───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│               │ Fake Stripe webhook injects   │ Billing│ Cryptographic signature verification using    │
+│               │ fraudulent `checkout.completed`│ Engine│ Stripe SDK (`constructEvent`); webhook replay │
+│               │ to gain free Move-In Passes.  │        │ defense via idempotency timestamp checks.     │
+├───────────────┼───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│ Tampering     │ Malicious image upload acts   │ Storage│ Client-side EXIF stripping + server-side      │
+│               │ as polyglot exploit / payload │ & ML   │ image re-encoding (Pillow/OpenCV) converting  │
+│               │ to trigger RCE in GPU worker. │ Worker │ input to canonical RGB arrays; runs non-root. │
+│               ├───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│               │ Client alters budget/pin data │ Canvas │ Server enforces budget calculations and SKU   │
+│               │ to force arbitrary URL routes.│ API    │ associations; client coordinates are clamped. │
+├───────────────┼───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│ Repudiation   │ Disputed Move-In Pass charges │ Billing│ Audit trail logging Stripe session IDs, user  │
+│               │ or unverified affiliate clicks│ & Com- │ IDs, IP hashes, and UTC timestamps with       │
+│               │ causing partner ban.          │ merce  │ immutable append-only database logs.          │
+├───────────────┼───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│ Information   │ Public enumeration of private │ R2 &   │ Presigned URLs require short expiration (5m); │
+│ Disclosure    │ domestic room photos via      │ Object │ randomized UUIDv4 asset keys; zero public read│
+│               │ predictable bucket URLs.      │ Storage│ permissions on raw storage buckets.           │
+│               ├───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│               │ Unblurred human faces or PII  │ AI/ML  │ Automated OpenCV YuNet face detection blurs   │
+│               │ in room photos leak into      │ Engine │ faces prior to diffusion; room photos purged  │
+│               │ cached models or vector logs. │        │ in 7 days; vectors store NO raw pixel data.   │
+├───────────────┼───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│ Denial of     │ "Image Bomb" / Pixel Flood:   │ GPU    │ Strict file-size cap (20MB); dimension limits │
+│ Service (DoS) │ uploading multi-gigapixel file│ Worker │ (max 4096x4096); decompression bomb check;    │
+│               │ to exhaust GPU VRAM (OOM).    │ Fleet  │ rate limiting (5 uploads/min per IP/user).    │
+│               ├───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│               │ Free-tier automated scraping  │ API &  │ Cloudflare Turnstile bot detection; Redis rate│
+│               │ flooding BullMQ render queue. │ Queues │ limiter (max 2 free renders per account/IP).  │
+├───────────────┼───────────────────────────────┼────────┼───────────────────────────────────────────────┤
+│ Elevation of  │ Free user bypasses paywall to │ NestJS │ NestJS `EntitlementGuard` validates database   │
+│ Privilege     │ unlock 4K renders and anchor  │ Guards │ pass records on server; client UI entitlement │
+│               │ locking features.             │        │ state is treated as purely cosmetic.          │
+└───────────────┴───────────────────────────────┴────────┴───────────────────────────────────────────────┘
+
+```
+
+---
+
+# 3. Security Architecture & Technical Controls
+
+### 3.1 Authentication, Sessions & Access Control
+* **Passwordless Magic Links:** 
+  * Tokens generated via `crypto.randomBytes(32).toString('hex')`.
+  * Hashed using SHA-256 before storage in Redis with a 15-minute TTL.
+  * Consuming a token immediately deletes it from Redis (`GETDEL`), preventing replay attacks.
+* **Session Cookies:**
+  * Transported exclusively via `HttpOnly`, `Secure`, `SameSite=Lax` cookies.
+  * Signed using a rotating HMAC secret.
+  * Absolute session lifetime: 14 days; idle session timeout: 72 hours.
+* **Role-Based Entitlement Enforcement (RBAC):**
+  * `EntitlementGuard` inspects the user's active pass state directly against Aurora PostgreSQL before dispatching any render job or 4K asset retrieval.
+  * BOLA/IDOR Defense: Every request querying `/api/v1/projects/:id` strictly asserts `WHERE id = :id AND (user_id = :current_user_id OR guest_session_id = :current_guest_id)`.
+
+### 3.2 File Upload & Processing Security
+Direct-to-storage uploads through presigned URLs prevent malicious payloads from exhausting web server resources, but require strict perimeter verification:
+
+
+```
+
+[Client Request: POST /api/v1/projects]
+│
+▼
+[API Gateway / NestJS Intake Verification]
+├── Rate Limit: Max 5 upload requests per minute per IP.
+├── Validate requested Content-Type: `image/jpeg`, `image/png`, `image/heic` (Strict Whitelist).
+├── Generate random asset key: `raw-uploads/{uuidv4}.{ext}` (No client-controlled filenames).
+└── Issue Presigned PUT URL: Restricted to exact `Content-Length` (<= 20,971,520 bytes), TTL = 300s.
+│
+▼
+[Client Executes Direct PUT to Cloudflare R2]
+│
+▼
+[Trigger Worker Validation on Ingestion]
+├── Step 1: Magic Byte / File Signature Inspection (Verify real JPEG/PNG/HEIC headers).
+├── Step 2: Decompression Bomb Guard: Reject if dimensions > 4096 x 4096 or uncompressed > 100MB.
+├── Step 3: Strip remaining EXIF metadata using PyExifTool / Pillow.
+└── Step 4: Re-encode image into sanitized canonical RGB array before feeding to ML models.
+
+```
+
+### 3.3 Payment Integrity & Webhook Security (Stripe)
+* **PCI DSS Compliance Scope:** Minimized to **SAQ-A**. No payment credentials (credit card numbers, CVVs) ever touch the application's servers. Payments are handled via Stripe Elements and Checkout sessions.
+* **Webhook Hardening:**
+  * Raw body parsing enabled exclusively for `/api/v1/billing/webhook` to preserve raw payload bytes for HMAC verification.
+  * Verification uses `stripe.webhooks.constructEvent(rawBody, signature, endpointSecret)`.
+  * Replay Protection: Timestamp tolerance enforced ($\le 300\text{ seconds}$).
+  * Webhook idempotency enforced via PostgreSQL unique constraint on `stripe_session_id`. Duplicate webhook deliveries yield an immediate HTTP 200 without re-processing.
+* **Zero Client Price Trust:** Price amounts ($14.99) and currency (USD) are hardcoded on the server. The client never passes financial amounts to the API.
+
+### 3.4 API Abuse Prevention & Rate Limiting
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              RATE LIMITING & THROTTLING TIERS                          │
+├──────────────────────────┬──────────────────────────────┬──────────────────────────────┤
+│ Endpoint Route           │ Target Tier                  │ Limit / Window (Redis)       │
+├──────────────────────────┼──────────────────────────────┼──────────────────────────────┤
+│ `POST /api/v1/auth/*`    │ Anonymous / Guest IP         │ 5 requests / 15 minutes      │
+│ `POST /api/v1/projects`  │ Authenticated / Guest IP     │ 5 uploads / minute           │
+│ `POST /api/v1/*/render`  │ Registered Free User         │ 2 total lifetime renders     │
+│ `POST /api/v1/*/render`  │ Move-In Pass Holder          │ Max 60 renders / 30-day pass │
+│ `GET /api/v1/commerce/*` │ All Users                    │ 30 clicks / minute (Anti-bot)│
+└──────────────────────────┴──────────────────────────────┴──────────────────────────────┘
+
+```
+
+---
+
+# 4. AI & Generative Pipeline Specific Risks
+
+Deploying generative diffusion models and vision-language embeddings introduces non-standard attack vectors requiring explicit controls:
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       AI-SPECIFIC RISK & DEFENSE MATRIX                                │
+├───────────────────────────┬────────┬───────────────────────────┬───────────────────────────────────────┤
+│ AI Threat Vector          │ Severity│ Mechanism                 │ Engineered Defensive Control          │
+├───────────────────────────┼────────┼───────────────────────────┼───────────────────────────────────────┤
+│ 1. Prompt Injection via   │ High   │ Attacker injects system   │ STRUCTURAL MITIGATION: Zero user      │
+│    Freeform Text Inputs   │        │ prompt overrides to force │ text input allowed. Users select ONLY │
+│                           │        │ offensive/illegal imagery.│ from 8 hardcoded style preset enums.  │
+├───────────────────────────┼────────┼───────────────────────────┼───────────────────────────────────────┤
+│ 2. Arbitrary Code Exec    │ Critical│ Deserialization exploit in│ Zero `.pickle` or `.bin` checkpoints. │
+│    via Model Weights      │        │ malicious model weights   │ All models loaded exclusively as safe │
+│                           │        │ (PyTorch `torch.load`).   │ `.safetensors` with SHA-256 pinning.  │
+├───────────────────────────┼────────┼───────────────────────────┼───────────────────────────────────────┤
+│ 3. Training Data Leakage  │ High   │ Cloud provider uses room  │ Enterprise Terms of Service + zero-   │
+│    via Vendor APIs        │        │ photos to fine-tune public│ retention contracts with Modal/RunPod;│
+│                           │        │ foundation models.        │ zero persistence on GPU worker nodes. │
+├───────────────────────────┼────────┼───────────────────────────┼───────────────────────────────────────┤
+│ 4. Biometric Privacy      │ High   │ Unobscured personal faces │ Automated OpenCV YuNet face detection │
+│    Inversion / Profiling  │        │ in room photos indexed in │ applies 31x31 Gaussian blur before    │
+│                           │        │ vector embeddings.        │ segmentation or SigLIP embeddings.    │
+├───────────────────────────┼────────┼───────────────────────────┼───────────────────────────────────────┤
+│ 5. Hallucinated Phishing  │ Medium │ Model hallucinates fake   │ Vector retrieval strictly bounded to  │
+│    or Broken Links        │        │ brand URLs leading to     │ internal database of verified in-stock│
+│                           │        │ malicious domains.        │ SKUs; AI never generates hyperlinks.  │
+└───────────────────────────┴────────┴───────────────────────────┴───────────────────────────────────────┘
+
+```
+
+---
+
+# 5. Data Privacy, Minimization & Regulatory Assessment
+
+### 5.1 Ephemeral Storage & The 7-Day Purge Architecture
+To comply with GDPR Article 5(1)(e) (Storage Limitation), the application enforces automated, multi-tier data destruction:
+
+
+```
+
+[Day 0: User Uploads Room & Renders Design]
+│ • Image stored in Cloudflare R2: `raw-uploads/{uuid}.jpg` and `renders/{uuid}.webp`
+│ • PostgreSQL `projects` record set with `purge_scheduled_at = NOW() + INTERVAL '7 days'`
+│
+[Day 7: Automated Dual Purge Execution]
+├── TIER 1: Cloudflare R2 Bucket Lifecycle Policy
+│   └── Automatically hard-deletes any object matching `raw-uploads/*` or `renders/*`
+│       with age > 7 days (Zero reliance on application code for deletion).
+│
+└── TIER 2: Backend Cleanup Daemon (Cron at 03:00 UTC Daily)
+└── Executes: `DELETE FROM projects WHERE purge_scheduled_at <= NOW()`
+Cascading foreign keys delete associated hotspots and vector cache pointers.
+
+```
+
+### 5.2 Right to Erasure: 1-Click Hard Purge Implementation
+Users can execute an immediate purge via `/account` (`PRV-02`):
+1. **Endpoint:** `DELETE /api/v1/account/data` (Requires passwordless re-authentication or active session confirmation).
+2. **Execution:**
+   * Deletes all user objects in Cloudflare R2 via batch DeleteObjects API.
+   * Hard-deletes all database rows in `users`, `move_passes`, `projects`, and `canvas_hotspots`.
+   * Invalidates Redis cache sessions and telemetry associations.
+   * Returns confirmation within 60 seconds.
+
+### 5.3 Regulatory Status: Confirmed vs. Specialist Legal Review
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    REGULATORY OBLIGATIONS EVALUATION                                   │
+├───────────────────────┬────────────┬──────────────────────────────────┬────────────────────────────────┤
+│ Regulatory Framework  │ Status     │ Confirmed Technical Obligation   │ Requires Specialist Review     │
+├───────────────────────┼────────────┼──────────────────────────────────┼────────────────────────────────┤
+│ GDPR / UK DPA 2018    │ Confirmed  │ • Art. 17 Right to Erasure (1-clk)│ • Legal basis for cross-border │
+│                       │ Mandatory  │ • Art. 5 Data Minimization (7d)  │   EU-to-US GPU data transit    │
+│                       │            │ • Art. 32 Encryption at Rest/Fly │   under EU Standard Contractual│
+│                       │            │ • Cookie consent for analytics   │   Clauses (SCCs).              │
+├───────────────────────┼────────────┼──────────────────────────────────┼────────────────────────────────┤
+│ CCPA / CPRA           │ Confirmed  │ • "Do Not Sell My Personal Info" │ • Affirmation of non-broker    │
+│ (California)          │ Mandatory  │ • Notice at Collection on upload │   status regarding affiliate   │
+│                       │            │ • Ephemeral domestic room purge  │   click data sharing.          │
+├───────────────────────┼────────────┼──────────────────────────────────┼────────────────────────────────┤
+│ FTC 16 CFR Part 255   │ Confirmed  │ • Clear, conspicuous affiliate   │ • Exact visual prominence and  │
+│ (US Commercial Guides)│ Mandatory  │   disclosures on all shoppable   │   proximity of mobile drawer   │
+│                       │            │   pin views before outbound click│   disclosure copy.             │
+├───────────────────────┼────────────┼──────────────────────────────────┼────────────────────────────────┤
+│ Illinois BIPA         │ SPECIALIST │ • System blurs faces in domestic │ • LEGAL REVIEW MANDATED: Does  │
+│ (Biometric Privacy)   │ REVIEW     │   photos to REMOVE biometric data│   running OpenCV face-detection│
+│                       │ REQUIRED   │   prior to storage.              │   constitute "capturing" a     │
+│                       │            │                                  │   biometric identifier?        │
+├───────────────────────┼────────────┼──────────────────────────────────┼────────────────────────────────┤
+│ Sales Tax & VAT       │ SPECIALIST │ • Stripe Tax integration to      │ • Characterization of Move-In  │
+│ (Digital Services)    │ REVIEW     │   calculate dynamic local sales  │   Pass as digital software vs. │
+│                       │ REQUIRED   │   tax in US and VAT in UK/EU.    │   advertising service.         │
+└───────────────────────┴────────────┴──────────────────────────────────┴────────────────────────────────┘
+
+```
+
+---
+
+# 6. Supply-Chain & Dependency Hardening
+
+Modern Node.js and Python ML stacks carry severe supply-chain vulnerability risks (e.g., malicious PyPI packages, compromised npm sub-dependencies):
+
+1. **Model Weight Provenance:**
+   * All ML model weights (`Depth-Anything-V2-Base`, `controlnet-depth-sdxl-1.0`, `siglip-so400m-patch14-384`) are downloaded exclusively from verified Hugging Face official repositories.
+   * Checksums (SHA-256) are validated during Docker container build time.
+   * Model weights are baked into immutable container images; **dynamic runtime downloads from external URLs are strictly disabled**.
+2. **Automated Dependency Auditing:**
+   * CI/CD pipeline enforces `npm audit --audit-level=high` and `pip-audit`.
+   * GitHub Dependabot alerts configured for automated security patches.
+   * Container images scanned via **Trivy** in GitHub Actions; deployments block on any unpatched Critical or High CVEs.
+3. **Execution Sandboxing:**
+   * GPU worker containers run as non-root users (`uid 10001`).
+   * Read-only root filesystems enabled (`read_only: true`), with strictly scoped `/tmp` mounts for temporary image array processing.
+
+---
+
+# 7. Logging, Incident Response & Disaster Recovery
+
+### 7.1 Privacy-Compliant Structured Logging
+Application logs must never become a backdoor for PII leakage:
+* **Strict Scrubbing Rules:**
+  * Raw image URLs, presigned URLs, and base64 payloads are **strictly redacted** from application logs (`[REDACTED_IMAGE_URL]`).
+  * Email addresses are masked: `m***@example.com`.
+  * User IP addresses are hashed using SHA-256 with a daily rotating salt prior to logging.
+* **Log Transport:** Encrypted via TLS and ingested into AWS CloudWatch / Datadog with a 30-day retention window.
+
+### 7.2 Incident Response Playbook: Compromised S3/R2 Bucket
+If unauthorized access to room images or database records is detected:
+1. **Immediate Revocation (Minute 0–15):** Rotate all Cloudflare R2 API tokens and AWS IAM access keys via Terraform/AWS CLI.
+2. **Traffic Severing (Minute 15–30):** Temporarily route all `/api/v1/projects` endpoints to an HTTP 503 maintenance page via Cloudflare Edge Rules.
+3. **Forensic Identification (Minute 30–60):** Inspect Cloudflare access logs to identify the exact scope of accessed object keys.
+4. **Regulatory Notification:** If unblurred domestic photos were exfiltrated, notify affected users and European Data Protection Authorities within **72 hours** as mandated by GDPR Article 33.
+
+---
+
+# 8. Prioritized Risk Register
+
+Risks are prioritized based on likelihood and business impact prior to technical mitigations.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                         PRIORITIZED RISK REGISTER                                      │
+├─────┬───────────────────────┬────────────┬───────────┬──────────────┬──────────────────────────────────┤
+│ ID  │ Risk Event Description│ Likelihood │ Severity  │ Score (LxS)  │ Primary Mitigation Architecture  │
+├─────┼───────────────────────┼────────────┼───────────┼──────────────┼──────────────────────────────────┤
+│ R-01│ Domestic interior     │ Low        │ Critical  │ HIGH (12)    │ Short-lived presigned URLs (5m); │
+│     │ photos leaked via open│            │           │              │ R2 7-day automated purge; no     │
+│     │ cloud storage bucket. │            │           │              │ public list permissions.         │
+├─────┼───────────────────────┼────────────┼───────────┼──────────────┼──────────────────────────────────┤
+│ R-02│ Decompression bomb /  │ Medium     │ High      │ HIGH (12)    │ Magic byte validation; 20MB cap; │
+│     │ malicious image crash-│            │           │              │ 4096px dimension ceiling; isolated│
+│     │ es GPU inference node.│            │           │              │ non-root container sandboxes.    │
+├─────┼───────────────────────┼────────────┼───────────┼──────────────┼──────────────────────────────────┤
+│ R-03│ BOLA/IDOR vulnerability│ Medium     │ High     │ HIGH (12)    │ Strict NestJS ownership guards;  │
+│     │ allows user to view   │            │           │              │ DB queries assert both project ID│
+│     │ another user's room.  │            │           │              │ and authenticated user ID.       │
+├─────┼───────────────────────┼────────────┼───────────┼──────────────┼──────────────────────────────────┤
+│ R-04│ Stripe webhook spoof- │ Low        │ High      │ MEDIUM (8)   │ Native cryptographic signature   │
+│     │ ing grants fraudulent │            │           │              │ verification with 300s timestamp │
+│     │ Move-In Passes.       │            │           │              │ tolerance and idempotency keys.  │
+├─────┼───────────────────────┼────────────┼───────────┼──────────────┼──────────────────────────────────┤
+│ R-05│ Regulatory sanction   │ Medium     │ Medium    │ MEDIUM (8)   │ Persistent FTC disclaimers on all│
+│     │ for deceptive affiliate│           │           │              │ canvas views and product drawers │
+│     │ links (FTC Part 255). │            │           │              │ prior to external redirect.      │
+├─────┼───────────────────────┼────────────┼───────────┼──────────────┼──────────────────────────────────┤
+│ R-06│ Face/biometric data of│ Low        │ High      │ MEDIUM (8)   │ Pre-diffusion OpenCV YuNet face  │
+│     │ resident leaked into  │            │           │              │ detection with 31x31 Gaussian    │
+│     │ vector database.      │            │           │              │ blur; vectors store NO images.   │
+├─────┼───────────────────────┼────────────┼───────────┼──────────────┼──────────────────────────────────┤
+│ R-07│ Queue exhaustion via  │ High       │ Low       │ MEDIUM (6)   │ Redis rate limiters; Cloudflare  │
+│     │ free-tier bot upload  │            │           │              │ Turnstile CAPTCHA on excessive   │
+│     │ script (Denial of Svc)│            │           │              │ generation attempts.             │
+└─────┴───────────────────────┴────────────┴───────────┴──────────────┴──────────────────────────────────┘
+
+```
+
+---
+
+# 9. Verification & Penetration Testing Protocols
+
+Security controls must be verified via reproducible security test scripts in CI/CD and pre-launch penetration tests.
+
+### 9.1 Automated Security Verification Suite (Jest / Supertest)
+
+```typescript
+/**
+ * Project RoomCommerce - Automated Security Verification Tests
+ * File: test/security/access-control.security-spec.ts
+ */
+
+import request from 'supertest';
+import { INestApplication } from '@nestjs/common';
+
+describe('Security & Privacy Control Verification', () => {
+  let app: INestApplication;
+
+  // TEST 1: BOLA / IDOR Protection
+  it('[SEC-TEST-01] should reject access to project owned by another user', async () => {
+    const attackerToken = 'Bearer user_attacker_jwt';
+    const victimProjectId = '4b6a9c12-3211-4f81-a90b-04f8664b9e22';
+
+    const response = await request(app.getHttpServer())
+      .get(`/api/v1/projects/${victimProjectId}`)
+      .set('Authorization', attackerToken);
+
+    expect(response.status).toBe(403);
+    expect(response.body.message).toContain('Access denied to requested project');
+  });
+
+  // TEST 2: Presigned Upload Content-Type & Size Boundary
+  it('[SEC-TEST-02] should reject presigned upload requests for executable scripts', async () => {
+    const userToken = 'Bearer user_valid_jwt';
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/projects')
+      .set('Authorization', userToken)
+      .send({
+        style_preset: 'JAPANDI',
+        content_type: 'application/x-sh', // Malicious shell script
+        file_size_bytes: 512,
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('Unsupported media type');
+  });
+
+  // TEST 3: Stripe Webhook Signature Spoofing
+  it('[SEC-TEST-03] should reject Stripe webhooks with invalid cryptographic signature', async () => {
+    const fakePayload = { type: 'checkout.session.completed', id: 'evt_fake_123' };
+
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/billing/webhook')
+      .set('stripe-signature', 't=1600000000,v1=invalid_hmac_signature')
+      .send(fakePayload);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toContain('Webhook signature verification failed');
+  });
+
+  // TEST 4: Immediate Data Purge Verification
+  it('[SEC-TEST-04] should completely erase project and canvas records upon hard-purge request', async () => {
+    const userToken = 'Bearer user_purge_test_jwt';
+
+    // Trigger hard purge
+    const purgeResponse = await request(app.getHttpServer())
+      .delete('/api/v1/account/data')
+      .set('Authorization', userToken)
+      .send({ confirmation: 'DELETE' });
+
+    expect(purgeResponse.status).toBe(200);
+
+    // Verify projects are deleted from database
+    const verifyResponse = await request(app.getHttpServer())
+      .get('/api/v1/projects')
+      .set('Authorization', userToken);
+
+    expect(verifyResponse.body.projects.length).toBe(0);
+  });
+});
+
+```
+
+---
+
+# 10. Release-Blocking Security Criteria (Gate Sign-Off)
+
+The application cannot deploy to public production infrastructure unless **100% of the following criteria are satisfied**:
+
+### Mandatory Go / No-Go Checklist
+
+* [ ] **`BLOCKER-01` (Face Blur Operational):** Automated OpenCV face-detection verified with $100\%$ pass rate on the test benchmark dataset of 30 domestic portraits; zero unblurred faces reach inpainting.
+* [ ] **`BLOCKER-02` (Zero Public Bucket Access):** Cloudflare R2 bucket configurations audited; public `ListObjects` and direct unauthorized `GetObject` return HTTP 403.
+* [ ] **`BLOCKER-03` (Ephemeral Lifecycle Active):** 7-day automatic deletion lifecycle rule verified active on Cloudflare R2; daily database purge daemon tested and operational.
+* [ ] **`BLOCKER-04` (Stripe Webhook Signature Enforced):** Stripe webhook listener cryptographically verifies HMAC signatures; replay attacks and forged events rejected.
+* [ ] **`BLOCKER-05` (BOLA/IDOR Regression Test):** Automated security integration test suite passes with zero authorization bypasses across project endpoints.
+* [ ] **`BLOCKER-06` (Model Weight SHA-256 Validated):** ML container images build exclusively with pre-downloaded `.safetensors` files matching published SHA-256 hashes.
+* [ ] **`BLOCKER-07` (FTC Compliance Verified):** Mandatory affiliate disclosure copy verified on all screens presenting shoppable links (`SCR-08`, `SCR-08A`, `SCR-08B`).
+* [ ] **`BLOCKER-08` (Zero High/Critical CVEs):** Trivy container scans and `npm audit` report zero unmitigated High or Critical vulnerabilities in production dependencies.
+
+---
+
+## Security & Privacy Gate Decision Request
+
+The application security architecture, threat model, and regulatory compliance plan for **Project RoomCommerce** are complete and built directly into the engineering specifications.
+
+**Recommendation:** Secure formal approval from the Security Lead, Privacy Specialist, and Legal Counsel to close Phase 2 and proceed to **Phase 4: Implementation & Engineering (Monorepo Setup, Sprint Planning & Task Execution)**.
+
+```
+
+```

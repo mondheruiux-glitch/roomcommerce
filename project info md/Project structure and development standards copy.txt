@@ -1,0 +1,674 @@
+```markdown
+# File: 20_phase4_repository_architecture_and_development_standards.md
+# Project: Project RoomCommerce
+# Lifecycle Phase: Phase 4 — Implementation & Engineering Standards
+# Author: Staff Engineer & Technical Lead
+# Status: Proposal Ready for Stakeholder Approval (Pre-Implementation Baseline)
+
+---
+
+## Central Project Status Document
+
+* **Project Working Title:** Project RoomCommerce
+* **Current Lifecycle Phase:** Phase 4 — Implementation & Engineering Setup
+* **Lifecycle Gate Status:** Engineering Standards Review Gate (Pre-Code Scaffolding)
+* **Architecture Baseline:** Modular Monolith API (NestJS) + Responsive Web Studio (Next.js 15) + Serverless GPU Fleet (Modal/PyTorch)
+* **Design System Baseline:** Atelier Design System (ADS) — Direction A (Editorial Atelier)
+* **Primary Objective:** Define the production repository architecture, folder topology, coding standards, CI/CD pipelines, and environment boundaries to begin sprint implementation safely and predictably.
+* **Governance Rule:** No application code or monorepo package scaffolding is committed until this architectural proposal receives formal approval.
+
+---
+
+# 1. Monorepo Architecture & Directory Topology
+
+The codebase uses a **Turborepo + pnpm workspaces** monorepo structure. This layout enforces strict boundaries between client UI, backend domain logic, serverless GPU workers, shared design tokens, and API data contracts without premature microservice fragmentation.
+
+
+```
+
+roomcommerce/
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml                     # Lint, typecheck, unit, integration tests
+│   │   ├── e2e.yml                    # Playwright browser automation suite
+│   │   ├── security-scan.yml          # Trivy & Snyk supply chain scanner
+│   │   └── deploy-staging.yml         # Automated staging deployment pipeline
+│   └── pull_request_template.md       # PR checklist & traceable PRD requirement tag
+├── apps/
+│   ├── web/                           # Next.js 15 (App Router, React 19)
+│   │   ├── src/
+│   │   │   ├── app/                   # File-based routing (SCR-01 to SCR-10)
+│   │   │   │   ├── (public)/          # Landing (SCR-01), Legal (FTC/Privacy)
+│   │   │   │   ├── (studio)/          # Studio Hub, Intake Wizard, Canvas Workspace
+│   │   │   │   ├── (account)/         # Account Settings, Purge Controls
+│   │   │   │   ├── api/               # Next.js Route Handlers (Edge proxies)
+│   │   │   │   └── layout.tsx         # Global font loading, Atelier CSS variables
+│   │   │   ├── components/            # App-specific compositions & layout shells
+│   │   │   ├── hooks/                 # Custom React hooks (useCanvas, useSSE)
+│   │   │   ├── stores/                # Zustand client state (canvas zoom/hotspots)
+│   │   │   └── lib/                   # Client utilities (EXIF scrubber, WebAssembly)
+│   │   ├── public/                    # Favicons, static brand assets
+│   │   ├── next.config.mjs            # Standalone build, security headers
+│   │   ├── tailwind.config.ts         # Ingests @roomcommerce/tokens plugin
+│   │   └── package.json
+│   │
+│   └── api/                           # NestJS 11 (Node.js 22 LTS Modular Monolith)
+│       ├── src/
+│       │   ├── modules/               # Bounded domain contexts
+│       │   │   ├── auth/              # Magic links, JWT, session cookies
+│       │   │   ├── billing/           # Stripe Checkout, Move-In Pass webhooks
+│       │   │   ├── projects/          # Presigned uploads, project metadata
+│       │   │   ├── inference/         # BullMQ queue, SSE hub, Modal runner client
+│       │   │   ├── catalog/           # 50K SKU sync, Qdrant vector indexer
+│       │   │   ├── commerce/          # Affiliate redirect router, click tracking
+│       │   │   └── privacy/           # 7-day storage purge daemon, hard-purge API
+│       │   ├── common/                # Global filters, interceptors, guards, pipes
+│       │   ├── database/              # Drizzle/Prisma schema, migrations, seeds
+│       │   ├── app.module.ts          # Root module assembling domain modules
+│       │   └── main.ts                # Bootstrap, validation pipes, Swagger setup
+│       ├── test/                      # Integration and security test suites
+│       ├── docker/                    # Multi-stage production Dockerfile
+│       └── package.json
+│
+├── workers/
+│   └── gpu-runner/                    # Python 3.11 / PyTorch ML Service (Modal / RunPod)
+│       ├── src/
+│       │   ├── pipeline.py            # Chained inference (Depth + SDXL + SAM + SigLIP)
+│       │   ├── sanitization.py        # OpenCV YuNet face detection & Gaussian blur
+│       │   ├── models/                # Pinned local model loaders (.safetensors)
+│       │   └── config.py              # CUDA allocator settings & VRAM caps
+│       ├── tests/                     # Model output contract tests & benchmarks
+│       ├── modal_app.py               # Modal serverless container entrypoint
+│       ├── pyproject.toml             # Pinned Python dependencies (Poetry/Ruff)
+│       └── Dockerfile                 # CUDA 12.4 runtime base container
+│
+├── packages/
+│   ├── tokens/                        # Atelier Design System (ADS) Master Tokens
+│   │   ├── src/
+│   │   │   ├── colors.ts              # Direction A color primitives & semantics
+│   │   │   ├── typography.ts          # Plus Jakarta Sans & JetBrains Mono scale
+│   │   │   ├── spacing.ts             # 8pt spatial grid scale (4px to 64px)
+│   │   │   ├── shadows.ts             # Structural border and shadow tokens
+│   │   │   └── index.ts               # CSS variable generator & Tailwind plugin
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── ui/                            # Shared ADS Reusable Component Library
+│   │   ├── src/
+│   │   │   ├── primitives/            # AdsButton, AdsBadge, AdsDivider, AdsIcon
+│   │   │   ├── inputs/                # AdsBudgetSlider, AdsStyleCardSelector, AdsDropzone
+│   │   │   ├── feedback/              # AdsProgressBar, AdsModalDialog, AdsToast
+│   │   │   ├── navigation/            # AdsAppHeader, AdsMobileBottomBar, AdsProductDrawer
+│   │   │   ├── data-display/          # AdsSkuSpecTable, AdsBudgetGauge, AdsProjectCard
+│   │   │   └── index.ts               # Barrel export for UI components
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   ├── contracts/                     # Single Source of Truth for Data Contracts
+│   │   ├── src/
+│   │   │   ├── api/                   # Zod request/response schemas & TypeScript DTOs
+│   │   │   ├── catalog/               # Canonical Product SKU JSON schema
+│   │   │   ├── events/                # Telemetry schemas (EV-101 to EV-302)
+│   │   │   ├── enums/                 # Style presets, room types, order statuses
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   │
+│   └── config/                        # Standardized Workspace Configurations
+│       ├── eslint/                    # Shared ESLint 9 flat configs (React/Node)
+│       ├── typescript/                # Base tsconfig.json templates
+│       └── prettier/                  # Pinned code formatting rules
+│
+├── docs/                              # Architecture Decision Records (ADR) & Runbooks
+│   ├── adr/
+│   │   ├── 0001-modular-monolith.md
+│   │   ├── 0002-serverless-gpu-modal.md
+│   │   └── 0003-ephemeral-storage-purge.md
+│   └── runbooks/
+├── .env.example                       # Documented environment variable template
+├── pnpm-workspace.yaml                # pnpm workspace package definitions
+├── turbo.json                         # Turborepo task pipeline & caching rules
+└── package.json                       # Monorepo root scripts & dev dependencies
+
+```
+
+---
+
+# 2. Component & File Naming Conventions
+
+Strict casing and naming conventions eliminate ambiguity across the full stack:
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     STANDARDIZED NAMING CONVENTIONS                                    │
+├─────────────────────┬──────────────────────┬────────────────────────────┬──────────────────────────────┤
+│ Entity Category     │ Casing Convention    │ Example Pattern            │ Path / File Placement        │
+├─────────────────────┼──────────────────────┼────────────────────────────┼──────────────────────────────┤
+│ React Components    │ PascalCase           │ `AdsProductDrawer.tsx`     │ `packages/ui/src/*/*.tsx`    │
+│ React Hooks         │ camelCase (use*)     │ `useCanvasHotspots.ts`     │ `apps/web/src/hooks/*.ts`    │
+│ Next.js App Routes  │ kebab-case / special │ `page.tsx`, `layout.tsx`   │ `apps/web/src/app/**`        │
+│ NestJS Controllers  │ kebab-case.type      │ `projects.controller.ts`   │ `apps/api/src/modules/**`    │
+│ NestJS Services     │ kebab-case.type      │ `catalog-sync.service.ts`  │ `apps/api/src/modules/**`    │
+│ Database Tables     │ snake_case (plural)  │ `catalog_skus`, `projects` │ PostgreSQL Schema DDL        │
+│ TypeScript Types    │ PascalCase           │ `ProjectResponseDto`       │ `packages/contracts/src/**`  │
+│ Zod Validation DTOs │ PascalCase + Schema  │ `CreateProjectSchema`      │ `packages/contracts/src/**`  │
+│ CSS Variables       │ kebab-case (--ads-*) │ `--ads-color-bg-canvas`    │ `packages/tokens/src/**`     │
+│ Python Modules      │ snake_case           │ `pipeline_runner.py`       │ `workers/gpu-runner/src/**`  │
+└─────────────────────┴──────────────────────┴────────────────────────────┴──────────────────────────────┘
+
+```
+
+---
+
+# 3. Reusable UI Component Organization (`packages/ui`)
+
+To prevent component duplication and enforce the Atelier Design System (ADS), all reusable UI primitives, inputs, feedback, and display elements live in `packages/ui`. 
+
+### 3.1 Component Directory Structure
+Every component follows a clean, co-located directory structure:
+
+
+```
+
+packages/ui/src/primitives/button/
+├── ads-button.tsx             # Primary component implementation
+├── ads-button.types.ts        # Component props & variant interfaces
+├── ads-button.test.tsx        # Unit tests (Vitest + React Testing Library)
+├── ads-button.stories.tsx     # Isolated visual documentation (Storybook)
+└── index.ts                   # Clean public export
+
+```
+
+### 3.2 Component Implementation Pattern
+Every component is written as an accessible, forward-ref capable React component:
+
+```tsx
+// packages/ui/src/primitives/button/ads-button.tsx
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '../../lib/utils';
+import { AdsSpinner } from '../spinner/ads-spinner';
+import type { AdsButtonProps } from './ads-button.types';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none active:scale-[0.98]',
+  {
+    variants: {
+      variant: {
+        primary: 'bg-brand-terracotta text-ink-inverted hover:bg-brand-terracotta-hover focus-visible:ring-ink-primary',
+        secondary: 'bg-bg-surface text-ink-primary border border-border-default hover:bg-bg-subtle focus-visible:ring-ink-primary',
+        danger: 'bg-bg-surface text-semantic-danger border border-semantic-danger hover:bg-semantic-danger-subtle focus-visible:ring-semantic-danger',
+        ghost: 'text-ink-secondary hover:text-ink-primary hover:bg-bg-subtle focus-visible:ring-ink-primary',
+      },
+      size: {
+        sm: 'h-8 px-3 text-xs rounded-sm gap-1.5',
+        md: 'h-10 px-4 text-sm rounded-md gap-2',
+        lg: 'h-12 px-6 text-base rounded-md gap-2.5',
+      },
+    },
+    defaultVariants: {
+      variant: 'primary',
+      size: 'md',
+    },
+  }
+);
+
+export const AdsButton = React.forwardRef<HTMLButtonElement, AdsButtonProps>(
+  ({ className, variant, size, isLoading, children, disabled, ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        className={cn(buttonVariants({ variant, size, className }))}
+        disabled={disabled || isLoading}
+        aria-busy={isLoading}
+        {...props}
+      >
+        {isLoading && <AdsSpinner aria-hidden="true" className="w-4 h-4 mr-2 animate-spin"/>}
+        {children}
+      </button>
+    );
+  }
+);
+
+AdsButton.displayName = 'AdsButton';
+
+```
+
+---
+
+# 4. Design-Token Implementation (`packages/tokens`)
+
+Design tokens are maintained as TypeScript constants and exported as native CSS variables and a Tailwind CSS plugin. This guarantees synchronization between Tailwind utilities and dynamic styles on the canvas.
+
+```typescript
+// packages/tokens/src/colors.ts
+export const colors = {
+  bg: {
+    canvas: '#F9F8F6',
+    surface: '#FFFFFF',
+    subtle: '#F2EFEB',
+    muted: '#E6E2DC',
+    overlay: 'rgba(26, 25, 23, 0.45)',
+  },
+  ink: {
+    primary: '#1A1917',
+    secondary: '#57534E',
+    muted: '#8C857B',
+    inverted: '#FAF8F5',
+  },
+  brand: {
+    terracotta: '#B85D3A',
+    'terracotta-hover': '#984B2E',
+    'terracotta-subtle': '#F7EBE6',
+    olive: '#4E5E4A',
+  },
+  semantic: {
+    success: '#2E6945',
+    'success-subtle': '#EDF5F0',
+    warning: '#A16207',
+    'warning-subtle': '#FEF9C3',
+    danger: '#B91C1C',
+    'danger-subtle': '#FEE2E2',
+    info: '#2563EB',
+  },
+  border: {
+    default: '#E6E2DC',
+    strong: '#D6D1CA',
+    interactive: '#1A1917',
+  },
+} as const;
+
+```
+
+```typescript
+// packages/tokens/src/tailwind-plugin.ts
+import plugin from 'tailwindcss/plugin';
+import { colors } from './colors';
+import { spacing } from './spacing';
+import { typography } from './typography';
+
+export const atelierThemePlugin = plugin(
+  ({ addBase }) => {
+    addBase({
+      ':root': {
+        '--ads-color-bg-canvas': colors.bg.canvas,
+        '--ads-color-bg-surface': colors.bg.surface,
+        '--ads-color-ink-primary': colors.ink.primary,
+        '--ads-color-brand-terracotta': colors.brand.terracotta,
+        // Additional token CSS variable mappings...
+      },
+    });
+  },
+  {
+    theme: {
+      extend: {
+        colors: {
+          'bg-canvas': 'var(--ads-color-bg-canvas)',
+          'bg-surface': 'var(--ads-color-bg-surface)',
+          'ink-primary': 'var(--ads-color-ink-primary)',
+          'brand-terracotta': 'var(--ads-color-brand-terracotta)',
+          // Token bindings...
+        },
+        fontFamily: {
+          sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          mono: ['"JetBrains Mono"', 'monospace'],
+        },
+      },
+    },
+  }
+);
+
+```
+
+---
+
+# 5. Data-Fetching & State-Management Conventions
+
+The architecture enforces clear separation between server state, real-time event streams, and transient client state:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              STATE MANAGEMENT STRATEGY                                 │
+├─────────────────────┬──────────────────────────┬───────────────────────────────────────┤
+│ State Archetype     │ Implementation Mechanism │ Domain Scope                          │
+├─────────────────────┼──────────────────────────┼───────────────────────────────────────┤
+│ Server State        │ TanStack Query v5        │ Project details, catalog listings,    │
+│                     │ (React Query)            │ user entitlements, payment status     │
+├─────────────────────┼──────────────────────────┼───────────────────────────────────────┤
+│ Real-Time Pipeline  │ Custom React Hook        │ Server-Sent Events (SSE) stream for   │
+│ Telemetry           │ (`usePipelineStream`)    │ inference progress (`SCR-07`)         │
+├─────────────────────┼──────────────────────────┼───────────────────────────────────────┤
+│ Transient UI State  │ Zustand                  │ Canvas pan/zoom offsets, selected     │
+│                     │ (Lightweight store)      │ pin ID, drawer open/close visibility  │
+├─────────────────────┼──────────────────────────┼───────────────────────────────────────┤
+│ Form State          │ React Hook Form + Zod    │ Intake wizard config, style selectors,│
+│                     │                          │ budget range slider inputs            │
+└─────────────────────┴──────────────────────────┴───────────────────────────────────────┘
+
+```
+
+### Real-Time SSE Consumer Hook Example
+
+```typescript
+// apps/web/src/hooks/use-pipeline-stream.ts
+import { useEffect, useState } from 'react';
+import type { PipelineProgressEvent } from '@roomcommerce/contracts';
+
+export function usePipelineStream(projectId: string | null) {
+  const [progress, setProgress] = useState<PipelineProgressEvent null |>(null);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!projectId) return;
+
+    const eventSource = new EventSource(`/api/v1/projects/${projectId}/events`);
+
+    eventSource.addEventListener('progress', (e) => {
+      const data = JSON.parse(e.data) as PipelineProgressEvent;
+      setProgress(data);
+    });
+
+    eventSource.addEventListener('complete', () => {
+      setIsCompleted(true);
+      eventSource.close();
+    });
+
+    eventSource.addEventListener('error', () => {
+      setError('Connection interrupted. Retrying...');
+    });
+
+    return () => {
+      eventSource.close();
+    };
+  }, [projectId]);
+
+  return { progress, isCompleted, error };
+}
+
+```
+
+---
+
+# 6. API, Validation & Response Envelope Patterns
+
+All backend endpoints use contract-first Zod schemas shared across frontend and backend via `@roomcommerce/contracts`.
+
+### 6.1 Standardized API Envelopes
+
+Every HTTP response conforms to an immutable JSON envelope:
+
+```typescript
+// Success Envelope
+export interface ApiSuccessResponse<T> {
+  success: true;
+  data: T;
+  meta?: {
+    page?: number;
+    total?: number;
+    timestamp: string;
+  };
+}
+
+// Error Envelope
+export interface ApiErrorResponse {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: Array<{ field: string; message: string }>;
+  };
+}
+
+```
+
+### 6.2 NestJS Validation Pipe Integration
+
+Incoming request bodies are validated using a custom `ZodValidationPipe` that converts validation failures into standard `ApiErrorResponse` structures:
+
+```typescript
+// packages/contracts/src/api/projects.schema.ts
+import { z } from 'zod';
+import { StylePresetEnum, RoomFunctionEnum } from '../enums';
+
+export const CreateProjectSchema = z.object({
+  style_preset: z.nativeEnum(StylePresetEnum),
+  room_function: z.nativeEnum(RoomFunctionEnum).default(RoomFunctionEnum.LIVING_ROOM),
+  budget_ceiling_cents: z.number().int().min(30000).max(1000000), // $300.00 to $10,000.00
+  currency: z.literal('USD').default('USD'),
+});
+
+export type CreateProjectDto = z.infer<typeof CreateProjectSchema>;
+
+```
+
+---
+
+# 7. Error-Handling Conventions
+
+### 7.1 Unified Error Taxonomy
+
+All system errors map to a standardized application error taxonomy:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                APPLICATION ERROR TAXONOMY                              │
+├──────────────────────────┬──────────────┬──────────────────────────────────────────────┤
+│ Error Code               │ HTTP Status  │ User-Facing Remediation Message              │
+├──────────────────────────┼──────────────┼──────────────────────────────────────────────┤
+│ `INVALID_IMAGE_FORMAT`   │ 400 Bad Req  │ Please upload a valid JPG, PNG, or HEIC file.│
+│ `IMAGE_QUALITY_FAILED`   │ 422 Unproc   │ Image too blurry or dark. Retake with light. │
+│ `ENTITLEMENT_EXCEEDED`   │ 403 Forbid   │ Free limit reached. Move-In Pass required.   │
+│ `PROJECT_NOT_FOUND`      │ 404 Not Found│ This project has expired or does not exist.  │
+│ `GPU_INFERENCE_TIMEOUT`  │ 504 Gateway  │ High server demand. Credits restored to you. │
+│ `PURGE_CONFLICT`         │ 409 Conflict │ Deletion already in progress for this asset. │
+└──────────────────────────┴──────────────┴──────────────────────────────────────────────┘
+
+```
+
+### 7.2 Global Exception Filter (NestJS)
+
+All uncaught application exceptions pass through a single filter to ensure consistent responses and sanitize sensitive internal error stack traces from client exposure:
+
+```typescript
+// apps/api/src/common/filters/global-exception.filter.ts
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import { Response } from 'express';
+import type { ApiErrorResponse } from '@roomcommerce/contracts';
+
+@Catch()
+export class GlobalExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let code = 'INTERNAL_SERVER_ERROR';
+    let message = 'An unexpected system error occurred. Please try again.';
+
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const res = exception.getResponse() as any;
+      code = res.code || 'HTTP_ERROR';
+      message = res.message || exception.message;
+    }
+
+    const payload: ApiErrorResponse = {
+      success: false,
+      error: { code, message },
+    };
+
+    response.status(status).json(payload);
+  }
+}
+
+```
+
+---
+
+# 8. Environment & Secrets Management
+
+To prevent runtime failures caused by missing environment variables, all configuration values are validated at boot time using `@t3-oss/env-core`:
+
+```typescript
+// apps/api/src/config/env.ts
+import { createEnv } from '@t3-oss/env-core';
+import { z } from 'zod';
+
+export const env = createEnv({
+  server: {
+    NODE_ENV: z.enum(['development', 'test', 'staging', 'production']),
+    PORT: z.coerce.number().default(4000),
+    DATABASE_URL: z.string().url(),
+    REDIS_URL: z.string().url(),
+    CLOUDFLARE_R2_BUCKET: z.string().min(1),
+    CLOUDFLARE_R2_ACCESS_KEY: z.string().min(1),
+    CLOUDFLARE_R2_SECRET_KEY: z.string().min(1),
+    STRIPE_SECRET_KEY: z.string().startsWith('sk_'),
+    STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_'),
+    MODAL_API_ENDPOINT: z.string().url(),
+    MODAL_API_TOKEN: z.string().min(1),
+    QDRANT_URL: z.string().url(),
+    QDRANT_API_KEY: z.string().min(1),
+  },
+  runtimeEnv: process.env,
+});
+
+```
+
+* **Secret Storage Hierarchy:** Production secrets are stored in **AWS Secrets Manager / Doppler** and injected into AWS ECS Fargate tasks as environment variables at launch. No raw `.env` files are checked into Git.
+
+---
+
+# 9. Branching Strategy & Code Review Standards
+
+### 9.1 Trunk-Based Development
+
+* The `main` branch is always deployable and protected against direct commits.
+* Developers branch directly from `main` using short-lived feature branches:
+* `feat/PROJ-101-image-dropzone`
+* `fix/PROJ-204-qdrant-filter-bug`
+* `chore/PROJ-305-update-deps`
+
+
+
+### 9.2 Pull Request (PR) Requirements
+
+To merge a PR into `main`, it must meet the following criteria:
+
+1. **Automated CI Checks:** 100% pass on linting, TypeScript compilation, unit tests, and integration tests.
+2. **Review Requirement:** Minimum of **one peer approval** from a senior engineer.
+3. **Traceability:** PR title and description must reference an approved requirement ID (`FR-*`, `NFR-*`, `SEC-*`).
+4. **Clean Git History:** Merges require **Squash and Merge** with Conventional Commit messaging (`feat: implement canvas hotspot pins (FR-401)`).
+
+---
+
+# 10. Automated Tests & CI/CD Pipeline
+
+### 10.1 Testing Strategy Breakdown
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   TESTING STRATEGY MATRIX                              │
+├───────────────────┬──────────────────────┬─────────────────────────────────────────────┤
+│ Test Level        │ Framework / Tool     │ Verification Scope                          │
+├───────────────────┼──────────────────────┼─────────────────────────────────────────────┤
+│ Unit Tests        │ Vitest               │ UI components, budget calculations, Zod DTOs│
+│ Integration Tests │ Supertest + Docker   │ NestJS endpoints, PostgreSQL, Redis BullMQ  │
+│ Contract Tests    │ PyTorch Test Harness │ GPU worker output tensors, depth dimensions │
+│ End-to-End (E2E)  │ Playwright           │ Critical journeys: Upload ➔ Style ➔ Canvas  │
+│ Security Audits   │ Trivy & npm-audit    │ Container CVEs and dependency vulnerabilities│
+└───────────────────┴──────────────────────┴─────────────────────────────────────────────┘
+
+```
+
+### 10.2 GitHub Actions CI Pipeline (`.github/workflows/ci.yml`)
+
+```yaml
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Monorepo Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Code Quality & Typecheck
+        run: pnpm turbo run lint typecheck
+
+      - name: Execute Unit & Integration Tests
+        run: pnpm turbo run test -- --coverage
+
+      - name: Security Vulnerability Scan
+        run: pnpm audit --audit-level=high
+
+```
+
+---
+
+# 11. Environment Topologies (Dev, Staging, Prod)
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      ENVIRONMENT CONFIGURATION MATRIX                                  │
+├───────────────────┬──────────────────────────┬──────────────────────────┬──────────────────────────────┤
+│ Resource / Scope  │ Local Development        │ Staging Environment      │ Production Environment       │
+├───────────────────┼──────────────────────────┼──────────────────────────┼──────────────────────────────┤
+│ Client Hosting    │ localhost:3000           │ staging.roomcommerce.com │ roomcommerce.com             │
+│ API Hosting       │ localhost:4000           │ api.staging.roomcommerce │ api.roomcommerce.com         │
+│ Database          │ Local Docker Postgres 16 │ AWS Aurora Serverless v2 │ AWS Aurora Multi-AZ Cluster  │
+│ Redis Cache       │ Local Docker Redis 7     │ AWS ElastiCache (Small)  │ AWS ElastiCache Cluster      │
+│ GPU Worker Fleet  │ Local Mock Worker/CPU    │ Modal Staging Workspace  │ Modal Dedicated Production   │
+│ Storage Bucket    │ LocalStack / MinIO       │ Cloudflare R2 (Staging)  │ Cloudflare R2 (7d Lifecycle) │
+│ Stripe Gateway    │ Stripe CLI / Mock Keys   │ Stripe Test Mode Sandbox │ Stripe Live Production Mode  │
+└───────────────────┴──────────────────────────┴──────────────────────────┴──────────────────────────────┘
+
+```
+
+---
+
+# 12. Verification & Pre-Implementation Approval
+
+### Proposed Implementation Verification Plan
+
+Once approved, repository scaffolding will be verified through three automated test suites:
+
+1. **Workspace Integrity Test:** Ensures pnpm workspaces resolve internal dependencies (`@roomcommerce/tokens`, `@roomcommerce/ui`, `@roomcommerce/contracts`) without build-time circular references.
+2. **Contract Consistency Test:** Verifies that Zod schemas in `@roomcommerce/contracts` compile to TypeScript types without emitting `any`.
+3. **Container Build Test:** Confirms the NestJS and Next.js Dockerfiles build within the CI memory limit ($4\text{GB}$).
+
+---
+
+## Technical Lead Sign-Off Request
+
+This repository architecture and development standard establishes a solid, clean, and scalable foundation for Project RoomCommerce. It fulfills all approved PRD and design system requirements without introducing premature microservice complexity.
+
+**Recommendation:** Approve this proposal to begin **Phase 4 Implementation: Sprint 1 Monorepo Scaffolding & Core Ingestion Pipeline**.
+
+Do you approve this proposed structure and engineering standard to proceed with implementation?
+
+```
+
+```

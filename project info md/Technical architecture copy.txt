@@ -1,0 +1,759 @@
+```markdown
+# File: 18_phase2_systems_architecture_specification.md
+# Project: Project RoomCommerce
+# Lifecycle Phase: Phase 2 — Technical Systems Architecture Specification
+# Author: Principal Software Architect
+# Status: Complete / Pending Executive & Technical Stakeholder Approval
+
+---
+
+## Central Project Status Document
+
+* **Project Working Title:** Project RoomCommerce
+* **Current Lifecycle Phase:** Phase 2 — Systems Architecture & Engineering Specification
+* **Lifecycle Gate Status:** Architecture Design Gate (Pre-Implementation Gate)
+* **Status Summary:** Synthesized the approved PRD (`PRD-PRC-V1.0`), P0 MVP backlog, Information Architecture, and Atelier Design System into a pragmatic, maintainable, and cost-bounded systems architecture. Explicitly rejects microservice over-fragmentation in favor of a cohesive **Modular Monolith API** paired with an **Asynchronous Serverless GPU Worker Fleet**.
+* **Immediate Gate Deliverable:** Systems Architecture Document covering end-to-end component responsibilities, technology selection trade-offs, modular boundaries, API contracts, data schemas, background queues, observability, security/privacy controls, and disaster recovery.
+* **Approval Required:** CPO, Engineering Lead, and Security Lead sign-off prior to provisioning cloud infrastructure and starting Phase 4 sprint tasks.
+
+---
+
+# 1. Architectural Philosophy & System Responsibilities
+
+The architecture prioritizes simplicity, unit economic protection, and strict separation between synchronous web requests and asynchronous compute-heavy ML workloads.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              HIGH-LEVEL SYSTEM TOPOLOGY                                │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+[Browser Client: Desktop / Mobile]
+│
+│ HTTPS (TLS 1.3) / WSS
+▼
+[Cloudflare Edge] (WAF, DNS, DDoS Mitigation, SSL Termination)
+│
+├───────────────────────────────┬───────────────────────────────┐
+▼                               ▼                               ▼
+[Next.js Web Client]        [Core Backend API]            [Cloudflare R2 Storage]
+(Vercel / AWS ECS)          (NestJS on AWS ECS Fargate)   (Direct Presigned Uploads &
+• Static SSG / SSR          • Authentication & Session     High-Res Render Serving)
+• UI Layout & Hotspots      • Stripe Billing & Passes      • 7-Day Auto Purge Policy
+• Client-side EXIF Strip    • Project & Canvas Engine      • Zero Egress Bandwidth Fees
+• WebAssembly Quality Check • Outbound Affiliate Router
+• BullMQ Job Orchestrator
+│
+┌─────────────────┴─────────────────┐
+▼                                   ▼
+[PostgreSQL 16 (Aurora)]              [Redis (Upstash / AWS)]
+• Relational Metadata                 • BullMQ Job Queues
+• Users & Move-In Passes              • Real-Time SSE Event Hub
+• Projects & Hotspot Pins             • API Rate Limiting Counters
+• 50K Retail Catalog SKUs
+│
+▼
+[Qdrant Managed Vector DB]
+• 768-dim SigLIP Embeddings
+• Cosine Metric + HNSW Index
+• In-Stock & Price Pre-filters
+│
+▼
+[Serverless GPU Worker Fleet] (Modal / RunPod Serverless)
+• Scale-to-Zero Architecture (NVIDIA L4 24GB GPUs)
+• Stage 1: OpenCV YuNet Face Blur
+• Stage 2: Depth Anything V2 (ViT-Base)
+• Stage 3: SDXL ControlNet Depth Inpainting
+• Stage 4: Grounding DINO + MobileSAM Segmentation
+• Stage 5: SigLIP-SO400M Vector Feature Extraction
+
+```
+
+### 1.1 Division of Responsibilities
+
+#### Frontend (Next.js 15 App Router / React 19)
+* **Render UI & Interactive Canvas:** Displays the responsive studio, handles 2-finger zoom/pan on mobile, renders interactive SVG/Canvas hotspot pins using normalized coordinates (`norm_x`, `norm_y`).
+* **Client-Side Edge Sanitization:** Strips EXIF/GPS telemetry before file transmission; computes quick client-side Laplacian image variance to immediately reject pitch-black or empty images without consuming server compute.
+* **Direct-to-Storage Uploads:** Uploads raw image files directly to Cloudflare R2 using short-lived presigned PUT URLs, preventing heavy multi-megabyte payloads from traversing the application API servers.
+* **Accessibility Parity:** Exposes the alternative WCAG 2.1 AA DOM specification table (`SCR-08B`) with synchronized state.
+
+#### Core Backend API (NestJS / Node.js 22 LTS on AWS ECS Fargate)
+* **Single Business Logic Monolith:** Organizes domain capabilities into isolated, clean modules (`Auth`, `Billing`, `Projects`, `Catalog`, `Commerce`, `InferenceOrchestrator`).
+* **Job Queuing & Orchestration:** Pushes validated inference jobs into Redis-backed BullMQ queues; manages priority lanes (Paid Pass vs. Free Tier).
+* **SSE Event Dispatcher:** Exposes a persistent Server-Sent Events (SSE) connection to stream real-time pipeline status to the frontend (`SCR-07`).
+* **Affiliate Link Redirection & Attribution:** Resolves product click tokens, logs telemetry events (`EV-202`), appends affiliate network click IDs, and issues HTTP 302 redirects to merchants.
+* **Stripe Webhook Ingestion:** Verifies cryptographic signatures, provisions 30-day Move-In Pass entitlements, and enforces the 60-generation fair-use ceiling.
+
+#### Serverless GPU Worker Fleet (Python 3.11 / PyTorch on Modal / RunPod)
+* **Isolated Compute Execution:** Runs containerized PyTorch workers with pinned CUDA drivers, completely separated from Node.js business logic.
+* **Scale-to-Zero Cost Protection:** Workers scale to zero instances during idle traffic, eliminating baseline idle GPU costs ($600–$1,200/month per dedicated server).
+* **Pipeline Execution:** Chains Depth Anything V2, SDXL ControlNet, SAM, and SigLIP, returning final WebP image assets and item bounding boxes to Cloudflare R2.
+
+#### Database Layer (AWS Aurora PostgreSQL 16)
+* **Relational Integrity:** Stores transactional entities, user profiles, Move-In Pass records, project associations, and normalized catalog metadata for 50,000 SKUs.
+* **TTL & Deletion Tracking:** Manages scheduled purge timestamps (`purge_scheduled_at`) to guarantee hard data erasure within 7 days.
+
+#### Vector Database (Managed Qdrant Cloud)
+* **Multimodal Search Engine:** Indexes 768-dimensional SigLIP image embeddings with HNSW indexing, enforcing real-time payload filtering (`in_stock == true`, `category == target`, `price <= budget`).
+
+#### Object Storage (Cloudflare R2)
+* **Zero-Egress Asset Storage:** Stores raw input photos and generated 4K/1080p renders. Native bucket lifecycle rules enforce automated deletion after 7 days, eliminating storage bloat and ensuring regulatory compliance.
+
+---
+
+# 2. Technology Choices & Explicit Trade-Offs
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   TECHNOLOGY DECISION EVALUATION MATRIX                                │
+├───────────────────┬──────────────────────┬──────────────────────┬──────────────────────────────────────┤
+│ Layer / Function  │ Selected Technology  │ Rejected Alternative │ Architectural Trade-Off Rationale    │
+├───────────────────┼──────────────────────┼──────────────────────┼──────────────────────────────────────┤
+│ Backend Framework │ NestJS (Node.js/TS)  │ Go / Python FastAPI  │ NestJS enforces strict modularity,   │
+│                   │                      │                      │ enterprise DI, and type-sharing with │
+│                   │                      │                      │ Next.js while keeping async I/O high.│
+├───────────────────┼──────────────────────┼──────────────────────┼──────────────────────────────────────┤
+│ Architecture      │ Modular Monolith     │ Microservices Fleet  │ Microservices add operational tax,   │
+│ Style             │                      │ (Kubernetes/Istio)   │ network latency, and CI/CD overhead  │
+│                   │                      │                      │ unwarranted for an MVP team.         │
+├───────────────────┼──────────────────────┼──────────────────────┼──────────────────────────────────────┤
+│ GPU Inference     │ Modal / RunPod       │ Dedicated AWS EC2    │ Serverless GPUs scale to 0. Running  │
+│ Infrastructure    │ Serverless (L4/A10G) │ (g5.2xlarge reserved)│ dedicated EC2 instances burns $700/mo│
+│                   │                      │                      │ fixed, regardless of traffic volume. │
+├───────────────────┼──────────────────────┼──────────────────────┼──────────────────────────────────────┤
+│ Vector Database   │ Qdrant (Managed)     │ pgvector / Pinecone  │ Qdrant delivers sub-10ms HNSW search │
+│                   │                      │                      │ with native compound payload filters │
+│                   │                      │                      │ at half the cost of Pinecone.        │
+├───────────────────┼──────────────────────┼──────────────────────┼──────────────────────────────────────┤
+│ Primary Database  │ PostgreSQL 16        │ MongoDB / DynamoDB   │ Relational schemas are mandatory for │
+│                   │ (AWS Aurora Server)  │                      │ financial passes, catalog SKUs, and  │
+│                   │                      │                      │ transactional affiliate events.      │
+├───────────────────┼──────────────────────┼──────────────────────┼──────────────────────────────────────┤
+│ Object Storage    │ Cloudflare R2        │ AWS S3 Standard      │ R2 charges $0 for data egress fees,  │
+│                   │                      │                      │ protecting margins on high-res 4K    │
+│                   │                      │                      │ renders and heavy room uploads.      │
+├───────────────────┼──────────────────────┼──────────────────────┼──────────────────────────────────────┤
+│ Client Framework  │ Next.js 15 (React 19)│ Single-Page App      │ Next.js provides hybrid SSR for fast │
+│                   │                      │ (Vite + React SPA)   │ landing discovery and client canvas  │
+│                   │                      │                      │ hydration with shared TS interfaces. │
+└───────────────────┴──────────────────────┴──────────────────────┴──────────────────────────────────────┘
+
+```
+
+---
+
+# 3. Application Modules & Bounded Contexts
+
+The backend is built as a single, maintainable **Modular Monolith** in NestJS. Modules communicate internally via direct dependency injection or decoupled in-process event emitters (`EventEmitter2`).
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              MODULAR MONOLITH BOUNDARIES                               │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1. AuthModule (`/api/v1/auth`)                                                         │
+│    • Passwordless Magic Link generation and cryptographic token verification.          │
+│    • JWT token issuance and HTTP-only cookie management.                               │
+│    • Guest session creation and anonymous identifier persistence.                      │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 2. BillingModule (`/api/v1/billing`)                                                   │
+│    • Stripe Checkout Session initiation for $14.99 Move-In Pass.                       │
+│    • Cryptographic webhook validation (`checkout.session.completed`).                 │
+│    • Entitlement verification and fair-use generation counting (cap: 60 runs).         │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 3. ProjectModule (`/api/v1/projects`)                                                  │
+│    • Presigned URL issuance for Cloudflare R2 uploads (`PUT`).                         │
+│    • Project lifecycle orchestration: Creation, Status, Canvas Retrieval.             │
+│    • Ephemeral storage scheduler (`purge_scheduled_at` tagging).                       │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 4. InferenceModule (`/api/v1/inference`)                                               │
+│    • BullMQ queue integration (Job dispatch, retry logic, timeout handling).          │
+│    • Server-Sent Events (SSE) telemetry hub (`GET /api/v1/projects/:id/events`).       │
+│    • gRPC / HTTPS client calling the external Modal serverless GPU runner.             │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 5. CatalogModule (`/api/v1/catalog`)                                                   │
+│    • Multi-retailer SKU metadata management (IKEA, Target, Wayfair, Amazon).           │
+│    • Automated daily ETL stock synchronization and out-of-stock reconciliation.        │
+│    • Qdrant vector index synchronization and payload updates.                          │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 6. CommerceModule (`/api/v1/commerce`)                                                 │
+│    • Programmatic affiliate deep-link resolution and sub-ID click tagging.             │
+│    • Outbound HTTP 302 redirect engine (`GET /api/v1/commerce/redirect/:hotspot_id`).  │
+│    • Click telemetry recording (`affiliate_click_events`).                             │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ 7. PrivacyModule (`/api/v1/privacy`)                                                   │
+│    • Immediate 1-click hard-purge executor (`DELETE /api/v1/account/data`).            │
+│    • Automated 7-day storage purge cron daemon.                                        │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+```
+
+---
+
+# 4. Authentication, Authorization & Session Management
+
+### 4.1 Authentication Workflow
+* **Passwordless Email Magic Links:** Eliminates password credential storage liabilities. When a user enters their email (`SCR-02`), the backend generates a cryptographically secure, single-use token (HMAC-SHA256, 15-minute expiration) and dispatches it via transactional email (Postmark / SendGrid).
+* **OAuth 2.0 Providers:** Optional Google and Apple Sign-In flows using OpenID Connect (OIDC).
+* **Guest Sessions:** Anonymous visitors receive an ephemeral `guest_session_id` stored in a secure, `SameSite=Lax`, `HttpOnly` cookie. This allows them to execute 1 free room redesign before creating an account.
+
+### 4.2 Authorization & Role-Based Access Control (RBAC)
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              PERMISSION ENFORCEMENT RULES                              │
+├─────────────────┬──────────┬──────────┬─────────────────┬──────────────────────────────┤
+│ User Role       │ Free Run │ Paid Run │ Anchor Locking  │ Export 4K Clean Canvas       │
+├─────────────────┼──────────┼──────────┼─────────────────┼──────────────────────────────┤
+│ Anonymous Guest │ Max 1    │ No       │ No              │ No (Watermarked 1080p)       │
+│ Registered User │ Max 2    │ No       │ No              │ No (Watermarked 1080p)       │
+│ Move-In Pass    │ Unlimited│ Up to 60 │ Yes             │ Yes (Clean 4K WebP)          │
+│ System Admin    │ N/A      │ Bypass   │ Yes             │ Yes (Diagnostics enabled)    │
+└─────────────────┴──────────┴──────────┴─────────────────┴──────────────────────────────┘
+
+```
+
+Authorization is enforced via NestJS Guards (`@UseGuards(JwtAuthGuard, EntitlementGuard)`). The `EntitlementGuard` validates the database state:
+```typescript
+// Entitlement Verification Rule
+const hasActivePass = user.movePasses.some(
+  pass => pass.expiresAt > new Date() && pass.generationsExecuted < 60
+);
+if (!hasActivePass && user.freeRendersUsed >= 2) {
+  throw new ForbiddenException({
+    code: 'PASS_REQUIRED',
+    message: 'Free generation limit reached. Please purchase a Move-In Pass.'
+  });
+}
+
+```
+
+---
+
+# 5. External Integrations & API Contracts
+
+All APIs follow strict REST conventions, returning standard JSON envelopes with uniform error handling.
+
+### 5.1 Project Intake & Presigned URL Generation
+
+* **Endpoint:** `POST /api/v1/projects`
+* **Purpose:** Validates project metadata and returns a presigned Cloudflare R2 upload URL.
+
+```json
+// REQUEST
+{
+  "style_preset": "JAPANDI",
+  "room_function": "LIVING_ROOM",
+  "budget_ceiling_cents": 150000,
+  "currency": "USD"
+}
+
+// RESPONSE (201 Created)
+{
+  "project_id": "4b6a9c12-3211-4f81-a90b-04f8664b9e22",
+  "upload_url": "[https://r2.roomcommerce.internal/raw-uploads/4b6a9c12.jpg?X-Amz-Signature=](https://r2.roomcommerce.internal/raw-uploads/4b6a9c12.jpg?X-Amz-Signature=)...",
+  "upload_method": "PUT",
+  "expires_in_seconds": 300,
+  "max_size_bytes": 20971520
+}
+
+```
+
+### 5.2 Enqueue Asynchronous Inference Job
+
+* **Endpoint:** `POST /api/v1/projects/:id/render`
+* **Purpose:** Enqueues the processing job in Redis/BullMQ.
+
+```json
+// REQUEST
+{
+  "uploaded_asset_key": "raw-uploads/4b6a9c12-3211-4f81-a90b-04f8664b9e22.jpg"
+}
+
+// RESPONSE (202 Accepted)
+{
+  "job_id": "job_d98f2190-e837-4581-bc02-53b054c0172e",
+  "status": "QUEUED",
+  "estimated_duration_seconds": 13,
+  "telemetry_stream_url": "/api/v1/projects/4b6a9c12-3211-4f81-a90b-04f8664b9e22/events"
+}
+
+```
+
+### 5.3 Live Pipeline Progress (Server-Sent Events)
+
+* **Endpoint:** `GET /api/v1/projects/:id/events`
+* **Purpose:** Supplies live pipeline progress to the client interface (`SCR-07`).
+
+```http
+HTTP/1.1 200 OK
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+
+event: progress
+data: {"phase": "DEPTH_ESTIMATION", "percent": 25, "message": "Analyzing room perspective..."}
+
+event: progress
+data: {"phase": "INPAINTING", "percent": 65, "message": "Applying Japandi aesthetic..."}
+
+event: progress
+data: {"phase": "CATALOG_MATCHING", "percent": 90, "message": "Matching live furniture SKUs..."}
+
+event: complete
+data: {"project_id": "4b6a9c12-3211-4f81-a90b-04f8664b9e22", "status": "COMPLETED", "redirect_url": "/studio/view/4b6a9c12-3211-4f81-a90b-04f8664b9e22"}
+
+```
+
+### 5.4 Fetch Completed Canvas & Shoppable Hotspots
+
+* **Endpoint:** `GET /api/v1/projects/:id`
+* **Purpose:** Returns high-resolution render asset URLs and normalized hotspot coordinates.
+
+```json
+// RESPONSE (200 OK)
+{
+  "project_id": "4b6a9c12-3211-4f81-a90b-04f8664b9e22",
+  "status": "COMPLETED",
+  "rendered_image_url": "[https://cdn.roomcommerce.com/renders/4b6a9c12-4k.webp](https://cdn.roomcommerce.com/renders/4b6a9c12-4k.webp)",
+  "is_watermarked": false,
+  "style_preset": "JAPANDI",
+  "total_cart_cost_cents": 133898,
+  "budget_ceiling_cents": 150000,
+  "currency": "USD",
+  "expires_at": "2026-10-19T14:41:00Z",
+  "hotspots": [
+    {
+      "hotspot_id": "pin_9a87d012-4321-4a11-88fc-123456789abc",
+      "norm_x": 0.4520,
+      "norm_y": 0.6840,
+      "category": "coffee_table",
+      "similarity_score": 0.942,
+      "product": {
+        "sku_id": "sku-target-0891",
+        "retailer_name": "Target",
+        "title": "Solid Oak Round Coffee Table",
+        "price_cents": 24999,
+        "currency": "USD",
+        "dimensions": { "width_cm": 110.0, "depth_cm": 60.0, "height_cm": 42.0 },
+        "in_stock": true,
+        "redirect_url": "/api/v1/commerce/redirect/pin_9a87d012-4321-4a11-88fc-123456789abc"
+      }
+    }
+  ]
+}
+
+```
+
+### 5.5 Outbound Programmatic Affiliate Redirect
+
+* **Endpoint:** `GET /api/v1/commerce/redirect/:hotspot_id`
+* **Purpose:** Records click attribution telemetry (`EV-202`) and executes an HTTP 302 redirect.
+
+```http
+HTTP/1.1 302 Found
+Location: [https://goto.target.com/c/12345/subid_pin9a87d012?u=https%3A%2F%2Fwww.target.com%2Fp%2Fsolid-oak-coffee-table](https://goto.target.com/c/12345/subid_pin9a87d012?u=https%3A%2F%2Fwww.target.com%2Fp%2Fsolid-oak-coffee-table)
+Set-Cookie: prc_click_session=pin_9a87d012; Path=/; Max-Age=86400; Secure; HttpOnly; SameSite=Lax
+
+```
+
+---
+
+# 6. Canonical Data Models & Entity Relationships
+
+### 6.1 Entity-Relationship Diagram (ERD)
+
+```
+┌────────────────────────┐         1:N         ┌────────────────────────┐
+│         users          │────────────────────<│      move_passes       │
+│────────────────────────│                     │────────────────────────│
+│ id (PK)                │                     │ id (PK)                │
+│ email (UQ)             │                     │ user_id (FK)           │
+│ free_renders_used      │                     │ stripe_session_id (UQ) │
+│ created_at             │                     │ expires_at             │
+└────────────────────────┘                     │ generations_executed   │
+            │                                  └────────────────────────┘
+            │ 1:N
+            ▼
+┌────────────────────────┐         1:N         ┌────────────────────────┐
+│        projects        │────────────────────<│    canvas_hotspots     │
+│────────────────────────│                     │────────────────────────│
+│ id (PK)                │                     │ id (PK)                │
+│ user_id (FK, Nullable) │                     │ project_id (FK)        │
+│ style_preset           │                     │ matched_sku_id (FK)    │
+│ budget_ceiling_cents   │                     │ norm_x, norm_y         │
+│ raw_image_url          │                     │ similarity_score       │
+│ rendered_image_url     │                     └────────────────────────┘
+│ purge_scheduled_at     │                                  │
+└────────────────────────┘                                  │
+                                                            │ N:1
+                                                            ▼
+┌────────────────────────┐         1:N         ┌────────────────────────┐
+│ affiliate_click_events │>────────────────────│      catalog_skus      │
+│────────────────────────│                     │────────────────────────│
+│ id (PK)                │                     │ id (PK)                │
+│ hotspot_id (FK)        │                     │ sku, retailer_id (UQ)  │
+│ sku_id (FK)            │                     │ title, category        │
+│ click_id (UUID)        │                     │ price_cents, in_stock  │
+│ created_at             │                     │ canonical_url          │
+└────────────────────────┘                     │ affiliate_url          │
+                                               │ primary_image_url      │
+                                               └────────────────────────┘
+
+```
+
+### 6.2 PostgreSQL 16 DDL Schema
+
+```sql
+-- Core User Accounts
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    free_renders_used SMALLINT NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Move-In Pass Entitlements (Episodic 30-Day Billing)
+CREATE TABLE move_passes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    stripe_session_id VARCHAR(255) UNIQUE NOT NULL,
+    amount_cents INTEGER NOT NULL DEFAULT 1499,
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    activated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '30 days'),
+    generations_executed SMALLINT NOT NULL DEFAULT 0,
+    is_active BOOLEAN GENERATED ALWAYS AS (
+        NOW() < expires_at AND generations_executed < 60
+    ) STORED
+);
+CREATE INDEX idx_move_passes_lookup ON move_passes(user_id, expires_at);
+
+-- Room Design Projects
+CREATE TYPE style_preset_enum AS ENUM (
+    'JAPANDI', 'MID_CENTURY_MODERN', 'SCANDINAVIAN', 'INDUSTRIAL',
+    'MINIMALIST', 'CONTEMPORARY', 'BOHEMIAN', 'MODERN_FARMHOUSE'
+);
+
+CREATE TYPE room_function_enum AS ENUM (
+    'LIVING_ROOM', 'BEDROOM', 'HOME_OFFICE', 'DINING_ROOM', 'PATIO'
+);
+
+CREATE TABLE projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    guest_session_id VARCHAR(128),
+    style_preset style_preset_enum NOT NULL,
+    room_function room_function_enum NOT NULL DEFAULT 'LIVING_ROOM',
+    budget_ceiling_cents INTEGER NOT NULL,
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    raw_image_url TEXT NOT NULL,
+    depth_map_url TEXT,
+    rendered_image_url TEXT,
+    purge_scheduled_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '7 days'),
+    status VARCHAR(32) NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_projects_user ON projects(user_id);
+CREATE INDEX idx_projects_purge ON projects(purge_scheduled_at) WHERE status != 'PURGED';
+
+-- Catalog Inventory (Aggregated Multi-Retailer Feed)
+CREATE TABLE catalog_skus (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sku VARCHAR(128) NOT NULL,
+    retailer_id VARCHAR(32) NOT NULL, -- 'IKEA', 'TARGET', 'WAYFAIR', 'AMAZON', 'WEST_ELM'
+    title VARCHAR(512) NOT NULL,
+    category VARCHAR(64) NOT NULL,
+    price_cents INTEGER NOT NULL,
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    width_cm NUMERIC(6,2),
+    depth_cm NUMERIC(6,2),
+    height_cm NUMERIC(6,2),
+    canonical_url TEXT NOT NULL,
+    affiliate_url TEXT NOT NULL,
+    primary_image_url TEXT NOT NULL,
+    in_stock BOOLEAN NOT NULL DEFAULT TRUE,
+    last_verified_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_retailer_sku UNIQUE (retailer_id, sku)
+);
+CREATE INDEX idx_catalog_query ON catalog_skus(category, in_stock, price_cents);
+
+-- Generated Hotspot Pins on Canvas
+CREATE TABLE canvas_hotspots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    matched_sku_id UUID NOT NULL REFERENCES catalog_skus(id),
+    category VARCHAR(64) NOT NULL,
+    norm_x NUMERIC(5,4) NOT NULL,
+    norm_y NUMERIC(5,4) NOT NULL,
+    similarity_score NUMERIC(5,4) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_canvas_hotspots_project ON canvas_hotspots(project_id);
+
+-- Outbound Affiliate Click Telemetry
+CREATE TABLE affiliate_click_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    hotspot_id UUID NOT NULL REFERENCES canvas_hotspots(id),
+    sku_id UUID NOT NULL REFERENCES catalog_skus(id),
+    retailer_id VARCHAR(32) NOT NULL,
+    click_id UUID NOT NULL DEFAULT gen_random_uuid(),
+    user_agent TEXT,
+    ip_hash VARCHAR(64),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_affiliate_clicks ON affiliate_click_events(created_at, retailer_id);
+
+```
+
+---
+
+# 7. Background Processing, Queues & Error Handling
+
+Heavy ML tasks cannot block HTTP request threads. Background processing uses **BullMQ with Redis**.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                BULLMQ JOB LIFECYCLE FLOW                               │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+  [Client Request] ──► Pushed to Queue: `room-inference-queue`
+                             │
+            ┌────────────────┴────────────────┐
+            ▼                                 ▼
+   Lane A: High-Priority             Lane B: Standard
+   (Paid Move-In Pass Holders)       (Free Tier Users)
+            │                                 │
+            └────────────────┬────────────────┘
+                             │
+                             ▼
+  [Worker Processes Job] ──► Timeout Budget: 25.0s (Hard Deadline)
+                             │
+            ┌────────────────┴────────────────┐
+            ▼                                 ▼
+        (Success)                          (Failure)
+            │                                 │
+   Save R2 Renders & Hotspots                 ├── Attempt 1 & 2: Exponential Backoff (2s, 5s)
+   Emit SSE: `complete`                       └── Final Fail: Move to `Dead-Letter Queue`
+                                                  Emit SSE: `error` (Credits Restored)
+
+```
+
+### Circuit Breaker & Timeout Strategy
+
+* **Hard Job Timeout:** If the GPU serverless runner does not respond within $25.0\text{ seconds}$, the BullMQ worker marks the job as timed out, restores the user's generation credit, and notifies the client via SSE.
+* **Dead-Letter Queue (DLQ):** Failed jobs are sent to `room-inference-dlq`. Alerts trigger in Slack/PagerDuty if the DLQ exceeds 5 items in a 10-minute window.
+* **Idempotency Guarantee:** Every render job takes an idempotency key (`idempotency_key = hash(project_id + user_id)`). Re-submitting the same request returns the existing job ID rather than spawning duplicate GPU tasks.
+
+---
+
+# 8. Observability, Monitoring, Logging & Telemetry
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              OBSERVABILITY ARCHITECTURE                                │
+├─────────────────────────┬──────────────────────────────┬───────────────────────────────┤
+│ Telemetry Domain        │ Tool / Sink                  │ Monitored Metrics & Alerts    │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Application Logging     │ Winston / CloudWatch         │ Structured JSON logs, trace   │
+│                         │                              │ IDs, error stack traces.      │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Error Tracking          │ Sentry                       │ Unhandled exceptions, broken  │
+│                         │                              │ affiliate redirect links.     │
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Systems Performance     │ Datadog / AWS CloudWatch     │ GPU worker execution latency, │
+│                         │                              │ BullMQ queue depth, Aurora CPU│
+├─────────────────────────┼──────────────────────────────┼───────────────────────────────┤
+│ Product & Telemetry     │ PostHog                      │ EV-101 to EV-302 event logs,  │
+│                         │                              │ funnel drop-off, pass sales.  │
+└─────────────────────────┴──────────────────────────────┴───────────────────────────────┘
+
+```
+
+### Structured Log Schema Example
+
+```json
+{
+  "timestamp": "2026-10-12T14:41:02.120Z",
+  "level": "info",
+  "service": "roomcommerce-api",
+  "trace_id": "c98f2190-e837-4581-bc02-53b054c0172e",
+  "event": "INFERENCE_JOB_COMPLETED",
+  "project_id": "4b6a9c12-3211-4f81-a90b-04f8664b9e22",
+  "user_id": "usr_99182a",
+  "duration_ms": 11250,
+  "detected_items": 4,
+  "compute_cost_usd": 0.00345
+}
+
+```
+
+---
+
+# 9. Deployment Environments & CI/CD Pipeline
+
+The application maintains three isolated environments: **Local Development**, **Staging**, and **Production**.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              CI/CD DEPLOYMENT PIPELINE                                 │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+  [Developer Pushes to `main`]
+              │
+              ▼
+  [GitHub Actions Pipeline]
+  ├── Step 1: Lint & Code Style (`eslint`, `prettier`, `tsc --noEmit`)
+  ├── Step 2: Automated Unit & Integration Tests (Vitest & Supertest)
+  ├── Step 3: Security Scan (Trivy container scanner + Snyk dependency audit)
+  └── Step 4: Build Docker Images (`api-service`, `gpu-worker`)
+              │
+              ▼
+  [Automated Deployment Gate]
+  ├── Deploy Next.js Client ──► AWS ECS Fargate / Cloudflare Edge
+  ├── Deploy NestJS Backend ──► AWS ECS Fargate Cluster (Rolling Zero-Downtime)
+  └── Deploy ML Workers     ──► Modal Container Registry / RunPod Fleet
+
+```
+
+---
+
+# 10. Testing Strategy
+
+Quality assurance enforces high test coverage across all layers to prevent regressions before releases reach users.
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 TESTING PYRAMID RATIOS                                 │
+├──────────────────────┬─────────────┬───────────────────────────────────────────────────┤
+│ Test Tier            │ Coverage    │ Execution Tools & Target Scope                    │
+├──────────────────────┼─────────────┼───────────────────────────────────────────────────┤
+│ Unit Tests           │ ≥ 85%       │ Vitest / Jest: Business logic, pricing math,      │
+│                      │             │ budget filters, token scrubbers, date limits.     │
+├──────────────────────┼─────────────┼───────────────────────────────────────────────────┤
+│ Integration Tests    │ ≥ 80%       │ Supertest + Testcontainers (real PostgreSQL/Redis):│
+│                      │             │ API endpoints, Stripe webhook handlers.           │
+├──────────────────────┼─────────────┼───────────────────────────────────────────────────┤
+│ ML Contract Tests    │ 100% paths  │ PyTorch test harness: Validates output tensors,   │
+│                      │             │ depth map formats, and SigLIP vector dimensions.  │
+├──────────────────────┼─────────────┼───────────────────────────────────────────────────┤
+│ End-to-End (E2E)     │ Core CUJs   │ Playwright: Tests photo upload, canvas hotspot    │
+│                      │             │ clicks, and Stripe payment modals.                │
+├──────────────────────┼─────────────┼───────────────────────────────────────────────────┤
+│ Load / Stress Tests  │ Benchmark   │ k6: Simulates 50 concurrent room generation jobs  │
+│                      │             │ and 200 vector queries/sec.                       │
+└──────────────────────┴─────────────┴───────────────────────────────────────────────────┘
+
+```
+
+---
+
+# 11. Scalability, Performance SLAs, Backup & Recovery
+
+### 11.1 Service Level Agreements (SLAs)
+
+* **API Availability:** $99.9\%$ monthly uptime.
+* **Warm Pipeline Generation Latency:** $\le 13.0\text{ seconds}$ average; $\le 15.0\text{ seconds}$ (p90).
+* **Hotspot Tap Response Time:** $\le 150\text{ milliseconds}$ to render product drawer.
+* **Vector Search Latency:** $\le 50\text{ milliseconds}$ per query in Qdrant.
+
+### 11.2 Disaster Recovery (DR) & Backup Policy
+
+* **Recovery Point Objective (RPO):** $< 1\text{ hour}$ (Aurora continuous automated backups with point-in-time recovery).
+* **Recovery Time Objective (RTO):** $< 30\text{ minutes}$ (ECS Fargate infrastructure defined via Terraform / CloudFormation).
+* **Ephemeral Data Exemption:** Raw user images and temporary room renders are not backed up across regions, complying with the 7-day privacy purge policy.
+
+---
+
+# 12. Security, Privacy & Regulatory Considerations
+
+### 12.1 GDPR & CCPA Compliance Architecture
+
+1. **Zero Model Training Guarantee:** User room imagery is strictly quarantined and excluded from foundation model training datasets (`PRV-01`).
+2. **Automated 7-Day Storage Purge:** Cloudflare R2 enforces bucket lifecycle rules that hard-delete files after 7 days (`SEC-01`). A companion database cron worker removes associated records.
+3. **Automated Biometric Obfuscation:** The serverless ingestion pipeline runs OpenCV YuNet face detection on every upload, applying a $31\times31$ Gaussian blur to domestic faces and family portraits before inpainting (`SEC-02`).
+4. **Immediate Right-to-Erasure:** A user can trigger an instant hard purge via `/account` (`PRV-02`), deleting all projects, images, and pins within 60 seconds.
+
+### 12.2 Commercial Regulatory Compliance (FTC / ASA)
+
+* Every screen presenting shoppable product pins (`SCR-08`, `SCR-08A`, `SCR-08B`) visibly includes mandatory legal disclaimers: *"We earn affiliate commissions from qualifying purchases made via links on this page."*
+
+---
+
+# 13. Expected Operating Costs & Technical Risk Matrix
+
+### 13.1 Monthly Operating Cost Model (Pilot Baseline: 5,000 Active Users)
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              MONTHLY OPERATING COST PROJECTION                         │
+├──────────────────────────────┬─────────────────────────────┬───────────────────────────┤
+│ Infrastructure Component     │ Basis & Sizing              │ Projected Monthly Cost    │
+├──────────────────────────────┼─────────────────────────────┼───────────────────────────┤
+│ AWS ECS Fargate (API)        │ 2 tasks (0.5 vCPU, 1GB RAM) │ $35.00                    │
+│ AWS Aurora PostgreSQL Server │ Serverless v2 (0.5 - 2 ACU) │ $45.00                    │
+│ Upstash Redis (Queues/SSE)   │ Managed Serverless Tier     │ $20.00                    │
+│ Cloudflare R2 Storage        │ 50GB storage + 0 egress     │ $5.00                     │
+│ Qdrant Cloud (Vector DB)     │ Starter Cluster (50K SKUs)  │ $45.00                    │
+│ Serverless GPU Workers       │ 15,000 runs @ $0.0035/run   │ $52.50                    │
+│ Domain, Postmark, Sentry     │ Base SaaS Developer Plans   │ $40.00                    │
+├──────────────────────────────┼─────────────────────────────┼───────────────────────────┤
+│ TOTAL ESTIMATED MONTHLY COST │ 5,000 Users / 15,000 Runs   │ $242.50 USD               │
+└──────────────────────────────┴─────────────────────────────┴───────────────────────────┘
+
+```
+
+*Unit Economic Verification:* Average compute cost per generation remains under **$0.0035**, leaving a healthy margin from the **$14.99** Move-In Pass and affiliate commissions.
+
+### 13.2 Technical Risk Assessment
+
+| Risk ID | Identified Risk | Impact | Architectural Mitigation |
+| --- | --- | --- | --- |
+| **TR-01** | GPU serverless cold starts cause generation times to exceed the 15s SLA. | High | Keep 1 warm GPU worker active during peak hours (10:00–22:00 local time). |
+| **TR-02** | Affiliate network links break due to merchant SKU churn. | Medium | Run automated daily ETL availability checks to mark dead links as out of stock. |
+| **TR-03** | Heavy concurrent mobile uploads saturate application API bandwidth. | Medium | Use presigned R2 URLs so mobile clients upload directly to storage, bypassing APIs. |
+
+---
+
+# 14. Unresolved Decisions & External Dependencies
+
+Before Phase 4 implementation starts, the team must confirm decisions on two external dependencies:
+
+1. **`DEP-01` Primary Serverless GPU Provider:** Select between **Modal** and **RunPod Serverless**.
+* *Recommendation:* Use **Modal** for faster container cold starts ($\sim 3.2\text{s}$) and native Python function bindings.
+
+
+2. **`DEP-02` Affiliate Network Aggregator Choice:** Select between **Skimlinks** and direct relationships via **Impact / CJ Affiliate**.
+* *Recommendation:* Use **Impact + Amazon Associates** for the US pilot to secure higher net commissions (4–8%) compared to third-party sub-aggregators.
+
+
+
+---
+
+# 15. Architecture Gate Review & Sign-Off Request
+
+The systems architecture for **Project RoomCommerce** is complete. It provides a reliable, scalable, and cost-effective plan that directly fulfills every approved PRD requirement.
+
+### Gate Verification Checklist
+
+* [x] Responsibilities clearly separated across Frontend, Backend, ML Workers, Database, and Storage.
+* [x] Pragmatic Modular Monolith chosen over unnecessary microservices.
+* [x] Complete REST API contracts and PostgreSQL DDL schemas specified.
+* [x] BullMQ background queue and SSE status streaming detailed.
+* [x] Ephemeral storage policies and GDPR/CCPA face/EXIF sanitization rules embedded.
+* [x] Unit economic validation confirmed at $\approx \$0.0035$ compute cost per run.
+
+**Recommendation:** Formally approve this architecture specification to unlock **Phase 4: Implementation & Engineering (Monorepo Setup, Sprint Planning & Task Execution)**.
+
+```
+
+```

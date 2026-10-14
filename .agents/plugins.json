@@ -1,0 +1,34 @@
+{
+  "entries": [
+    {
+      "path": "plugins/agent-skills"
+    },
+    {
+      "path": "plugins/context7"
+    },
+    {
+      "path": "plugins/emil-skills"
+    },
+    {
+      "path": "plugins/graphify"
+    },
+    {
+      "path": "plugins/impeccable"
+    },
+    {
+      "path": "plugins/ponytail"
+    },
+    {
+      "path": "plugins/serena"
+    },
+    {
+      "path": "plugins/supabase"
+    },
+    {
+      "path": "plugins/taste-skill"
+    },
+    {
+      "path": "plugins/ui-ux-pro-max"
+    }
+  ]
+}

@@ -1,0 +1,297 @@
+```markdown
+# File: 25_phase6_cpo_executive_review_and_v1_1_iteration_roadmap.md
+# Project: Project RoomCommerce
+# Lifecycle Phase: Phase 6 — Post-Launch Product Evaluation & V1.1 Iteration Roadmap
+# Author: Chief Product Officer
+# Status: Complete / Executive Strategy & Iteration Roadmap Approved
+
+---
+
+## Central Project Status Document
+
+* **Project Working Title:** Project RoomCommerce
+* **Current Lifecycle Phase:** Phase 6 — Post-Canary Evaluation & V1.1 Iteration Scoping
+* **Current Software Version:** `v1.0.0` (Graduated from 10% Canary to 100% General Availability)
+* **Lifecycle Gate Status:** V1.1 Scoping & Architectural Gate
+* **Executive Decision Log:**
+  * *Decision 6.1:* Reject conversational AI prompt-chat interfaces. The core value proposition remains deterministic spatial inpainting bounded by budget and catalog metadata.
+  * *Decision 6.2:* Promote **Selective Anchor Item Locking (`FR-104`)** from P1 backlog to immediate V1.1 implementation based on overwhelming user feedback from incremental room remodelers.
+  * *Decision 6.3:* Promote **Universal Room Basket & Cross-Device Handoff** to mitigate mobile affiliate cookie expiration leakage (addressing the Amazon 24-hour cookie drop-off).
+* **Active Critical Risks:** Long furniture deliberation cycles ($14–45\text{ days}$) conflicting with short single-device affiliate attribution windows; spatial pin clustering on small mobile viewports.
+* **Immediate Next Step:** Authorize engineering sprint planning for the V1.1 release package.
+
+---
+
+# 1. Executive Performance Review: Empirical Results vs. Targets
+
+The following audit synthesizes telemetry from 3,850 completed room generations across the pilot release, cross-referencing quantitative funnel data with customer support tickets and SRE observability.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   PILOT PERFORMANCE AUDIT SCORECARD                                    │
+├─────────────────────────┬──────────────────────────┬──────────────────────┬─────────────┬──────────────┤
+│ Metric Category         │ Monitored Metric         │ MVP Target Baseline  │ Actual Obs. │ Delta Status │
+├─────────────────────────┼──────────────────────────┼──────────────────────┼─────────────┼──────────────┤
+│ Core North Star (NSM)   │ Qualified Outbound (QSOS)│ ≥ 1.0 QSOS / User    │ 1.28 QSOS   │ +28.0% (PASS)│
+├─────────────────────────┼──────────────────────────┼──────────────────────┼─────────────┼──────────────┤
+│ Acquisition / Intake    │ Landing ➔ Upload Rate    │ ≥ 35.0% of Visitors  │ 38.2%       │ +9.1% (PASS) │
+│                         │ Quality Gate Pass Rate   │ ≥ 80.0% of Uploads   │ 84.6%       │ +5.7% (PASS) │
+├─────────────────────────┼──────────────────────────┼──────────────────────┼─────────────┼──────────────┤
+│ Pipeline Performance    │ Warm Inference (Average) │ ≤ 13.0s              │ 10.42s      │ -19.8% (PASS)│
+│                         │ Pipeline p90 Latency     │ ≤ 15.0s              │ 11.85s      │ -21.0% (PASS)│
+│                         │ GPU Unit Cost per Run    │ ≤ $0.040 USD         │ $0.00348 USD│ 11.5x Margin │
+├─────────────────────────┼──────────────────────────┼──────────────────────┼─────────────┼──────────────┤
+│ Engagement & Commercial │ Product Pin Tap Rate     │ ≥ 45.0% of Sessions  │ 61.4%       │ +36.4% (PASS)│
+│                         │ Outbound Affiliate CTR   │ ≥ 25.0% of Viewers   │ 27.8%       │ +11.2% (PASS)│
+├─────────────────────────┼──────────────────────────┼──────────────────────┼─────────────┼──────────────┤
+│ Monetization            │ Free-to-Pass Conversion  │ ≥ 7.0% of Free Users │ 8.1%        │ +15.7% (PASS)│
+│                         │ Pass Refund Rate         │ < 1.0% of Sales      │ 0.4%        │ Healthy      │
+├─────────────────────────┼──────────────────────────┼──────────────────────┼─────────────┼──────────────┤
+│ Regulatory / Compliance │ Out-of-Stock Pin Rate    │ 0.0% (Guaranteed)    │ 0.0%        │ Verified     │
+│                         │ 7-Day Storage Hard Purge │ 100% Deletion Rate   │ 100%        │ Verified     │
+└─────────────────────────┴──────────────────────────┴──────────────────────┴─────────────┴──────────────┘
+
+```
+
+---
+
+# 2. Diagnostic Analysis: What Is Working vs. What Is Breaking
+
+### 2.1 Features Delivering High Measurable Value
+1. **The Instant Cross-Retailer Shopping List:** User interviews confirm that combining IKEA, Target, Wayfair, and Amazon items into a unified room visual is the primary retention driver. Users actively contrast this with single-brand visualizers (IKEA Kreativ, Wayfair Decorify).
+2. **The 30-Day Move-In Pass ($14.99):** The anti-subscription thesis was validated. Conversion hit **8.1%** (exceeding the 7.0% target). Qualitative feedback highlights user relief at not being enrolled in an auto-renewing subscription for a one-time moving event.
+3. **Sub-12s Serverless Inference Architecture:** The decoupled Modal + Qdrant pipeline consistently delivers completed renders in $\sim 10.4\text{s}$, preventing top-of-funnel drop-off.
+
+### 2.2 Friction Points, Confusion & Complexity Drivers
+1. **The "Replace My Favorite Couch" Friction:** **44% of negative qualitative feedback** came from the Secondary Target Audience (Incremental Refreshers). The AI redesign replaced their existing expensive furniture (e.g., a $2,000 leather sofa) with a new catalog couch, rendering the redesign useless to them.
+2. **The Mobile-to-Desktop Purchase Disconnect (Cookie Leakage):** While **68% of room captures and generations happen on mobile smartphones**, **72% of actual high-ticket furniture purchases occur on desktop computers** days later. Users browse on mobile, like the items, but do not complete the purchase within the retailer's mobile browser session, leading to significant affiliate attribution loss (especially with Amazon's 24-hour cookie).
+3. **Budget vs. Style Mismatch Dead-Ends:** Users selecting "Industrial" or "Mid-Century" with an unrealistic budget ceiling ($300–$400) experienced degraded renders with fewer matched items, causing frustration.
+4. **Pin Tap Collision on Mobile Viewports:** On dense scenes with 5+ items, small decor pins (e.g., table lamp and wall art) overlap on small smartphone screens ($< 390\text{px}$), leading to mis-taps and navigation frustration.
+
+### 2.3 Technical Debt & Reliability Fragilities
+* **Nightly Catalog Feed Sync Latency:** Catalog pricing and stock status sync once every 24 hours at 03:00 UTC. While out-of-stock pins at generation time remained at 0%, 1.2% of SKUs changed price at the retailer between sync cycles, creating a temporary display discrepancy.
+* **Cold Worker Spikes During Lunchtime Bursts:** While warm inference averages $10.4\text{s}$, sudden surges in concurrent users between 12:00 and 13:00 EST triggered cold worker spin-ups on Modal, pushing p99 latency to $18.2\text{s}$.
+
+---
+
+# 3. Strategic Rejections & Postponed Concepts
+
+To maintain organizational focus and protect unit economics, the following proposals are explicitly rejected or deferred:
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   FEATURE REJECTION & DEFERRAL AUDIT                                   │
+├──────────────────────────┬──────────┬──────────────────────────────────────────────────────────────────┤
+│ Proposed Feature Concept │ Decision │ Strategic Justification & Evidence                               │
+├──────────────────────────┼──────────┼──────────────────────────────────────────────────────────────────┤
+│ 1. Conversational AI     │ REJECTED │ Generates prompt-fatigue and unpredictable spatial hallucinations.│
+│    Chatbot Interface     │          │ Users want instant visual results bounded by real catalog SKUs,  │
+│    (e.g., "Chat with AI")│          │ not an open-ended chatbot that cannot enforce physical budgets.  │
+├──────────────────────────┼──────────┼──────────────────────────────────────────────────────────────────┤
+│ 2. WebXR / AR Camera     │ POSTPONED│ 3D USDZ asset coverage across budget retailers (Target/IKEA) is  │
+│    "View in Room" Mode   │ (To V2)  │ under 15% of total catalog SKUs. Building AR for 15% of items    │
+│                          │          │ creates a fragmented, confusing user experience.                 │
+├──────────────────────────┼──────────┼──────────────────────────────────────────────────────────────────┤
+│ 3. Hyper-Local Handyman &│ POSTPONED│ Software-only e-commerce scaling delivers 85%+ gross digital     │
+│    Contractor Directory  │ (To V2)  │ margins. Introducing two-sided local services requires physical   │
+│                          │          │ operations, diluting focus before commerce validation completes. │
+├──────────────────────────┼──────────┼──────────────────────────────────────────────────────────────────┤
+│ 4. Social "Community     │ REJECTED │ Furnishing a home is a private, episodic transaction. Adding a   │
+│    Design Feed" / Likes  │          │ social feed creates low-utility maintenance overhead without     │
+│                          │          │ driving qualified outbound retailer sessions.                    │
+└──────────────────────────┴──────────┴──────────────────────────────────────────────────────────────────┘
+
+```
+
+---
+
+# 4. Prioritized V1.1 Iteration Backlog (RICE Prioritization)
+
+The next iteration focuses on four core initiatives designed to increase **Qualified Shoppable Outbound Sessions (QSOS)**, unlock the secondary market segment, and close the mobile-to-desktop affiliate attribution gap.
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      V1.1 RICE PRIORITIZATION MATRIX                                   │
+├──────┬────────────────────────────────┬──────┬────────┬────────────┬────────┬───────┬──────────────────┤
+│ ID   │ Initiative Title               │ Reach│ Impact │ Confidence │ Effort │ Score │ Strategic Rank   │
+├──────┼────────────────────────────────┼──────┼────────┼────────────┼────────┼───────┼──────────────────┤
+│ IT-1 │ Selective Anchor Item Locking  │ 75%  │ 3.0    │ 90% (V.High│ 2.0    │ 101.2 │ RANK 1 (P0)      │
+│      │ ("Keep My Couch / Flooring")   │      │ (High) │            │ (Med)  │       │ Unlocks Refresher│
+├──────┼────────────────────────────────┼──────┼────────┼────────────┼────────┼───────┼──────────────────┤
+│ IT-2 │ Universal Project Handoff &    │ 65%  │ 3.0    │ 85% (High) │ 1.5    │ 110.5 │ RANK 2 (P0)      │
+│      │ Single-Click Cart Sync (Email) │      │ (High) │            │ (Low)  │       │ Solves Cookie Gap│
+├──────┼────────────────────────────────┼──────┼────────┼────────────┼────────┼───────┼──────────────────┤
+│ IT-3 │ Dynamic Budget Floor Guidance  │ 80%  │ 2.0    │ 90% (V.High│ 1.0    │ 144.0 │ RANK 3 (P0)      │
+│      │ & Style Feasibility Gauge      │      │ (Med)  │            │ (Low)  │       │ Fixes Dead-Ends  │
+├──────┼────────────────────────────────┼──────┼────────┼────────────┼────────┼───────┼──────────────────┤
+│ IT-4 │ Adaptive Spatial Pin Collision │ 100% │ 1.5    │ 95% (V.High│ 1.0    │ 142.5 │ RANK 4 (P1)      │
+│      │ & Grouped Decor Badging        │ (Mob)│ (Low)  │            │ (Low)  │       │ Usability Polish │
+└──────┴────────────────────────────────┴──────┴────────┴────────────┴────────┴───────┴──────────────────┘
+
+```
+
+---
+
+# 5. Detailed Change Specifications for V1.1 Release
+
+---
+
+### Initiative 1: Selective Anchor Item Locking (`IT-1` / `FR-104`)
+
+#### Problem Statement
+Existing room remodelers abandon the application because the generative pipeline replaces furniture pieces they intend to keep (e.g., an existing sofa or newly installed hardwood flooring).
+
+#### Evidence Base
+* **44% of negative qualitative feedback** on Canvas (`SCR-08`) cited an inability to preserve core furniture.
+* Drop-off rate among users identifying as "Incremental Refreshers" was **2.1x higher** than Transitional Movers.
+
+#### Expected Outcome
+Enable users to lock 1–3 detected objects in place. The AI inpainting model will redesign around these locked items while preserving their boundaries, materials, and lighting.
+
+#### Success Metric
+* **Incremental Refresher Conversion Rate:** Increase Free-to-Pass paywall conversion among remodelers from **4.2% to $\ge 7.5\%$**.
+* **Feature Adoption:** $\ge 35\%$ of paid generations use at least one anchor lock.
+
+#### Implementation Scope
+* **Frontend (`SCR-05` / `SCR-06`):** On the inspection screen, render interactive segmentation bounding masks produced by Grounding DINO. Tapping an item marks it with a locked badge (`"Keep This Item"`).
+* **Backend (`InferenceModule`):** The serverless GPU worker converts locked bounding boxes into an inverted binary mask, preventing the diffusion model from altering pixels within those coordinates.
+* **Entitlement Gate:** Available exclusively to active $14.99 Move-In Pass holders (`FR-504`).
+
+#### Acceptance Criteria
+1. Tapping a detected sofa highlights its bounding box in blueprint olive (`#4E5E4A`) with a `"LOCKED"` badge.
+2. The generated output preserves the original sofa's pixels, lighting, and texture, while generating cohesive rugs, coffee tables, and decor around it.
+3. Locked items are excluded from the matched shopping cart sum and do not receive purchasable pins.
+
+---
+
+### Initiative 2: Universal Project Handoff & Desktop Cart Sync (`IT-2`)
+
+#### Problem Statement
+Users generate room designs on mobile smartphones but make high-ticket furniture purchases on desktop computers days later. This breaks the mobile browser affiliate cookie attribution window, causing **lost referral revenue**.
+
+#### Evidence Base
+* **68%** of generation sessions occur on mobile viewports ($< 768\text{px}$).
+* Downstream affiliate cookie matching dashboards show an estimated **38% attribution drop** on sessions where users transition from mobile browsing to desktop checkout without a persistent click identifier.
+
+#### Expected Outcome
+A single-click action allowing users to email themselves a direct "Desktop Project Dossier" that includes the 4K render, dimensions, and active affiliate links, refreshing the affiliate cookie window when opened on their primary purchasing device.
+
+#### Success Metric
+* **Attribution Recovery:** Recover an estimated **$0.45 additional affiliate revenue per completed generation**.
+* **Handoff Conversion:** $\ge 22\%$ of mobile users trigger the "Send to Desktop" workflow.
+
+#### Implementation Scope
+* **Frontend (`SCR-08` / `SCR-08A`):** Add a persistent CTA on mobile viewports: `[ Send Shopping List to My Computer 💻 ]`.
+* **Backend (`CommerceModule`):** Generates a secure, signed desktop handoff link via Postmark, delivering a clean desktop landing page that re-hydrates the interactive canvas and refreshes affiliate cookies.
+
+#### Acceptance Criteria
+1. Clicking the CTA prompts for an email address (pre-filled if authenticated).
+2. The email delivers an HTML specification sheet with room render, individual product cards, prices, and direct affiliate links.
+3. Clicking the email link on a desktop computer opens the project directly in the desktop view (`SCR-08`) with valid affiliate session cookies set on the desktop browser.
+
+---
+
+### Initiative 3: Dynamic Style-Budget Feasibility Floor (`IT-3` / `EXP-2`)
+
+#### Problem Statement
+Users occasionally set unrealistically low budget ceilings (e.g., $300 for a complete Mid-Century Modern living room), leading to degraded catalog matches and poor visual results.
+
+#### Evidence Base
+* Sessions where the budget was set below $450 exhibited an **outbound affiliate CTR of only 11.2%** (compared to the 27.8% platform average) due to sparse product availability in premium design styles.
+
+#### Expected Outcome
+Provide real-time guidance on the budget slider (`SCR-06`), indicating the minimum viable spending floor required for the selected style preset to ensure a complete, cohesive room match.
+
+#### Success Metric
+* **Budget Realism Shift:** Reduce low-budget generation failures by **$\ge 45\%$**.
+* **Outbound CTR:** Increase outbound CTR on budget-constrained sessions from **11.2% to $\ge 22.0\%$**.
+
+#### Implementation Scope
+* **Frontend (`SCR-06`):** The budget slider dynamically updates its minimum recommended floor based on the selected style card (e.g., Japandi: $550, Minimalist: $400, Contemporary: $650).
+* **Defensive Guardrail:** If the user sets the slider below the recommended floor, an amber badge appears: *"Note: Budgets below $550 may limit accent furniture options for Japandi."*
+
+#### Acceptance Criteria
+1. Switching style cards dynamically adjusts the recommended floor indicator on the slider rail.
+2. The system does not hard-block generation, preserving user agency while providing helpful guidance.
+3. Renders executed at or above the recommended floor return $\ge 4$ matched items across all product categories.
+
+---
+
+### Initiative 4: Adaptive Spatial Pin Clustering & Mobile Hierarchy (`IT-4`)
+
+#### Problem Statement
+On compact smartphone screens ($< 390\text{px}$), multiple adjacent furniture pins (e.g., table lamp, books, side table) overlap visually, causing mis-taps and touch frustration.
+
+#### Evidence Base
+* Mobile telemetry revealed that **8.3% of pin taps** were immediately followed by an accidental tap dismissal within 1 second, indicating coordinate overlap.
+
+#### Expected Outcome
+Implement coordinate distance clustering on mobile viewports. Pins within a $32\text{px}$ visual radius merge into a single grouped cluster pin (`"2 Items"`), expanding into individual cards within the bottom sheet drawer.
+
+#### Success Metric
+* **Mis-tap Reduction:** Decrease rapid pin dismissals ($< 1\text{s}$) by **$\ge 70\%$** on mobile viewports.
+* **Mobile Drawer Engagement:** Increase secondary item inspection depth from **1.6 to $\ge 2.2$ items per session**.
+
+#### Implementation Scope
+* **Frontend (`packages/ui/src/primitives/hotspot/`):** Update canvas coordinate math to group adjacent pins dynamically based on current viewport scale and zoom level.
+
+#### Acceptance Criteria
+1. When two pins are within $32\text{px}$ of each other, they collapse into a single cluster badge: `[ +2 Items ]`.
+2. Tapping the cluster badge opens the bottom sheet drawer showing both products side-by-side.
+3. Zooming in past 1.5x scale dynamically separates the cluster into individual pins.
+
+---
+
+# 6. Updated 6-Month Strategic Product Roadmap (V1.1 through V2.0)
+
+
+```
+
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                              UPDATED STRATEGIC PRODUCT ROADMAP                         │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+
+SPRINT CYCLE 1: RELEASE V1.1 (Weeks 1–4) — "The Cohesive Commerce Release"
+├── IT-1: Selective Anchor Item Locking (Keep Couch / Floor) [FR-104]
+├── IT-2: Universal Project Handoff & Desktop Cart Sync (Email Handoff)
+├── IT-3: Dynamic Style-Budget Feasibility Floor (EXP-2 Rollout)
+└── IT-4: Adaptive Mobile Pin Clustering & Viewport Collision Management
+└── [GATE APPROVAL CRITERIA: Paid conversion ≥ 8.5%; Mobile handoff CTR ≥ 20%]
+
+SPRINT CYCLE 2: RELEASE V1.2 (Weeks 5–8) — "Catalog Scale & Regional Pilot"
+├── Ingest 100,000 Additional SKUs (Add West Elm, CB2, Pottery Barn)
+├── Automated 6-Hour SKU Price & Availability Re-indexing
+└── Multi-Currency & UK Geo-Routing Engine Pilot (GBP / IKEA UK)
+└── [GATE APPROVAL CRITERIA: Catalog staleness < 0.2%; UK outbound CTR ≥ 22%]
+
+SPRINT CYCLE 3: RELEASE V2.0 (Weeks 9–16) — "Collaborative Spatial Design"
+├── Multi-User Shared Project Boards (Roommate / Partner collaboration)
+├── Direct DTC Brand Sponsored Placement Engine (Native CPC/CPA bidding)
+└── High-Resolution Vector Spec PDF Export (Full contractor/buying guide)
+└── [GATE APPROVAL CRITERIA: Tracked monthly GMV ≥ $250,000 USD]
+
+```
+
+---
+
+# 7. Executive Sign-Off & Next Actions
+
+The performance baseline for **Project RoomCommerce** is verified, operationally stable, and unit-economic positive ($\approx \$0.0035$ GPU cost vs. $\$14.99$ pass). 
+
+The V1.1 iteration plan targets verified drop-off points, unblocks the secondary remodeler market, and protects mobile affiliate cookie attribution.
+
+### Gate Authorization Request
+* [x] Pilot telemetry and business unit economics reviewed and verified.
+* [x] Vanity features (chatbots, social feeds, speculative AR) rejected.
+* [x] RICE-prioritized backlog locked for V1.1 implementation.
+* [x] Four detailed change specifications documented with testable acceptance criteria.
+
+**Recommendation:** Formally authorize the Engineering Lead to begin **Sprint Cycle 1 (V1.1 Implementation)**, prioritizing Anchor Item Locking (`IT-1`) and Desktop Cart Sync (`IT-2`).
+
+```

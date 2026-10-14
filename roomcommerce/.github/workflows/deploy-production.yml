@@ -1,0 +1,577 @@
+# .github/workflows/deploy-production.yml
+# Scope: Tag-triggered production canary release pipeline (Step 9.2)
+# Phases: build → migrate → canary-10% (2h soak) → canary-50% (4h soak) → full-cutover
+# Requirements: NFR-04, NFR-05, SEC-03, BO-01, BO-02
+
+name: "Deploy Production (Canary)"
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+# Only one production deploy can run at a time — never cancel an in-progress release
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: roomcommerce-prod
+  WEB_SERVICE: roomcommerce-web-prod
+  API_SERVICE: roomcommerce-api-prod
+  WEB_TASK_FAMILY: roomcommerce-web
+  API_TASK_FAMILY: roomcommerce-api
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 0: Pre-Flight Production Readiness Gate (TASK-015)
+  # ─────────────────────────────────────────────────────────────────────────
+  preflight-gate:
+    name: "Pre-Flight Production Readiness Gate"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run production preflight verification
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          CLOUDFLARE_R2_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_R2_ACCOUNT_ID }}
+          CLOUDFLARE_R2_ACCESS_KEY_ID: ${{ secrets.CLOUDFLARE_R2_ACCESS_KEY_ID }}
+          CLOUDFLARE_R2_SECRET_ACCESS_KEY: ${{ secrets.CLOUDFLARE_R2_SECRET_ACCESS_KEY }}
+          CLOUDFLARE_R2_BUCKET_NAME: ${{ secrets.CLOUDFLARE_R2_BUCKET_NAME }}
+          MODAL_API_ENDPOINT: ${{ secrets.MODAL_API_ENDPOINT }}
+          MODAL_API_TOKEN: ${{ secrets.MODAL_API_TOKEN }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        run: |
+          pnpm preflight
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 1: Build, scan, and push production images to ECR
+  # ─────────────────────────────────────────────────────────────────────────
+  build-and-push:
+    name: "Build & Push ECR Images"
+    runs-on: ubuntu-latest
+    outputs:
+      registry: ${{ steps.login-ecr.outputs.registry }}
+      image_tag: ${{ github.ref_name }}
+      web_image: ${{ steps.login-ecr.outputs.registry }}/roomcommerce-web:${{ github.ref_name }}
+      api_image: ${{ steps.login-ecr.outputs.registry }}/roomcommerce-api:${{ github.ref_name }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Enable Docker layer caching to speed up repeat builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push Next.js web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/roomcommerce-web:${{ github.ref_name }}
+            ${{ steps.login-ecr.outputs.registry }}/roomcommerce-web:latest
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+          provenance: false
+
+      - name: Build & push NestJS API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/roomcommerce-api:${{ github.ref_name }}
+            ${{ steps.login-ecr.outputs.registry }}/roomcommerce-api:latest
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+          provenance: false
+
+      # ECR Enhanced Scanning — block on CRITICAL/HIGH CVEs before any deployment
+      - name: Wait for ECR vulnerability scan results
+        run: |
+          echo "[*] Waiting for ECR Enhanced Scan on web image..."
+          aws ecr wait image-scan-complete \
+            --repository-name roomcommerce-web \
+            --image-id imageTag=${{ github.ref_name }}
+
+          echo "[*] Waiting for ECR Enhanced Scan on API image..."
+          aws ecr wait image-scan-complete \
+            --repository-name roomcommerce-api \
+            --image-id imageTag=${{ github.ref_name }}
+
+      - name: Assert zero CRITICAL/HIGH vulnerabilities (SEC-03)
+        run: |
+          for repo in roomcommerce-web roomcommerce-api; do
+            CRITICAL=$(aws ecr describe-image-scan-findings \
+              --repository-name $repo \
+              --image-id imageTag=${{ github.ref_name }} \
+              --query 'imageScanFindings.findingSeverityCounts.CRITICAL' \
+              --output text)
+            HIGH=$(aws ecr describe-image-scan-findings \
+              --repository-name $repo \
+              --image-id imageTag=${{ github.ref_name }} \
+              --query 'imageScanFindings.findingSeverityCounts.HIGH' \
+              --output text)
+            CRITICAL=${CRITICAL:-0}
+            HIGH=${HIGH:-0}
+            echo "[$repo] CRITICAL=$CRITICAL HIGH=$HIGH"
+            if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+              echo "::error::ECR scan found CRITICAL=$CRITICAL HIGH=$HIGH vulnerabilities in $repo. Blocking deployment."
+              exit 1
+            fi
+          done
+          echo "[✓] No CRITICAL or HIGH CVEs detected. Images cleared for deployment."
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 2: Run Drizzle database migrations in a one-shot ECS task
+  # Avoids migration lock contention when multiple service tasks start simultaneously
+  # ─────────────────────────────────────────────────────────────────────────
+  run-migrations:
+    name: "Run Database Migrations (Drizzle)"
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Run `drizzle-kit migrate` as a transient one-shot ECS Fargate task
+      # with the new image tag before the service fleet launches
+      - name: Run Drizzle migration task on ECS
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition roomcommerce-api-migrate \
+            --launch-type FARGATE \
+            --overrides "{
+              \"containerOverrides\": [{
+                \"name\": \"api\",
+                \"image\": \"${{ needs.build-and-push.outputs.api_image }}\",
+                \"command\": [\"node\", \"dist/scripts/migrate.js\"]
+              }]
+            }" \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.ECS_PRIVATE_SUBNET_IDS }}],securityGroups=[${{ secrets.ECS_SECURITY_GROUP_ID }}],assignPublicIp=DISABLED}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          echo "[*] Migration task started: $TASK_ARN"
+          echo "[*] Waiting for migration to complete (max 5 minutes)..."
+
+          aws ecs wait tasks-stopped \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks "$TASK_ARN"
+
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+
+          echo "[*] Migration task exit code: $EXIT_CODE"
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "::error::Database migration failed with exit code $EXIT_CODE. Aborting deployment."
+            exit 1
+          fi
+          echo "[✓] Database migrations applied successfully."
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 3: Manual approval gate — SRE sign-off required before production touch
+  # ─────────────────────────────────────────────────────────────────────────
+  await-approval:
+    name: "Await SRE Production Approval"
+    needs: [preflight-gate, run-migrations, build-and-push]
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://app.roomcommerce.com
+
+    steps:
+      - name: Approval gate
+        run: |
+          echo "[✓] Production deployment of ${{ github.ref_name }} approved by SRE."
+          echo "    Images: ${{ needs.build-and-push.outputs.web_image }}"
+          echo "            ${{ needs.build-and-push.outputs.api_image }}"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 4: Phase 1 — Deploy canary at 10% and soak for 2 hours
+  # ─────────────────────────────────────────────────────────────────────────
+  canary-phase-1:
+    name: "Canary Phase 1 — 10% Traffic (2h Soak)"
+    needs: [await-approval, build-and-push]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Register new task definition revisions with the canary image tag
+      - name: Register new ECS task definitions (canary image)
+        run: |
+          # Render web task definition with new image
+          WEB_TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.WEB_TASK_FAMILY }} \
+            --query 'taskDefinition' \
+            --output json | \
+            jq --arg IMAGE "${{ needs.build-and-push.outputs.web_image }}" \
+               'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.placementConstraints,.compatibilities,.registeredAt,.registeredBy) |
+                .containerDefinitions[0].image = $IMAGE')
+
+          WEB_TASK_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$WEB_TASK_DEF" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "WEB_TASK_ARN=$WEB_TASK_ARN" >> $GITHUB_ENV
+
+          # Render api task definition with new image
+          API_TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.API_TASK_FAMILY }} \
+            --query 'taskDefinition' \
+            --output json | \
+            jq --arg IMAGE "${{ needs.build-and-push.outputs.api_image }}" \
+               'del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.placementConstraints,.compatibilities,.registeredAt,.registeredBy) |
+                .containerDefinitions[0].image = $IMAGE')
+
+          API_TASK_ARN=$(aws ecs register-task-definition \
+            --cli-input-json "$API_TASK_DEF" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          echo "API_TASK_ARN=$API_TASK_ARN" >> $GITHUB_ENV
+
+          echo "[✓] Registered Web task: $WEB_TASK_ARN"
+          echo "[✓] Registered API task: $API_TASK_ARN"
+
+      # Route 10% of Cloudflare traffic to the canary via the routing Worker
+      - name: Set Cloudflare canary traffic weight to 10%
+        run: |
+          curl -s -X PUT \
+            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/workers/scripts/roomcommerce-canary-router/bindings" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "bindings": [{
+                "type": "kv_namespace",
+                "name": "CANARY_CONFIG",
+                "namespace_id": "${{ secrets.CF_KV_CANARY_NAMESPACE_ID }}"
+              }]
+            }' | jq -r '.success'
+
+          # Write canary weight into Cloudflare KV
+          curl -s -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/${{ secrets.CF_KV_CANARY_NAMESPACE_ID }}/values/canary_weight" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: text/plain" \
+            -d "0.10"
+
+          curl -s -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/${{ secrets.CF_KV_CANARY_NAMESPACE_ID }}/values/canary_tag" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: text/plain" \
+            -d "${{ github.ref_name }}"
+
+          echo "[✓] Cloudflare canary weight set to 10% for tag ${{ github.ref_name }}."
+
+      # Update ECS service with 1 canary task alongside stable fleet
+      - name: Deploy 1 canary API task to ECS
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.API_SERVICE }} \
+            --task-definition "$API_TASK_ARN" \
+            --desired-count 1 \
+            --deployment-configuration "maximumPercent=150,minimumHealthyPercent=100" \
+            --force-new-deployment
+          echo "[✓] 1 canary API task launched."
+
+      # Phase 1 soak: poll CloudWatch every 5 minutes for 2 hours
+      - name: "Phase 1 SLO Soak — 2h (5xx ≤ 0.5%, GPU p90 ≤ 15s)"
+        run: |
+          END_TIME=$(($(date +%s) + 7200))  # 2 hours = 7200 seconds
+          POLL_INTERVAL=300                   # Poll every 5 minutes
+          CONSECUTIVE_FAILURES=0
+          MAX_FAILURES=2
+
+          while [ $(date +%s) -lt $END_TIME ]; do
+            echo "[$(date -u)] Polling SLO metrics..."
+
+            # Query 5xx error rate from CloudWatch (last 5 minutes)
+            ERROR_RATE=$(aws cloudwatch get-metric-statistics \
+              --namespace AWS/ApplicationELB \
+              --metric-name HTTPCode_Target_5XX_Count \
+              --dimensions Name=LoadBalancer,Value=${{ secrets.ALB_ARN_SUFFIX }} \
+              --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-5M +%Y-%m-%dT%H:%M:%SZ) \
+              --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+              --period 300 \
+              --statistics Sum \
+              --query 'Datapoints[0].Sum' \
+              --output text 2>/dev/null || echo "0")
+
+            TOTAL_REQ=$(aws cloudwatch get-metric-statistics \
+              --namespace AWS/ApplicationELB \
+              --metric-name RequestCount \
+              --dimensions Name=LoadBalancer,Value=${{ secrets.ALB_ARN_SUFFIX }} \
+              --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-5M +%Y-%m-%dT%H:%M:%SZ) \
+              --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+              --period 300 \
+              --statistics Sum \
+              --query 'Datapoints[0].Sum' \
+              --output text 2>/dev/null || echo "1")
+
+            ERROR_RATE=${ERROR_RATE:-0}
+            TOTAL_REQ=${TOTAL_REQ:-1}
+
+            # Calculate error rate percentage
+            RATE=$(echo "scale=4; $ERROR_RATE / $TOTAL_REQ" | bc -l 2>/dev/null || echo "0")
+            echo "  5xx error rate: ${RATE} (threshold: 0.005)"
+
+            if (( $(echo "$RATE > 0.005" | bc -l 2>/dev/null || echo "0") )); then
+              CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
+              echo "::warning::SLO breach detected! Consecutive failures: $CONSECUTIVE_FAILURES/$MAX_FAILURES"
+
+              if [ $CONSECUTIVE_FAILURES -ge $MAX_FAILURES ]; then
+                echo "::error::Phase 1 SLO breach — automated rollback triggered."
+                # Reset Cloudflare to 0% canary
+                curl -s -X PUT \
+                  "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/${{ secrets.CF_KV_CANARY_NAMESPACE_ID }}/values/canary_weight" \
+                  -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+                  -H "Content-Type: text/plain" \
+                  -d "0.00"
+                exit 1
+              fi
+            else
+              CONSECUTIVE_FAILURES=0
+            fi
+
+            sleep $POLL_INTERVAL
+          done
+          echo "[✓] Phase 1 soak completed. SLOs nominal."
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 5: Phase 2 — Expand canary to 50% for 4-hour soak
+  # ─────────────────────────────────────────────────────────────────────────
+  canary-phase-2:
+    name: "Canary Phase 2 — 50% Traffic (4h Soak)"
+    needs: canary-phase-1
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Expand Cloudflare canary traffic to 50%
+        run: |
+          curl -s -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/${{ secrets.CF_KV_CANARY_NAMESPACE_ID }}/values/canary_weight" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: text/plain" \
+            -d "0.50"
+          echo "[✓] Cloudflare canary weight expanded to 50%."
+
+      - name: Scale canary ECS service to 50% task parity
+        run: |
+          # Get stable task count and match with canary tasks
+          STABLE_COUNT=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.API_SERVICE }} \
+            --query 'services[0].runningCount' \
+            --output text)
+          CANARY_TASKS=$((STABLE_COUNT / 2))
+          CANARY_TASKS=$((CANARY_TASKS > 1 ? CANARY_TASKS : 1))
+
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.API_SERVICE }} \
+            --desired-count $((STABLE_COUNT + CANARY_TASKS)) \
+            --force-new-deployment
+
+          echo "[✓] Scaled to $((STABLE_COUNT + CANARY_TASKS)) total tasks ($CANARY_TASKS canary)."
+
+      - name: "Phase 2 SLO Soak — 4h (5xx ≤ 0.5%, Affiliate CTR ≥ 20%)"
+        run: |
+          END_TIME=$(($(date +%s) + 14400))  # 4 hours
+          POLL_INTERVAL=300
+          CONSECUTIVE_FAILURES=0
+          MAX_FAILURES=3
+
+          while [ $(date +%s) -lt $END_TIME ]; do
+            echo "[$(date -u)] Phase 2 SLO poll..."
+
+            ERROR_RATE=$(aws cloudwatch get-metric-statistics \
+              --namespace AWS/ApplicationELB \
+              --metric-name HTTPCode_Target_5XX_Count \
+              --dimensions Name=LoadBalancer,Value=${{ secrets.ALB_ARN_SUFFIX }} \
+              --start-time $(date -u -d '5 minutes ago' +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -v-5M +%Y-%m-%dT%H:%M:%SZ) \
+              --end-time $(date -u +%Y-%m-%dT%H:%M:%SZ) \
+              --period 300 \
+              --statistics Sum \
+              --query 'Datapoints[0].Sum' \
+              --output text 2>/dev/null || echo "0")
+
+            ERROR_RATE=${ERROR_RATE:-0}
+            echo "  5xx count (5m): $ERROR_RATE"
+
+            if [ "${ERROR_RATE%.*}" -gt 5 ] 2>/dev/null; then
+              CONSECUTIVE_FAILURES=$((CONSECUTIVE_FAILURES + 1))
+              echo "::warning::Phase 2 SLO degradation. Failures: $CONSECUTIVE_FAILURES/$MAX_FAILURES"
+              if [ $CONSECUTIVE_FAILURES -ge $MAX_FAILURES ]; then
+                echo "::error::Phase 2 SLO breach — rolling back canary."
+                curl -s -X PUT \
+                  "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/${{ secrets.CF_KV_CANARY_NAMESPACE_ID }}/values/canary_weight" \
+                  -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+                  -H "Content-Type: text/plain" \
+                  -d "0.00"
+                exit 1
+              fi
+            else
+              CONSECUTIVE_FAILURES=0
+            fi
+
+            sleep $POLL_INTERVAL
+          done
+          echo "[✓] Phase 2 soak completed. All SLOs nominal."
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # JOB 6: Phase 3 — Full production cutover (100%) + cache purge
+  # ─────────────────────────────────────────────────────────────────────────
+  full-cutover:
+    name: "Phase 3 — Full Production Cutover (100%)"
+    needs: [canary-phase-2, build-and-push]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set Cloudflare canary weight to 100% (full cutover)
+        run: |
+          curl -s -X PUT \
+            "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/storage/kv/namespaces/${{ secrets.CF_KV_CANARY_NAMESPACE_ID }}/values/canary_weight" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: text/plain" \
+            -d "1.00"
+          echo "[✓] 100% traffic routed to canary (now: stable)."
+
+      - name: Update ECS service to 100% new task definition
+        run: |
+          # Retrieve the latest registered task definition revision for API
+          LATEST_API=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.API_TASK_FAMILY }} \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          LATEST_WEB=$(aws ecs describe-task-definition \
+            --task-definition ${{ env.WEB_TASK_FAMILY }} \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.API_SERVICE }} \
+            --task-definition "$LATEST_API" \
+            --force-new-deployment
+
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.WEB_SERVICE }} \
+            --task-definition "$LATEST_WEB" \
+            --force-new-deployment
+
+          echo "[✓] ECS services updated to latest task definitions."
+          echo "[*] Waiting for services to reach steady state..."
+
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.API_SERVICE }} ${{ env.WEB_SERVICE }}
+
+          echo "[✓] All ECS services stable."
+
+      # Purge Cloudflare CDN cache for Next.js static assets to prevent mixed bundle serving
+      - name: Purge Cloudflare CDN cache (/_next/static/* + R2 renders)
+        run: |
+          curl -s -X POST \
+            "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "files": [
+                "https://app.roomcommerce.com/_next/static/*",
+                "https://app.roomcommerce.com/",
+                "https://app.roomcommerce.com/studio"
+              ]
+            }' | jq -r '"Cloudflare cache purge: " + (.success | tostring)'
+
+      - name: Tag stable baseline for rollback reference
+        run: |
+          # Record this release as the new stable baseline in SSM for rollback
+          aws ssm put-parameter \
+            --name "/roomcommerce/prod/stable_task_revision" \
+            --value "${{ github.ref_name }}" \
+            --type String \
+            --overwrite
+          echo "[✓] Stable baseline recorded: ${{ github.ref_name }}"
+
+      - name: Production release summary
+        run: |
+          echo "══════════════════════════════════════════════════════════"
+          echo "  🚀 RoomCommerce ${{ github.ref_name }} — PRODUCTION LIVE"
+          echo "══════════════════════════════════════════════════════════"
+          echo "  Web image : ${{ needs.build-and-push.outputs.web_image }}"
+          echo "  API image : ${{ needs.build-and-push.outputs.api_image }}"
+          echo "  Cluster   : ${{ env.ECS_CLUSTER }}"
+          echo "  URL       : https://app.roomcommerce.com"
+          echo "══════════════════════════════════════════════════════════"

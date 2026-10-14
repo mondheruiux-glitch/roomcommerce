@@ -1,0 +1,76 @@
+{
+  "family": "roomcommerce-web",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/roomcommerce-web-task-role",
+  "containerDefinitions": [
+    {
+      "name": "web",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/roomcommerce-web:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "NODE_ENV",                "value": "production" },
+        { "name": "PORT",                    "value": "3000" },
+        { "name": "HOSTNAME",                "value": "0.0.0.0" },
+        { "name": "NEXT_TELEMETRY_DISABLED", "value": "1" },
+        { "name": "APP_VERSION",             "value": "${APP_VERSION}" }
+      ],
+      "secrets": [
+        {
+          "name": "NEXTAUTH_SECRET",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/NEXTAUTH_SECRET"
+        },
+        {
+          "name": "NEXTAUTH_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/NEXTAUTH_URL"
+        },
+        {
+          "name": "WEB_BASE_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/WEB_BASE_URL"
+        },
+        {
+          "name": "NEXT_PUBLIC_API_BASE_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/NEXT_PUBLIC_API_BASE_URL"
+        },
+        {
+          "name": "NEXT_PUBLIC_API_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/roomcommerce/prod/NEXT_PUBLIC_API_URL"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":         "/ecs/roomcommerce-web",
+          "awslogs-region":        "us-east-1",
+          "awslogs-stream-prefix": "web"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -qO- http://localhost:3000/api/health || exit 1"
+        ],
+        "interval":    30,
+        "timeout":     5,
+        "retries":     3,
+        "startPeriod": 60
+      },
+      "readonlyRootFilesystem": false,
+      "user": "1001:1001"
+    }
+  ],
+  "tags": [
+    { "key": "Project",     "value": "RoomCommerce" },
+    { "key": "Environment", "value": "production" },
+    { "key": "Component",   "value": "web" }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "serena": {
+      "command": "/opt/homebrew/bin/serena",
+      "args": ["start-mcp-server"]
+    }
+  }
+}
