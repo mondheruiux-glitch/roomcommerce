@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { z } from 'zod';
 
 const isTest = process.env['NODE_ENV'] === 'test';
@@ -9,7 +10,7 @@ const envSchema = z.object({
   WEB_BASE_URL: z.string().default('http://localhost:3000'),
   JWT_SECRET: z.string().default('super_secret_jwt_signing_key_at_least_32_chars'),
   COOKIE_SECRET: z.string().default('super_secret_cookie_parser_secret'),
-  DATABASE_URL: z.string().default('postgresql://postgres:postgres@localhost:5432/roomcommerce_dev?schema=public'),
+  DATABASE_URL: z.string().default('postgresql://postgres:postgres_password@localhost:5432/roomcommerce?schema=public'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   CLOUDFLARE_R2_ACCOUNT_ID: z.string().default('mock_account_id'),
   CLOUDFLARE_R2_ACCESS_KEY_ID: z.string().default('mock_access_key'),

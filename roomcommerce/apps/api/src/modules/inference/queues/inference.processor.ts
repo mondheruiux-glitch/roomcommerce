@@ -82,7 +82,7 @@ function makeMockEmbedding(seed: number): number[] {
  */
 function isLiveModalConfigured(): boolean {
   if (process.env['MODAL_MOCK_MODE'] === 'true') return false;
-  const endpoint = env.MODAL_API_ENDPOINT ?? '';
+  const endpoint = process.env['MODAL_API_ENDPOINT'] ?? env.MODAL_API_ENDPOINT ?? '';
   return endpoint.startsWith('http') && !endpoint.includes('mock');
 }
 

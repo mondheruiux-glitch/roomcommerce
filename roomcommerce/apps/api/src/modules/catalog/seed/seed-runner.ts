@@ -7,6 +7,7 @@
  *   pnpm --filter @roomcommerce/api exec ts-node --esm src/modules/catalog/seed/seed-runner.ts --limit 1000
  */
 
+import 'dotenv/config';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
@@ -25,7 +26,8 @@ async function main() {
   console.log(`[seed] Total records to upsert: ${records.length.toLocaleString()}`);
 
   const pool = new Pool({
-    connectionString: process.env['DATABASE_URL'] ?? 'postgresql://postgres:postgres@localhost:5432/roomcommerce_dev',
+    connectionString:
+      process.env['DATABASE_URL'] ?? 'postgresql://postgres:postgres_password@localhost:5432/roomcommerce',
   });
   const db = drizzle(pool);
 

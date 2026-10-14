@@ -1,10 +1,12 @@
+import 'dotenv/config';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from './schema/index.js';
+import { env } from '../config/env.js';
 
 // Connection pool — sizes tuned for Aurora Serverless v2 auto-scaling
 const pool = new Pool({
-  connectionString: process.env['DATABASE_URL'],
+  connectionString: env.DATABASE_URL,
   min: Number(process.env['DATABASE_POOL_MIN'] ?? 2),
   max: Number(process.env['DATABASE_POOL_MAX'] ?? 20),
 });

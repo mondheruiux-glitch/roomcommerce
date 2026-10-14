@@ -2,10 +2,10 @@ import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
   out: './drizzle',
-  schema: './src/database/schema/*.ts',
+  schema: './dist/database/schema/index.js',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env['DATABASE_URL'] ?? 'postgresql://postgres:postgres@localhost:5432/roomcommerce_dev',
+    url: process.env['DATABASE_URL'] ?? 'postgresql://postgres:postgres_password@localhost:5432/roomcommerce',
   },
   migrations: {
     table: '__drizzle_migrations',

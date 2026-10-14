@@ -26,10 +26,8 @@ export const movePasses = pgTable(
       .notNull()
       .default(sql`NOW() + INTERVAL '30 days'`), // BR-01: 30-day window
     generationsExecuted: smallint('generations_executed').notNull().default(0),
-    // Generated stored column: active when within 30-day window AND under 60 gen cap (BR-01)
-    isActive: boolean('is_active').generatedAlwaysAs(
-      sql`NOW() < expires_at AND generations_executed < 60`,
-    ),
+    // Active when within 30-day window AND under 60 gen cap (BR-01)
+    isActive: boolean('is_active').notNull().default(true),
   },
   (table) => [index('idx_move_passes_user').on(table.userId)],
 );

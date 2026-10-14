@@ -81,8 +81,13 @@ services:
   #    S3 API:       http://localhost:9000
   #    Web Console:  http://localhost:9001  (minioadmin / minioadmin_password)
   # ---------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # 4. MinIO — Local S3 / Cloudflare R2 Emulator
+  #    S3 API:       http://localhost:9000
+  #    Web Console:  http://localhost:9001  (minioadmin / minioadmin_password)
+  # ---------------------------------------------------------------------------
   r2-local:
-    image: minio/minio:latest
+    image: elestio/minio:latest
     container_name: roomcommerce-r2-local
     restart: unless-stopped
     ports:
@@ -91,11 +96,11 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin_password
-    command: server /data --console-address ":9001"
+    command: minio server /data --console-address ":9001"
     volumes:
       - minio_data:/data
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -105,13 +110,14 @@ services:
   #    Creates 'roomcommerce-assets' bucket with anonymous download policy
   # ---------------------------------------------------------------------------
   r2-init:
-    image: minio/mc:latest
+    image: elestio/minio:latest
     container_name: roomcommerce-r2-init
     depends_on:
       r2-local:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
+      sleep 2;
       mc alias set local http://r2-local:9000 minioadmin minioadmin_password;
       mc mb --ignore-existing local/roomcommerce-assets;
       mc anonymous set download local/roomcommerce-assets;

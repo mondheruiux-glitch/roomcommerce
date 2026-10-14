@@ -114,19 +114,26 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   ]);
 }
 
-// Helper: detect mock/local placeholder values
-function isMock(val: string): boolean {
+// Helper: detect dummy placeholder values
+function isPlaceholder(val: string): boolean {
   return (
+    val === '' ||
     val.startsWith('mock_') ||
-    val.startsWith('sk_test_') ||
     val.startsWith('whsec_mock_') ||
-    val.includes('localhost') ||
-    val.includes('127.0.0.1') ||
     val.includes('<') ||
     val.includes('>') ||
-    val.startsWith('your_') ||
-    val === ''
+    val.startsWith('your_')
   );
+}
+
+// Helper: detect local dev URLs
+function isLocal(val: string): boolean {
+  return val.includes('localhost') || val.includes('127.0.0.1');
+}
+
+// Helper: detect mock/local placeholder values (for strict-prod auditing)
+function isMock(val: string): boolean {
+  return isPlaceholder(val) || (IS_STRICT && isLocal(val)) || val.startsWith('sk_test_');
 }
 
 // --- Gate 1: Environment & Secrets Audit ------------------------------------
@@ -141,7 +148,7 @@ async function checkEnvSecrets(): Promise<GateResult> {
   };
 
   const missing = Object.entries(required).filter(([, v]) => v === '').map(([k]) => k);
-  const mocked  = Object.entries(required).filter(([, v]) => v !== '' && isMock(v)).map(([k]) => k);
+  const mocked  = Object.entries(required).filter(([, v]) => v !== '' && (IS_STRICT ? isMock(v) : isPlaceholder(v))).map(([k]) => k);
   const live    = Object.keys(required).length - missing.length - mocked.length;
 
   if (missing.length > 0) {
@@ -153,21 +160,27 @@ async function checkEnvSecrets(): Promise<GateResult> {
   if (mocked.length > 0) {
     return {
       id: 1, name: 'Environment & Secrets Audit', status: 'MOCK',
-      detail: `${live}/${Object.keys(required).length} live  |  Mock: ${mocked.join(', ')}`,
+      detail: `${live}/${Object.keys(required).length} configured  |  Mock/Placeholder: ${mocked.join(', ')}`,
     };
   }
   return {
     id: 1, name: 'Environment & Secrets Audit', status: 'READY',
-    detail: `All ${Object.keys(required).length} required env vars configured with live credentials`,
+    detail: `All ${Object.keys(required).length} required env vars configured`,
   };
 }
 
 // --- Gate 2: PostgreSQL 16 Connectivity -------------------------------------
 async function checkPostgres(): Promise<GateResult> {
-  if (!ENV.DATABASE_URL || isMock(ENV.DATABASE_URL)) {
+  if (!ENV.DATABASE_URL || isPlaceholder(ENV.DATABASE_URL)) {
     return {
       id: 2, name: 'PostgreSQL 16 Connectivity', status: 'MOCK',
-      detail: 'DATABASE_URL is local/mock -- skipping live connectivity probe',
+      detail: 'DATABASE_URL is not configured -- skipping live connectivity probe',
+    };
+  }
+  if (IS_STRICT && isLocal(ENV.DATABASE_URL)) {
+    return {
+      id: 2, name: 'PostgreSQL 16 Connectivity', status: 'OFFLINE',
+      detail: 'DATABASE_URL points to localhost in strict production mode',
     };
   }
 
@@ -175,9 +188,10 @@ async function checkPostgres(): Promise<GateResult> {
   try {
     await withTimeout(pool.query('SELECT 1 AS ok'), TIMEOUT, 'PostgreSQL');
     await pool.end();
+    const locTag = isLocal(ENV.DATABASE_URL) ? ' (local container)' : ' (cloud)';
     return {
       id: 2, name: 'PostgreSQL 16 Connectivity', status: 'READY',
-      detail: `SELECT 1 succeeded  |  ${ENV.DATABASE_URL.split('@')[1] ?? '(URL masked)'}`,
+      detail: `SELECT 1 succeeded  |  ${ENV.DATABASE_URL.split('@')[1] ?? '(URL masked)'}${locTag}`,
     };
   } catch (err) {
     await pool.end().catch(() => undefined);
@@ -190,10 +204,16 @@ async function checkPostgres(): Promise<GateResult> {
 
 // --- Gate 3: Redis 7 (BullMQ) Connectivity ----------------------------------
 async function checkRedis(): Promise<GateResult> {
-  if (!ENV.REDIS_URL || isMock(ENV.REDIS_URL)) {
+  if (!ENV.REDIS_URL || isPlaceholder(ENV.REDIS_URL)) {
     return {
       id: 3, name: 'Redis 7 (BullMQ) Connectivity', status: 'MOCK',
-      detail: 'REDIS_URL is local/mock -- skipping live connectivity probe',
+      detail: 'REDIS_URL is not configured -- skipping live connectivity probe',
+    };
+  }
+  if (IS_STRICT && isLocal(ENV.REDIS_URL)) {
+    return {
+      id: 3, name: 'Redis 7 (BullMQ) Connectivity', status: 'OFFLINE',
+      detail: 'REDIS_URL points to localhost in strict production mode',
     };
   }
 
@@ -207,9 +227,10 @@ async function checkRedis(): Promise<GateResult> {
   try {
     await withTimeout(redis.connect().then(() => redis.ping()), TIMEOUT, 'Redis');
     await redis.quit();
+    const locTag = isLocal(ENV.REDIS_URL) ? ' (local container)' : ' (cloud)';
     return {
       id: 3, name: 'Redis 7 (BullMQ) Connectivity', status: 'READY',
-      detail: `PONG received  |  ${ENV.REDIS_URL.split('@').pop() ?? '(URL masked)'}`,
+      detail: `PONG received  |  ${ENV.REDIS_URL.split('@').pop() ?? '(URL masked)'}${locTag}`,
     };
   } catch (err) {
     redis.disconnect();
@@ -224,30 +245,46 @@ async function checkRedis(): Promise<GateResult> {
 async function checkQdrant(): Promise<GateResult> {
   const url = ENV.QDRANT_URL;
 
-  if (!url || isMock(url)) {
+  if (!url || isPlaceholder(url)) {
     return {
       id: 4, name: 'Qdrant Vector Cluster (retail_catalog_v1)', status: 'MOCK',
-      detail: 'QDRANT_URL is local/mock -- provision managed cluster on cloud.qdrant.io',
+      detail: 'QDRANT_URL is not configured -- provision cluster or start local Qdrant',
       action: 'pnpm api:embed',
+    };
+  }
+  if (IS_STRICT && isLocal(url)) {
+    return {
+      id: 4, name: 'Qdrant Vector Cluster (retail_catalog_v1)', status: 'OFFLINE',
+      detail: 'QDRANT_URL points to localhost in strict production mode',
     };
   }
 
   const collectionUrl = `${url.replace(/\/$/, '')}/collections/retail_catalog_v1`;
   try {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (ENV.QDRANT_API_KEY && !isMock(ENV.QDRANT_API_KEY)) headers['api-key'] = ENV.QDRANT_API_KEY;
+    if (ENV.QDRANT_API_KEY && !isPlaceholder(ENV.QDRANT_API_KEY)) headers['api-key'] = ENV.QDRANT_API_KEY;
 
     const res = await withTimeout(fetch(collectionUrl, { headers }), TIMEOUT, 'Qdrant');
     if (res.ok) {
       const body = await res.json() as { result?: { status?: string; vectors_count?: number } };
       const collStatus = body?.result?.status ?? 'unknown';
-      const vectors    = body?.result?.vectors_count ?? '?';
+      const vectors    = body?.result?.vectors_count ?? 0;
+      const locTag     = isLocal(url) ? ' (local container)' : ' (cloud)';
       return {
         id: 4, name: 'Qdrant Vector Cluster (retail_catalog_v1)', status: 'READY',
-        detail: `Collection status: ${collStatus}  |  ${vectors} vectors indexed`,
+        detail: `Collection status: ${collStatus}  |  ${vectors} vectors indexed${locTag}`,
       };
     }
     if (res.status === 404) {
+      // Check if root Qdrant server is up
+      const rootRes = await withTimeout(fetch(`${url.replace(/\/$/, '')}/collections`, { headers }), TIMEOUT, 'Qdrant root').catch(() => null);
+      if (rootRes && rootRes.ok) {
+        return {
+          id: 4, name: 'Qdrant Vector Cluster (retail_catalog_v1)', status: 'WARN',
+          detail: `Qdrant server is UP${isLocal(url) ? ' (local container)' : ''}, but collection retail_catalog_v1 is not embedded yet`,
+          action: 'pnpm api:embed',
+        };
+      }
       return {
         id: 4, name: 'Qdrant Vector Cluster (retail_catalog_v1)', status: 'OFFLINE',
         detail: 'Collection retail_catalog_v1 not found',
