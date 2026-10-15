@@ -253,6 +253,7 @@ export interface ProductDetail {
   imageUrl: string;
   affiliateUrl: string;
   similarityScore: number;
+  isAlternative?: boolean;
   dimensions: {
     widthCm: number;
     heightCm: number;
@@ -261,25 +262,50 @@ export interface ProductDetail {
 }
 
 export async function fetchProductDetail(productId: string): Promise<ProductDetail> {
-  const raw = await apiFetch<any>(`/api/v1/catalog/products/${productId}`).catch(() =>
-    apiFetch<any>(`/api/v1/commerce/products/${productId}`),
-  );
-  const data = raw.data ?? raw;
-  return {
-    id: data.id ?? productId,
-    title: data.title ?? '',
-    retailer: data.retailer ?? data.retailerName ?? '',
-    priceCents: data.priceCents ?? data.price_cents ?? 0,
-    inStock: data.inStock ?? data.in_stock ?? true,
-    imageUrl: data.imageUrl ?? data.image_url ?? '',
-    affiliateUrl: data.affiliateUrl ?? data.affiliate_url ?? getCommerceRedirectUrl(productId),
-    similarityScore: data.similarityScore ?? data.similarity_score ?? 0.9,
-    dimensions: {
-      widthCm: data.dimensions?.widthCm ?? data.dimensions?.width_cm ?? data.dimensionsCm?.width ?? 0,
-      heightCm: data.dimensions?.heightCm ?? data.dimensions?.height_cm ?? data.dimensionsCm?.height ?? 0,
-      depthCm: data.dimensions?.depthCm ?? data.dimensions?.depth_cm ?? data.dimensionsCm?.depth ?? 0,
-    },
-  };
+  try {
+    const raw = await apiFetch<any>(`/api/v1/catalog/products/${productId}`).catch(() =>
+      apiFetch<any>(`/api/v1/commerce/products/${productId}`),
+    );
+    const data = raw.data ?? raw;
+    return {
+      id: data.id ?? productId,
+      title: data.title ?? '',
+      retailer: data.retailer ?? data.retailerName ?? '',
+      priceCents: data.priceCents ?? data.price_cents ?? 0,
+      inStock: data.inStock ?? data.in_stock ?? true,
+      imageUrl: data.imageUrl ?? data.image_url ?? '',
+      affiliateUrl: data.affiliateUrl ?? data.affiliate_url ?? getCommerceRedirectUrl(productId),
+      similarityScore: data.similarityScore ?? data.similarity_score ?? 0.9,
+      isAlternative: Boolean(data.isAlternative ?? data.is_alternative),
+      dimensions: {
+        widthCm: data.dimensions?.widthCm ?? data.dimensions?.width_cm ?? data.dimensionsCm?.width ?? 0,
+        heightCm: data.dimensions?.heightCm ?? data.dimensions?.height_cm ?? data.dimensionsCm?.height ?? 0,
+        depthCm: data.dimensions?.depthCm ?? data.dimensions?.depth_cm ?? data.dimensionsCm?.depth ?? 0,
+      },
+    };
+  } catch (err) {
+    // If primary product fails (RSK-01 404 / dead link), fallback to alternatives
+    const altRaw = await apiFetch<any>(`/api/v1/catalog/products/${productId}/alternatives`);
+    const alts = altRaw.data ?? altRaw;
+    const firstAlt = Array.isArray(alts) ? alts[0] : alts;
+    if (!firstAlt) throw err;
+    return {
+      id: firstAlt.id ?? productId,
+      title: firstAlt.title ?? 'Alternative Product',
+      retailer: firstAlt.retailer ?? firstAlt.retailerName ?? 'Retailer Partner',
+      priceCents: firstAlt.priceCents ?? firstAlt.price_cents ?? 0,
+      inStock: firstAlt.inStock ?? firstAlt.in_stock ?? true,
+      imageUrl: firstAlt.imageUrl ?? firstAlt.image_url ?? '',
+      affiliateUrl: firstAlt.affiliateUrl ?? firstAlt.affiliate_url ?? getCommerceRedirectUrl(firstAlt.id),
+      similarityScore: firstAlt.similarityScore ?? firstAlt.similarity_score ?? 0.9,
+      isAlternative: true,
+      dimensions: {
+        widthCm: firstAlt.dimensions?.widthCm ?? firstAlt.dimensions?.width_cm ?? firstAlt.dimensionsCm?.width ?? 0,
+        heightCm: firstAlt.dimensions?.heightCm ?? firstAlt.dimensions?.height_cm ?? firstAlt.dimensionsCm?.height ?? 0,
+        depthCm: firstAlt.dimensions?.depthCm ?? firstAlt.dimensions?.depth_cm ?? firstAlt.dimensionsCm?.depth ?? 0,
+      },
+    };
+  }
 }
 
 export function getCommerceRedirectUrl(productId: string): string {

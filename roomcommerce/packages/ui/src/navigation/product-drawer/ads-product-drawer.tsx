@@ -17,6 +17,7 @@ export interface ProductDrawerData {
   inStock: boolean;
   imageUrl: string;
   redirectUrl: string;
+  isAlternative?: boolean;
 }
 
 export interface AdsProductDrawerProps {
@@ -128,8 +129,16 @@ export function AdsProductDrawer({ isOpen, onClose, product, className }: AdsPro
 
           {/* Identity */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <AdsBadge variant="brand">{matchPercent}% Visual Match</AdsBadge>
+              {product.isAlternative && (
+                <span
+                  data-testid="alt-badge"
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-brand-terracotta/10 text-brand-terracotta border border-brand-terracotta/20"
+                >
+                  Alternative Item
+                </span>
+              )}
             </div>
             <h2
               id="drawer-product-title"

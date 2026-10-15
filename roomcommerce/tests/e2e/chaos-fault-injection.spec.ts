@@ -78,6 +78,7 @@ test.describe('Chaos: GPU Worker Timeout & Credit Restitution (NFR-06)', () => {
     await page.locator('input[type="file"]').setInputFiles(fixturePath);
 
     await expect(page).toHaveURL(/\/studio\/new\/inspect/, { timeout: 10000 });
+    await expect(page.locator('h1')).toContainText(/Quality Review/i);
     await page.click('#inspect-continue-btn');
     await expect(page).toHaveURL(/\/studio\/new\/configure/);
     await page.click('button:has-text("Japandi")');
@@ -181,7 +182,7 @@ test.describe('Chaos: Merchant 404 Dead Link → Secondary SKU Promotion (RSK-01
     await expect(page.locator('#drawer-product-title')).toBeVisible();
 
     // 3. "Alternative" or "Similar" label signals to user it is a secondary match
-    const altLabel = page.locator('text=Alternative, text=Similar Item, [data-testid="alt-badge"]');
+    const altLabel = page.locator('[data-testid="alt-badge"], :has-text("Alternative"), :has-text("Similar Item")');
     await expect(altLabel.first()).toBeVisible();
   });
 });
@@ -267,6 +268,7 @@ test.describe('Chaos: Network Disconnection During SSE → Auto-Reconnect (NFR-0
     await page.locator('input[type="file"]').setInputFiles(fixturePath);
 
     await expect(page).toHaveURL(/\/studio\/new\/inspect/, { timeout: 10000 });
+    await expect(page.locator('h1')).toContainText(/Quality Review/i);
     await page.click('#inspect-continue-btn');
     await expect(page).toHaveURL(/\/studio\/new\/configure/);
     await page.click('button:has-text("Japandi")');

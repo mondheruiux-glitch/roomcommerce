@@ -46,6 +46,7 @@ export default function ViewPage({ params }: ViewPageProps) {
         imageUrl: productDetail.imageUrl,
         redirectUrl: getCommerceRedirectUrl(productDetail.id),
         similarityScore: productDetail.similarityScore,
+        isAlternative: productDetail.isAlternative,
         dimensionsCm: {
           width: productDetail.dimensions.widthCm,
           height: productDetail.dimensions.heightCm,

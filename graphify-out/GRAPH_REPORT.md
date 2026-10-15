@@ -1,13 +1,18 @@
-# Graph Report - project commerce  (2026-10-14)
+# Graph Report - project commerce  (2026-10-15)
 
 ## Corpus Check
-- 3081 files · ~10,792,981 words
+- 3079 files · ~10,787,231 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 22787 nodes · 35322 edges · 1802 communities (1707 shown, 95 thin omitted)
+- 22789 nodes · 35335 edges · 1803 communities (1711 shown, 92 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 66 edges (avg confidence: 0.74)
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `fbc0fe45`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Community 0|Community 0]]
@@ -1780,6 +1785,7 @@
 - [[_COMMUNITY_Community 1793|Community 1793]]
 - [[_COMMUNITY_Community 1794|Community 1794]]
 - [[_COMMUNITY_Community 1795|Community 1795]]
+- [[_COMMUNITY_Community 1796|Community 1796]]
 - [[_COMMUNITY_Community 1807|Community 1807]]
 - [[_COMMUNITY_Community 1811|Community 1811]]
 
@@ -1802,28 +1808,28 @@
   .agents/skills/impeccable/scripts/live-browser.js → roomcommerce/vendor/react-bits/worker/index.js
 - `injectSvelteComponentsFromManifest()` --calls--> `fetch()`  [INFERRED]
   .agents/skills/impeccable/scripts/live-browser.js → roomcommerce/vendor/react-bits/worker/index.js
-- `probeJsxWrapperForOrphan()` --calls--> `fetch()`  [INFERRED]
-  .agents/skills/impeccable/scripts/live-browser.js → roomcommerce/vendor/react-bits/worker/index.js
 - `injectVariantsFromSource()` --calls--> `fetch()`  [INFERRED]
   .agents/skills/impeccable/scripts/live-browser.js → roomcommerce/vendor/react-bits/worker/index.js
+- `claimAgentTarget()` --calls--> `fetch()`  [INFERRED]
+  .agents/skills/impeccable/scripts/live-browser.js → roomcommerce/vendor/react-bits/worker/index.js
 
-## Communities (1802 total, 95 thin omitted)
+## Communities (1803 total, 92 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.20
 Nodes (9): glassSurface, CONTENT, DEFAULT_PROPS, DRIFT, LOOK, PRESET_OPTIONS, PRESETS, propData (+1 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.15
-Nodes (11): animatedList, ANIMATION_OPTIONS, CITIES, COMMANDS, DEFAULT_PROPS, ITEMS, PHOTOS, PLAYLIST (+3 more)
+Cohesion: 0.09
+Nodes (33): buildCollapsible(), buildColorModels(), buildDesignHeader(), buildRadiiModels(), buildTypographyModels(), cssSafe(), designEmptyMessage(), escapeHtml() (+25 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.08
 Nodes (25): 1. Patch Plan: `FIX-001` Package Script Aliases, 2. Patch Plan: `FIX-002` Dynamic CORS Origin Handling, 3. Patch Plan: `FIX-003` PostgreSQL Pagination Index on Projects, 4. Patch Plan: `FIX-004` SSE Client Reconnection Backoff, code:json ("r2:lifecycle": "ts-node scripts/configure-r2-lifecycle.ts",), code:typescript (origin: [env.WEB_BASE_URL, 'http://localhost:3000', 'http://), code:typescript (origin: (requestOrigin, callback) => {), code:typescript (export const projects = pgTable('projects', {) (+17 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.12
-Nodes (12): crystalizedBall, DEFAULT_PROPS, MOTION_OPTIONS, PRESET_OPTIONS, PRESETS, SHAPE_OPTIONS, spotlightCard, DEFAULT_PROPS (+4 more)
+Cohesion: 0.22
+Nodes (6): spotlightCard, DEFAULT_PROPS, GLASS, SHAPE_OPTIONS, SKILLS, STATS
 
 ### Community 4 - "Community 4"
 Cohesion: 0.08
@@ -1831,19 +1837,19 @@ Nodes (23): 1. Application Core & Bootstrap, 2. Database & Data Models (`src/dat
 
 ### Community 5 - "Community 5"
 Cohesion: 0.02
-Nodes (73): floatingLines, DEFAULT_PROPS, LOOK, PRESET_OPTIONS, PRESETS, propData, STYLE_OPTIONS, WAVES (+65 more)
+Nodes (81): clickSpark, DARK_SWAP, DEFAULT_PROPS, DEMO_OPTIONS, EASING_OPTIONS, INK, LAYER_OPTIONS, LIGHT_SWAP (+73 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.04
-Nodes (104): annotLastPinClick, applyOriginalAttrsToSvelteAnchor(), applyPlaceholderSizingStyles(), buildCollapsible(), buildColorModels(), buildRadiiModels(), buildSvelteExpressionTextMap(), buildSveltePropValuesFromLiveElement() (+96 more)
+Cohesion: 0.03
+Nodes (111): ACTIONS, ADOPTABLE_SESSION_PHASES, AGENT_TARGET_CLIENT_ID, annotLastPinClick, applyOriginalAttrsToSvelteAnchor(), bindEditBadgeProxy(), buildPickedAnchorSnapshot(), buildSvelteExpressionTextMap() (+103 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.03
-Nodes (175): AnimatedContentDemo(), AntigravityDemo(), ClickSparkDemo(), CrosshairDemo(), CrystalizedBallDemo(), CubesDemo(), DitherVeilDemo(), ElasticMeshDemo() (+167 more)
+Cohesion: 0.02
+Nodes (180): AnimatedContentDemo(), AntigravityDemo(), ClickSparkDemo(), CrosshairDemo(), CrystalizedBallDemo(), CubesDemo(), DitherVeilDemo(), ElasticMeshDemo() (+172 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.07
-Nodes (79): abandonForeignSession(), abandonSupersededGo(), applyEditing(), beginNewLiveConfiguration(), buildInsertPlaceholderSnapshotFromDom(), buildLocatorForLeaf(), buildPickedAnchorSnapshot(), cancelEditing() (+71 more)
+Cohesion: 0.08
+Nodes (85): abandonForeignSession(), abandonSupersededGo(), abortSvelteComponentInjection(), applySavedSessionMeta(), beginNewLiveConfiguration(), cancelEditing(), cancelEditingToPicking(), cancelInsertConfigure() (+77 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.08
@@ -1854,20 +1860,20 @@ Cohesion: 0.05
 Nodes (17): getLocalPointerPos(), getMouseDistance(), getNewPosition(), ImageItem, ImageTrail(), ImageTrailConstructor, ImageTrailProps, ImageTrailVariant1 (+9 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.04
-Nodes (46): ferrofluid, DEFAULT_PROPS, FLOW_OPTIONS, LIGHTS, LOOK, PRESET_OPTIONS, PRESETS, propData (+38 more)
+Cohesion: 0.22
+Nodes (8): ferrofluid, DEFAULT_PROPS, FLOW_OPTIONS, LIGHTS, LOOK, PRESET_OPTIONS, PRESETS, propData
 
 ### Community 12 - "Community 12"
 Cohesion: 0.06
-Nodes (62): TOOLS, DIST, main(), renderPage(), ROOT, setTag(), generateSitemap(), getLastModified() (+54 more)
+Nodes (51): DIST, main(), renderPage(), ROOT, setTag(), generateSitemap(), getLastModified(), categories() (+43 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 0.09
-Nodes (27): addManualContextText(), canRestoreManualEditElement(), collectManualContextPieces(), contextElementForManualEdit(), copyEditContainerContext(), copyEditLeafContext(), directMixedTextRestoreNodes(), documentRefClassSuffix() (+19 more)
+Cohesion: 0.08
+Nodes (33): addManualContextText(), applyEditing(), buildLocatorForLeaf(), canRestoreManualEditElement(), collectManualContextPieces(), contextElementForManualEdit(), copyEditContainerContext(), copyEditLeafContext() (+25 more)
 
 ### Community 14 - "Community 14"
-Cohesion: 0.20
-Nodes (9): chromaGrid, DEFAULT_PROPS, ITEMS, LOOK, PRESET_OPTIONS, PRESETS, propData, RATIO_OPTIONS (+1 more)
+Cohesion: 0.03
+Nodes (55): cursorGrid, CursorGridDemo(), DEFAULT_PROPS, FALLOFF_OPTIONS, glowCursor, COMET, DEFAULT_PROPS, PRESET_OPTIONS (+47 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.11
@@ -1875,15 +1881,15 @@ Nodes (67): $(), ae(), at(), be(), bt(), ce(), ct(), de() (+59 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.02
-Nodes (116): gradualBlur, DEFAULT_PROPS, patternWaves, DEFAULT_PROPS, FADE_OPTIONS, LIGHT_PROPS, PATTERN_OPTIONS, PRESET_OPTIONS (+108 more)
+Nodes (108): logoLoop, DEFAULT_PROPS, items, metallicPaint, CONTENT_OPTIONS, DEFAULT_PROPS, LOOK, PRESET_OPTIONS (+100 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.13
-Nodes (13): clickSpark, DARK_SWAP, DEFAULT_PROPS, DEMO_OPTIONS, EASING_OPTIONS, INK, LAYER_OPTIONS, LIGHT_SWAP (+5 more)
+Cohesion: 0.08
+Nodes (17): pixelCard, DEFAULT_PROPS, DEMO_OPTIONS, ICONS, INK, LOOK, ORIGIN_OPTIONS, PALETTES (+9 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.08
-Nodes (17): usePauseOffscreenAnimations(), CARDS, CircularCarousel, ElectricLogo, HoldButton, LiveDemo(), MicroSlats, TechText (+9 more)
+Cohesion: 0.06
+Nodes (32): MESSAGES, useNewSinceLastVisit(), usePageSEO(), usePauseOffscreenAnimations(), CARDS, CircularCarousel, ElectricLogo, HoldButton (+24 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.12
@@ -1927,7 +1933,7 @@ Nodes (45): agentKit, agentSkill, category, href, name, slug, summary, tier (+37
 
 ### Community 30 - "Community 30"
 Cohesion: 0.04
-Nodes (38): COMPONENT_ROUTES, SHORTCUTS, DocsOverview(), RelatedComponents(), CONTROLS, DOC_SECTIONS, GetStartedLoader(), PROP_ROWS (+30 more)
+Nodes (28): COMPONENT_ROUTES, SHORTCUTS, catalog, CATEGORIES, metadataByPath, NEW, NEW_KEYS, now (+20 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.04
@@ -1954,8 +1960,8 @@ Cohesion: 0.05
 Nodes (5): EFFECT_CATEGORIES, EFFECT_ICONS, EFFECT_NAMES, EffectCard, PARAMS_COMPONENTS
 
 ### Community 37 - "Community 37"
-Cohesion: 0.09
-Nodes (17): FooterWaves(), InstallationContext, InstallationProvider(), OptionsContext, OptionsProvider(), ColorModeButton, ColorModeIcon(), ColorModeProvider() (+9 more)
+Cohesion: 0.12
+Nodes (14): Dependencies(), useInstallation(), InstallationContext, InstallationProvider(), COMMANDS, IMPORT_TOKENS, PKG_TO_RUNNER, QuickStart() (+6 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.16
@@ -1967,19 +1973,19 @@ Nodes (42): dependencies, @chakra-ui/react, class-variance-authority, clsx, @emo
 
 ### Community 40 - "Community 40"
 Cohesion: 0.08
-Nodes (44): applyGlobalBarLabelState(), armPageChatForTyping(), attachSteerFocusDebug(), clearSteerAwaitTimer(), collapsePageChat(), configureVoiceContext(), expandPageChat(), finishVoiceSession() (+36 more)
+Nodes (42): armPageChatForTyping(), attachSteerFocusDebug(), clearSteerAwaitTimer(), collapsePageChat(), configureVoiceContext(), expandPageChat(), finishVoiceSession(), focusConfigureInput() (+34 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.05
 Nodes (39): Anti-Patterns, code:block1 (┌─────────────────────────────────────┐), code:block10 (MISSING REQUIREMENT:), code:block11 (PLAN:), code:markdown (# Project: [Name]), code:block3 (PROJECT CONTEXT:), code:block4 (TASK: Add email validation to the registration endpoint), code:markdown (# Project Map) (+31 more)
 
 ### Community 42 - "Community 42"
-Cohesion: 0.10
-Nodes (22): AGENT_NOTES, buildComponentSection(), buildProOverview(), CATEGORY_ORDER, CATEGORY_SLUGS, CLI_INSTRUCTIONS, collectComponents(), DEV_LINKS (+14 more)
+Cohesion: 0.09
+Nodes (39): AGENT_NOTES, buildCli(), buildComponentSection(), buildDev(), buildDocs(), buildHeader(), buildKeyDependencies(), buildMcp() (+31 more)
 
 ### Community 43 - "Community 43"
-Cohesion: 0.10
-Nodes (15): AITerminal(), VariantTabs(), useInView(), AnimatedResult(), CountUp(), CountUpProps, DEFAULT_ASCII_PARAMS, DEFAULT_DITHER_PARAMS (+7 more)
+Cohesion: 0.07
+Nodes (27): BackgroundRenderer, BackgroundStudio(), ORDERED_BACKGROUNDS, STUDIO_BACKGROUNDS, STUDIO_LIGHT_PROPS, ANIMATION_IDS, BACKGROUNDS, getBackgroundById() (+19 more)
 
 ### Community 44 - "Community 44"
 Cohesion: 0.05
@@ -1994,12 +2000,12 @@ Cohesion: 0.05
 Nodes (38): Base Color Presets, Best Practices, code:bash (npm install next-themes), code:css (:root {), code:css ([data-theme="violet"] {), code:tsx (<div data-theme="violet">), code:tsx (// components/ui/button.tsx), code:tsx (<Button variant="gradient" size="xl">Custom Button</Button>) (+30 more)
 
 ### Community 47 - "Community 47"
-Cohesion: 0.14
-Nodes (24): args, checkEnvSecrets(), checkModal(), checkPostgres(), checkQdrant(), checkR2(), checkRedis(), checkStripe() (+16 more)
+Cohesion: 0.15
+Nodes (26): args, checkEnvSecrets(), checkModal(), checkPostgres(), checkQdrant(), checkR2(), checkRedis(), checkStripe() (+18 more)
 
 ### Community 48 - "Community 48"
-Cohesion: 0.09
-Nodes (42): actionLabel(), applyConfigureBarChrome(), bindConfigureCountPillTooltip(), bindConfigureInlineControlHover(), buildConfigureActionControl(), buildConfigureCountControl(), buildConfigureRow(), buildConfigureSubmitButton() (+34 more)
+Cohesion: 0.10
+Nodes (40): actionLabel(), applyConfigureBarChrome(), bindConfigureCountPillTooltip(), bindConfigureInlineControlHover(), buildConfigureActionControl(), buildConfigureCountControl(), buildConfigureRow(), buildConfigureSubmitButton() (+32 more)
 
 ### Community 49 - "Community 49"
 Cohesion: 0.05
@@ -2023,7 +2029,7 @@ Nodes (35): Arc, BALL_PRESETS, BLACK, blend(), buildDust(), buildPalette(), buil
 
 ### Community 54 - "Community 54"
 Cohesion: 0.06
-Nodes (37): createRenderer(), generateCharacterAtlas(), ASCII_PRESETS, BLEND_MODES, createEffect(), DEFAULT_BARREL_PARAMS, DEFAULT_BLOOM_PARAMS, DEFAULT_BLUR_PARAMS (+29 more)
+Nodes (36): createRenderer(), ASCII_PRESETS, BLEND_MODES, createEffect(), DEFAULT_BARREL_PARAMS, DEFAULT_BLOOM_PARAMS, DEFAULT_BLUR_PARAMS, DEFAULT_CHROMATIC_PARAMS (+28 more)
 
 ### Community 55 - "Community 55"
 Cohesion: 0.05
@@ -2066,8 +2072,8 @@ Cohesion: 0.06
 Nodes (35): 1.1 Objective, 1.2 In-Scope, 1.3 Explicit Exclusions (Deferred to Subsequent Plans), 1. Objective & Scope Boundaries, 2.1 Preceding Milestones, 2.2 System & Tooling Dependencies, 2.3 Required Environment Variables, 2. Prerequisites & Dependency Matrix (+27 more)
 
 ### Community 65 - "Community 65"
-Cohesion: 0.08
-Nodes (40): agentHasWorkInFlight(), agentStatusText(), attachSteerFocusGuard(), barPaletteForTheme(), brandMarkSvg(), buildDesignHeader(), buildSteerProcessingDots(), buildSteerQueueHint() (+32 more)
+Cohesion: 0.09
+Nodes (36): agentHasWorkInFlight(), agentStatusText(), attachSteerFocusGuard(), barPaletteForTheme(), brandMarkSvg(), buildParamsPanel(), buildSteerProcessingDots(), buildSteerQueueHint() (+28 more)
 
 ### Community 66 - "Community 66"
 Cohesion: 0.06
@@ -2102,16 +2108,16 @@ Cohesion: 0.06
 Nodes (33): Accessibility, Accessibility Requirements, ARIA States, code:css (/* Standard transition for interactive elements */), code:css (/* Standard focus ring */), code:css (/* Container focus when child is focused */), code:css (.disabled {), code:css (.loading {) (+25 more)
 
 ### Community 75 - "Community 75"
-Cohesion: 0.33
-Nodes (5): mockDeleteUsers, mockPurgeArtifacts, mockPurgeCron, mockSelectProjects, userProjects
+Cohesion: 0.17
+Nodes (19): AI_ITEMS, absoluteUrl(), AI_PROVIDERS, blockToMarkdown(), buildCompactPrompt(), codeBlockToMarkdown(), collapse(), componentDocsUrl() (+11 more)
 
 ### Community 76 - "Community 76"
-Cohesion: 0.10
-Nodes (16): BOOT, BROWNOUT, CATEGORY_LINKS, NotFoundPage(), PALETTES, DOCS_CATEGORIES, DocsRoute(), NotFoundPage (+8 more)
+Cohesion: 0.09
+Nodes (17): categoryPreviews, CURATED, createGalleryCanvas(), BOOT, BROWNOUT, CATEGORY_LINKS, NotFoundPage(), PALETTES (+9 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.09
-Nodes (26): categoryIconMapping, metadataByPath, SearchDialog(), curate(), freeFirst(), load(), useProManifest(), categoryIconMapping (+18 more)
+Cohesion: 0.10
+Nodes (23): categoryIconMapping, metadataByPath, SearchDialog(), useProManifest(), categoryIconMapping, searchComponents(), SearchDialog(), SearchContext (+15 more)
 
 ### Community 78 - "Community 78"
 Cohesion: 0.06
@@ -2147,11 +2153,11 @@ Nodes (22): AffiliateClickEvent, affiliateClickEvents, NewAffiliateClickEvent, C
 
 ### Community 86 - "Community 86"
 Cohesion: 0.03
-Nodes (111): ACTIONS, ADOPTABLE_SESSION_PHASES, AGENT_TARGET_CLIENT_ID, agentTargetsSeen, annotState, apply(), applyLiveBarPreference(), averageRgb01() (+103 more)
+Nodes (111): agentTargetsSeen, annotState, apply(), applyGlobalBarLabelState(), applyLiveBarPreference(), applyPlaceholderDimensions(), averageRgb01(), beginEditPin() (+103 more)
 
 ### Community 87 - "Community 87"
-Cohesion: 0.04
-Nodes (83): abortSvelteComponentInjection(), applyParamDefaults(), applyParamValue(), applyPlaceholderDimensions(), applySavedSessionMeta(), buildParamsPanel(), clampVariantIndex(), clearHandled() (+75 more)
+Cohesion: 0.09
+Nodes (34): applyParamDefaults(), applyParamValue(), closedClipPath(), commitAcceptedVariantToDom(), ensureInsertPlaceholder(), findVariantsWrapper(), getMountedSvelteComponentAnchor(), getVisibleVariantEl() (+26 more)
 
 ### Community 88 - "Community 88"
 Cohesion: 0.06
@@ -2175,7 +2181,7 @@ Nodes (17): main(), Add full color palette (50-950 shades) for a base color.    
 
 ### Community 93 - "Community 93"
 Cohesion: 0.17
-Nodes (28): anchorOf(), clamp(), EASE_OUT, GroupApi, GroupContext, GroupState, horizontal(), LAYER (+20 more)
+Nodes (29): anchorOf(), clamp(), EASE_OUT, GroupApi, GroupContext, GroupState, horizontal(), LAYER (+21 more)
 
 ### Community 94 - "Community 94"
 Cohesion: 0.15
@@ -2187,7 +2193,7 @@ Nodes (32): dependencies, tailwindcss, devDependencies, @roomcommerce/config, ts
 
 ### Community 96 - "Community 96"
 Cohesion: 0.10
-Nodes (27): AccountPage(), formatCountdown(), metadata, AccountData, apiFetch(), createCheckoutSession(), CreateCheckoutSessionResponse, createProject() (+19 more)
+Nodes (26): AccountPage(), formatCountdown(), metadata, AccountData, apiFetch(), createCheckoutSession(), CreateCheckoutSessionResponse, createProject() (+18 more)
 
 ### Community 97 - "Community 97"
 Cohesion: 0.06
@@ -2246,16 +2252,16 @@ Cohesion: 0.20
 Nodes (27): apply(), Candidate, clamp(), compile(), Field, invert(), lightness(), link() (+19 more)
 
 ### Community 111 - "Community 111"
-Cohesion: 0.11
-Nodes (13): ConfigurePage(), useExifScrubber(), DETECTED_ITEMS, InspectPage(), uploadToR2(), blob, file, state (+5 more)
+Cohesion: 0.14
+Nodes (10): ConfigurePage(), DETECTED_ITEMS, InspectPage(), triggerRender(), blob, file, state, DEFAULTS (+2 more)
 
 ### Community 112 - "Community 112"
 Cohesion: 0.10
 Nodes (27): ANNOUNCEMENT, announcementKey(), BASE_IMAGE, captureLive(), CHROME_CANDIDATES, connect(), encodeJpeg(), evaluate() (+19 more)
 
 ### Community 113 - "Community 113"
-Cohesion: 0.15
-Nodes (29): clearStoredManualApplyState(), fetchPendingCount(), handleManualEditActivity(), hidePendingApplyDock(), loadSvelteComponentParams(), manualApplyLoadingText(), manualApplyStateKey(), manualEditEventForCurrentPage() (+21 more)
+Cohesion: 0.14
+Nodes (31): clearStoredManualApplyState(), fetchPendingCount(), handleManualEditActivity(), hidePendingApplyDock(), loadSvelteComponentParams(), manualApplyLoadingText(), manualApplyStateKey(), manualEditEventForCurrentPage() (+23 more)
 
 ### Community 114 - "Community 114"
 Cohesion: 0.07
@@ -2270,8 +2276,8 @@ Cohesion: 0.10
 Nodes (26): a, b, distribution, keys, slice, total, unique, CatalogIngestDto (+18 more)
 
 ### Community 117 - "Community 117"
-Cohesion: 0.05
-Nodes (41): ExportModal(), CodeOptions(), findCodeHighlighter(), SHOWCASE_ITEMS, Changelog(), dayLabel(), KIND_LABELS, monthLabel() (+33 more)
+Cohesion: 0.07
+Nodes (20): SHOWCASE_ITEMS, Changelog(), dayLabel(), KIND_LABELS, monthLabel(), toDate(), CopyButton(), Introduction() (+12 more)
 
 ### Community 118 - "Community 118"
 Cohesion: 0.05
@@ -2311,7 +2317,7 @@ Nodes (24): CATEGORY_PRO_GROUPS, HIDDEN_TEMPLATE_SLUGS, PRO_SHOWCASE, PRO_UPSELL
 
 ### Community 127 - "Community 127"
 Cohesion: 0.06
-Nodes (40): AnnouncementModal(), ProCard(), ProCardMobile(), Logo(), PRO_FAQ, PRO_FREE_COPY, PRO_SECTIONS, PRO_TESTIMONIALS (+32 more)
+Nodes (44): AnnouncementModal(), ProCard(), ProCardMobile(), Logo(), PRO_FAQ, PRO_FREE_COPY, PRO_SECTIONS, PRO_TESTIMONIALS (+36 more)
 
 ### Community 128 - "Community 128"
 Cohesion: 0.07
@@ -2331,7 +2337,7 @@ Nodes (13): _build_service(), _fake_get_image_features(), _make_test_image(), te
 
 ### Community 132 - "Community 132"
 Cohesion: 0.09
-Nodes (27): TailwindConfigGenerator.add_breakpoints, TailwindConfigGenerator.add_color_palette, TailwindConfigGenerator.add_colors, TailwindConfigGenerator.add_fonts, TailwindConfigGenerator._generate_typescript, excluded_lines, functions, excluded_lines (+19 more)
+Nodes (27): TailwindConfigGenerator.add_breakpoints, TailwindConfigGenerator.add_color_palette, TailwindConfigGenerator.generate_config_string, TailwindConfigGenerator._generate_javascript, TailwindConfigGenerator._generate_typescript, excluded_lines, functions, excluded_lines (+19 more)
 
 ### Community 133 - "Community 133"
 Cohesion: 0.07
@@ -2367,7 +2373,7 @@ Nodes (20): clamp(), HOVERS, Mote, Palette, Point, pointAt(), Pulse, Rgb (+12 mo
 
 ### Community 141 - "Community 141"
 Cohesion: 0.03
-Nodes (57): evilEye, DEFAULT_PROPS, EvilEyeDemo(), buildPrompt(), canFullscreen(), findChildProps(), getActiveCode(), insertCategoryPro() (+49 more)
+Nodes (66): ghostFibers, DEFAULT_PROPS, GhostFibersDemo(), propData, buildPrompt(), canFullscreen(), findChildProps(), getActiveCode() (+58 more)
 
 ### Community 142 - "Community 142"
 Cohesion: 0.20
@@ -2375,7 +2381,7 @@ Nodes (22): Actions, CardValues, clamp(), DEFAULT_IMAGES, DragState, EXITS, Layo
 
 ### Community 143 - "Community 143"
 Cohesion: 0.05
-Nodes (26): AuthModule, AvailabilityCheckResult, SkuAvailabilityService, BillingController, BillingService, StoragePurgeCron, db, pool (+18 more)
+Nodes (22): AuthModule, StoragePurgeCron, PrivacyController, PrivacyModule, PrivacyService, expiredMock, mockDeleteProjects, mockDeleteUsers (+14 more)
 
 ### Community 144 - "Community 144"
 Cohesion: 0.08
@@ -2442,8 +2448,8 @@ Cohesion: 0.08
 Nodes (24): scripts, build, check:prop-docs, dev, format, lint, llms:text, new:component (+16 more)
 
 ### Community 160 - "Community 160"
-Cohesion: 0.12
-Nodes (12): buildSponsorUrl(), SponsorLogo(), buildSponsorUrl(), SponsorItem(), tierStyles, diamondSponsors, platinumSponsors, silverSponsors (+4 more)
+Cohesion: 0.13
+Nodes (11): buildSponsorUrl(), SponsorLogo(), buildSponsorUrl(), SponsorItem(), tierStyles, diamondSponsors, platinumSponsors, silverSponsors (+3 more)
 
 ### Community 161 - "Community 161"
 Cohesion: 0.08
@@ -2458,8 +2464,8 @@ Cohesion: 0.09
 Nodes (21): 1. Should this animate at all?, 2. What is the purpose?, 3. Pick the tool — cheapest that works, 4. Pick the properties, 5. Easing and duration — or a spring, 6. Interruption and exit, 7. Reduced motion and pointer gating, Building Animations (+13 more)
 
 ### Community 164 - "Community 164"
-Cohesion: 0.25
-Nodes (12): detect_domain(), get_cip_brief(), _load_csv(), Load CSV and return list of dicts, Core search function using BM25, Auto-detect the most relevant domain from query, Main search function with auto-domain detection, Search across all domains and combine results (+4 more)
+Cohesion: 0.14
+Nodes (18): BM25, detect_domain(), get_cip_brief(), _load_csv(), Load CSV and return list of dicts, Core search function using BM25, Auto-detect the most relevant domain from query, Main search function with auto-domain detection (+10 more)
 
 ### Community 165 - "Community 165"
 Cohesion: 0.22
@@ -2486,8 +2492,8 @@ Cohesion: 0.21
 Nodes (21): Ballpit(), BallpitProps, createBallpit(), CreateBallpitReturn, createPointerData(), isInside(), onPointerClick(), onPointerLeave() (+13 more)
 
 ### Community 171 - "Community 171"
-Cohesion: 0.11
-Nodes (15): targetCursor, BLEND_OPTIONS, DEFAULT_PROPS, LOOK, PRESET_OPTIONS, PRESETS, propData, flyingPosters (+7 more)
+Cohesion: 0.22
+Nodes (8): flyingPosters, AXIS_OPTIONS, DEFAULT_PROPS, FlyingPostersDemo(), ITEMS, PRESET_OPTIONS, PRESETS, propData
 
 ### Community 172 - "Community 172"
 Cohesion: 0.08
@@ -2502,8 +2508,8 @@ Cohesion: 0.09
 Nodes (21): code:block1 (SPECIFY ──→ PLAN ──→ TASKS ──→ IMPLEMENT), code:markdown (# Capability Map: [Initiative Name]), code:block3 (ASSUMPTIONS I'M MAKING:), code:block4 (Build: npm run build), code:block5 (src/           → Application source code), code:markdown (# Spec: [Project/Feature Name]), code:block7 (REQUIREMENT: "Make the dashboard faster"), code:markdown (- [ ] Task: [Description]) (+13 more)
 
 ### Community 175 - "Community 175"
-Cohesion: 0.09
-Nodes (20): DotField, _buffers, COLOR_PRESETS, ColorValue(), EditableValue(), formatValue(), Hero(), hexToHsv() (+12 more)
+Cohesion: 0.12
+Nodes (16): _buffers, COLOR_PRESETS, ColorValue(), EditableValue(), formatValue(), Hero(), hexToHsv(), hsvToHex() (+8 more)
 
 ### Community 176 - "Community 176"
 Cohesion: 0.11
@@ -2594,8 +2600,8 @@ Cohesion: 0.10
 Nodes (15): swarmCursor, CLICK_OPTIONS, DARK_SWAP, DEFAULT_PROPS, DEMO_OPTIONS, FEATURES, IDLE_OPTIONS, INK (+7 more)
 
 ### Community 198 - "Community 198"
-Cohesion: 0.21
-Nodes (17): buildCli(), buildDev(), buildDocs(), buildHeader(), buildKeyDependencies(), buildMcp(), buildProAgentKit(), buildProCategorySection() (+9 more)
+Cohesion: 0.15
+Nodes (12): magnetLines, DARK_SWAP, DEFAULT_PROPS, LAYOUT_OPTIONS, LIGHT_SWAP, LOOK, MODE_OPTIONS, PRESET_OPTIONS (+4 more)
 
 ### Community 199 - "Community 199"
 Cohesion: 0.27
@@ -2627,7 +2633,7 @@ Nodes (17): clamp(), DEFAULT_ACTIONS, EASE_OUT, Grip, Live, onColor(), Phase, pr
 
 ### Community 206 - "Community 206"
 Cohesion: 0.05
-Nodes (33): CatalogModule, InferenceController, InferenceModule, InferenceService, body, completedEvent, errorEvent, job (+25 more)
+Nodes (34): CatalogModule, InferenceController, InferenceModule, InferenceService, body, completedEvent, errorEvent, job (+26 more)
 
 ### Community 207 - "Community 207"
 Cohesion: 0.19
@@ -2635,7 +2641,7 @@ Nodes (19): _e(), generate_chart_slide(), generate_cta_slide(), generate_deck(),
 
 ### Community 208 - "Community 208"
 Cohesion: 0.10
-Nodes (21): TestShadcnInstaller.test_add_components_already_installed, TestShadcnInstaller.test_check_shadcn_config_exists, TestShadcnInstaller.test_check_shadcn_config_not_exists, TestShadcnInstaller.test_init_default_project_root, functions, excluded_lines, executed_lines, missing_lines (+13 more)
+Nodes (21): TestShadcnInstaller.test_add_components_already_installed, TestShadcnInstaller.test_add_components_no_config, TestShadcnInstaller.test_get_installed_components_no_config, TestShadcnInstaller.test_init_custom_project_root, functions, excluded_lines, executed_lines, missing_lines (+13 more)
 
 ### Community 209 - "Community 209"
 Cohesion: 0.10
@@ -2887,7 +2893,7 @@ Nodes (6): _make_service_no_yunet(), test_sanitization.py — Unit tests for Ima
 
 ### Community 271 - "Community 271"
 Cohesion: 0.09
-Nodes (22): ComponentList(), EMPTY_SET, FAV_BTN_STYLE, PILL_BTN_STYLE, revealsHidden(), squash(), AIMenuSections(), MenuGroup() (+14 more)
+Nodes (21): ComponentList(), EMPTY_SET, FAV_BTN_STYLE, PILL_BTN_STYLE, revealsHidden(), squash(), AIMenuSections(), MenuGroup() (+13 more)
 
 ### Community 272 - "Community 272"
 Cohesion: 0.31
@@ -2910,7 +2916,7 @@ Cohesion: 0.21
 Nodes (9): main(), Add all available shadcn/ui components.          Args:             overwrite: If, Handle shadcn/ui component installation., List installed components.          Returns:             Tuple of (success, mess, Check if shadcn is initialized in project.          Returns:             True if, Get list of already installed components.          Returns:             List of, Read shadcn version from project package.json; fall back to a pinned default., Add shadcn/ui components.          Args:             components: List of compone (+1 more)
 
 ### Community 277 - "Community 277"
-Cohesion: 0.22
+Cohesion: 0.24
 Nodes (17): Done(), actOnAgentTarget(), agentTargetBusyReason(), agentTargetOverlayGone(), agentTargetTaken(), claimAgentTarget(), claimAndActOnAgentTarget(), declineAgentTargetBusy() (+9 more)
 
 ### Community 278 - "Community 278"
@@ -3099,7 +3105,7 @@ Nodes (11): Bar, clamp(), compile(), hash(), link(), locate(), noise(), Settings
 
 ### Community 324 - "Community 324"
 Cohesion: 0.14
-Nodes (14): 13. OUT OF SCOPE, 14. FINAL PRE-FLIGHT CHECK, 1.A Dial Inference (design read → dial values), 1.B Use-Case Presets, 1.C How the Dials Drive Output, 1. THE THREE DIALS (Core Configuration), 2.A When to reach for a real design system (use official packages), 2.B When the brief is an aesthetic, not a system (+6 more)
+Nodes (13): 13. OUT OF SCOPE, 14. FINAL PRE-FLIGHT CHECK, 1.A Dial Inference (design read → dial values), 1.B Use-Case Presets, 1.C How the Dials Drive Output, 1. THE THREE DIALS (Core Configuration), 2.A When to reach for a real design system (use official packages), 2.B When the brief is an aesthetic, not a system (+5 more)
 
 ### Community 325 - "Community 325"
 Cohesion: 0.13
@@ -3150,8 +3156,8 @@ Cohesion: 0.14
 Nodes (9): base, { bin }, file, jsrepoBin, jsrepoDir, next, ROOT, signatures (+1 more)
 
 ### Community 337 - "Community 337"
-Cohesion: 0.16
-Nodes (12): dither, DEFAULT_PROPS, DitherDemo(), EFFECT_OPTIONS, LOOK, MODE_OPTIONS, PALETTE_OPTIONS, paletteName() (+4 more)
+Cohesion: 0.10
+Nodes (18): crosshair, BLEND_OPTIONS, DEFAULT_PROPS, EFFECT_OPTIONS, LINE_OPTIONS, SCOPE_OPTIONS, dither, DEFAULT_PROPS (+10 more)
 
 ### Community 338 - "Community 338"
 Cohesion: 0.15
@@ -3298,8 +3304,8 @@ Cohesion: 0.36
 Nodes (9): CARD_SHADOW, resolveOffset(), scrollsInside(), ScrollStack(), ScrollStackItem(), ScrollStackItemProps, ScrollStackProps, StackSettings (+1 more)
 
 ### Community 374 - "Community 374"
-Cohesion: 0.24
-Nodes (6): highlightCode(), highlighterPromise, LANGUAGE_ALIASES, reactBitsDarkTheme, reactBitsLightTheme, sharedScopes
+Cohesion: 0.12
+Nodes (10): useScrubGesture(), PreviewSliderVertical(), roundToStep(), stepDecimals(), highlightCode(), highlighterPromise, LANGUAGE_ALIASES, reactBitsDarkTheme (+2 more)
 
 ### Community 375 - "Community 375"
 Cohesion: 0.17
@@ -3402,8 +3408,8 @@ Cohesion: 0.18
 Nodes (9): clamp(), Easing, EASINGS, FALLOFF, Settings, ShinyText(), ShinyTextProps, Trigger (+1 more)
 
 ### Community 400 - "Community 400"
-Cohesion: 0.17
-Nodes (9): mockConstructEvent, mockCreateSession, mockFindFirstPass, mockFindFirstUser, mockInsertPass, mockSession, mockUpdateUser, tx (+1 more)
+Cohesion: 0.10
+Nodes (12): BillingController, BillingModule, BillingService, mockConstructEvent, mockCreateSession, mockFindFirstPass, mockFindFirstUser, mockInsertPass (+4 more)
 
 ### Community 401 - "Community 401"
 Cohesion: 0.18
@@ -3427,7 +3433,7 @@ Nodes (10): magicRings, DARK_SWAP, DEFAULT_PROPS, LIGHT_SWAP, LOOK, MOTION_OPTIO
 
 ### Community 406 - "Community 406"
 Cohesion: 0.18
-Nodes (11): galaxy, DEFAULT_PROPS, DIRECTION_OPTIONS, GalaxyDemo(), LOOK, PALETTE_OPTIONS, paletteName(), PALETTES (+3 more)
+Nodes (10): gradientBlinds, CLICK_OPTIONS, DEFAULT_PROPS, DIRECTION_OPTIONS, IDLE_OPTIONS, LIGHT_SWAP, LOOK, PRESET_OPTIONS (+2 more)
 
 ### Community 408 - "Community 408"
 Cohesion: 0.38
@@ -3587,11 +3593,11 @@ Nodes (5): TailwindConfigGenerator._base_config, excluded_lines, executed_lines,
 
 ### Community 447 - "Community 447"
 Cohesion: 0.10
-Nodes (13): BillingModule, Env, envSchema, GlobalExceptionFilter, HealthController, HealthModule, HealthCheckResult, HealthService (+5 more)
+Nodes (12): Env, envSchema, GlobalExceptionFilter, HealthController, HealthModule, HealthCheckResult, HealthService, mockRes (+4 more)
 
 ### Community 448 - "Community 448"
-Cohesion: 0.25
-Nodes (7): glowCursor, COMET, DEFAULT_PROPS, PRESET_OPTIONS, PRESETS, propData, QUALITY_OPTIONS
+Cohesion: 0.20
+Nodes (9): glareHover, BLEND_OPTIONS, DEFAULT_PROPS, LOOK, MODE_OPTIONS, PRESET_OPTIONS, PRESETS, propData (+1 more)
 
 ### Community 449 - "Community 449"
 Cohesion: 0.13
@@ -3630,8 +3636,8 @@ Cohesion: 0.22
 Nodes (8): ghostCursor, DARK_SWAP, DEFAULT_PROPS, LIGHT_SWAP, LOOK, PRESET_OPTIONS, PRESETS, propData
 
 ### Community 458 - "Community 458"
-Cohesion: 0.07
-Nodes (22): ActiveRouteContext, ActiveRouteProvider(), CLI_TOOLS, CliInstallation(), PKG_MANAGERS, CodeHighlighter(), hashSnippet(), routeExpansionState (+14 more)
+Cohesion: 0.04
+Nodes (42): ActiveRouteContext, ActiveRouteProvider(), Controls(), ExportModal(), PKG_MANAGERS, getDocsPath(), CLI_TOOLS, CliInstallation() (+34 more)
 
 ### Community 459 - "Community 459"
 Cohesion: 0.36
@@ -3647,7 +3653,7 @@ Nodes (11): ShadcnInstaller, shadcn_add.py, classes, excluded_lines, executed_li
 
 ### Community 462 - "Community 462"
 Cohesion: 0.18
-Nodes (11): ShadcnInstaller.list_installed, TailwindConfigGenerator.add_plugins, excluded_lines, executed_lines, missing_lines, summary, missing_lines, excluded_lines (+3 more)
+Nodes (11): ShadcnInstaller.list_installed, TailwindConfigGenerator.add_fonts, excluded_lines, executed_lines, missing_lines, summary, missing_lines, excluded_lines (+3 more)
 
 ### Community 463 - "Community 463"
 Cohesion: 0.11
@@ -3655,11 +3661,11 @@ Nodes (14): ExifScrubberStatus, UseExifScrubberResult, stripExifMetadata(), file
 
 ### Community 464 - "Community 464"
 Cohesion: 0.18
-Nodes (11): ShadcnInstaller.get_installed_components, TailwindConfigGenerator.generate_config_string, excluded_lines, executed_lines, missing_lines, summary, percent_covered, excluded_lines (+3 more)
+Nodes (11): ShadcnInstaller.get_installed_components, TailwindConfigGenerator._format_plugins, excluded_lines, executed_lines, missing_lines, summary, percent_covered, excluded_lines (+3 more)
 
 ### Community 465 - "Community 465"
 Cohesion: 0.18
-Nodes (11): ShadcnInstaller.__init__, TailwindConfigGenerator.recommend_plugins, excluded_lines, executed_lines, missing_lines, summary, num_statements, excluded_lines (+3 more)
+Nodes (11): ShadcnInstaller.__init__, TailwindConfigGenerator.__init__, excluded_lines, executed_lines, missing_lines, summary, num_statements, excluded_lines (+3 more)
 
 ### Community 466 - "Community 466"
 Cohesion: 0.18
@@ -3770,8 +3776,8 @@ Cohesion: 0.17
 Nodes (10): embedRes, JSON_HEADERS, options, searchOk, searchPayload, searchRes, STYLE_QUERIES, t0 (+2 more)
 
 ### Community 493 - "Community 493"
-Cohesion: 0.03
-Nodes (45): metallicPaint, CONTENT_OPTIONS, DEFAULT_PROPS, LOOK, PRESET_OPTIONS, PRESETS, propData, bubbleMenu (+37 more)
+Cohesion: 0.29
+Nodes (6): depthCarousel, DEFAULT_PROPS, DepthCarouselDemo(), EASE_OPTIONS, ITEMS, TILT_OPTIONS
 
 ### Community 494 - "Community 494"
 Cohesion: 0.18
@@ -3779,7 +3785,7 @@ Nodes (10): particles, DEFAULT_PROPS, DRIFT_OPTIONS, HOVER_OPTIONS, LOOK, PRESET
 
 ### Community 495 - "Community 495"
 Cohesion: 0.02
-Nodes (72): cubes, DEFAULT_PROPS, EDGE_OPTIONS, LIGHT, LOOK, PRESET_OPTIONS, PRESETS, propData (+64 more)
+Nodes (72): crystalizedBall, DEFAULT_PROPS, MOTION_OPTIONS, PRESET_OPTIONS, PRESETS, SHAPE_OPTIONS, cubes, DEFAULT_PROPS (+64 more)
 
 ### Community 496 - "Community 496"
 Cohesion: 0.12
@@ -3794,12 +3800,12 @@ Cohesion: 0.20
 Nodes (9): carousel, DEFAULT_PROPS, EFFECT_OPTIONS, INDICATOR_OPTIONS, PHOTOS, PRESET_OPTIONS, PRESETS, propData (+1 more)
 
 ### Community 499 - "Community 499"
-Cohesion: 0.22
-Nodes (8): rippleGrid, AUTO_OPTIONS, DEFAULT_PROPS, PRESET_OPTIONS, PRESETS, propData, SHAPE, VARIANT_OPTIONS
+Cohesion: 0.20
+Nodes (11): applyPlaceholderSizingStyles(), buildPlaceholderResizeHandles(), createInsertPlaceholder(), cursorForPlaceholderEdge(), detectInsertAxis(), detectInsertAxisFromStyle(), placeholderSizing(), positionAnnotOverlay() (+3 more)
 
 ### Community 500 - "Community 500"
-Cohesion: 0.15
-Nodes (11): glassIcons, APPS, DEFAULT_PROPS, HOVER_OPTIONS, LABEL_OPTIONS, MONO, PLATE_OPTIONS, PRESET_OPTIONS (+3 more)
+Cohesion: 0.10
+Nodes (16): ditherVeil, DEFAULT_PROPS, FIT_OPTIONS, PALETTE_OPTIONS, PATTERN_OPTIONS, glassIcons, APPS, DEFAULT_PROPS (+8 more)
 
 ### Community 501 - "Community 501"
 Cohesion: 0.22
@@ -3807,7 +3813,7 @@ Nodes (8): metaBalls, DEFAULT_PROPS, MOTION_OPTIONS, PRESET_OPTIONS, PRESETS, pr
 
 ### Community 502 - "Community 502"
 Cohesion: 0.22
-Nodes (3): categoryPreviews, CURATED, createGalleryCanvas()
+Nodes (8): elasticMesh, BALLOON, CONTENT_OPTIONS, DEFAULT_PROPS, MATERIAL_OPTIONS, PRESET_OPTIONS, PRESETS, propData
 
 ### Community 503 - "Community 503"
 Cohesion: 0.22
@@ -3858,12 +3864,12 @@ Cohesion: 0.39
 Nodes (7): generate_html(), get_deliverable_info(), get_image_base64(), main(), Convert image to base64 for embedding in HTML, Extract deliverable type from filename and get info, Generate HTML presentation from CIP images
 
 ### Community 515 - "Community 515"
-Cohesion: 0.09
-Nodes (22): assets, baseUrl, counts, agentKit, appUi, appUiCategories, blockCategories, blocks (+14 more)
+Cohesion: 0.22
+Nodes (9): counts, agentKit, appUi, appUiCategories, blockCategories, blocks, components, templates (+1 more)
 
 ### Community 516 - "Community 516"
 Cohesion: 0.22
-Nodes (8): ribbons, DEFAULT_PROPS, LOOK, PRESET_OPTIONS, PRESETS, propData, RibbonsDemo(), SHAPE_OPTIONS
+Nodes (8): patternWaves, DEFAULT_PROPS, FADE_OPTIONS, LIGHT_PROPS, PATTERN_OPTIONS, PRESET_OPTIONS, PRESETS, WAVE_OPTIONS
 
 ### Community 517 - "Community 517"
 Cohesion: 0.22
@@ -7407,7 +7413,7 @@ Nodes (12): bar, onDismiss, AdsProgressBar(), AdsProgressBarProps, ProgressStage
 
 ### Community 1402 - "Community 1402"
 Cohesion: 0.22
-Nodes (8): scrollStack, DEFAULT_PROPS, LOOK, PHOTOS, PRESET_OPTIONS, PRESETS, propData, ScrollStackDemo()
+Nodes (8): fuseButton, COMMIT_OPTIONS, DEFAULT_PROPS, FUSE_OPTIONS, PRESET_OPTIONS, PRESETS, SETTLE_OPTIONS, SIZE_OPTIONS
 
 ### Community 1403 - "Community 1403"
 Cohesion: 0.14
@@ -7422,16 +7428,20 @@ Cohesion: 0.20
 Nodes (9): AdsButton, AdsButtonProps, buttonVariants, AdsDivider, AdsDividerProps, AdsCanvasHotspotProps, cn(), AdsModalDialogProps (+1 more)
 
 ### Community 1406 - "Community 1406"
-Cohesion: 0.22
-Nodes (8): circularGallery, DEFAULT_PROPS, FONT_OPTIONS, ITEMS, LOOK, PRESET_OPTIONS, PRESETS, propData
+Cohesion: 0.25
+Nodes (7): gridMotion, DEFAULT_PROPS, DIRECTION_OPTIONS, PHOTOS, PRESET_OPTIONS, PRESETS, WORDS
 
 ### Community 1407 - "Community 1407"
 Cohesion: 0.11
 Nodes (17): 1. PostgreSQL Relational Schema (`src/database/schema/`), 2. Qdrant Vector Collection (`retail_catalog_v1`), 3.1 Authentication (`/api/v1/auth`), 3.2 Billing & Entitlements (`/api/v1/billing`), 3.3 Projects & Assets (`/api/v1/projects`), 3.4 Inference & SSE Progress (`/api/v1/inference`), 3.5 Catalog & Inventory (`/api/v1/catalog`), 3.6 Commerce & Affiliate Redirect (`/api/v1/commerce`) (+9 more)
 
+### Community 1408 - "Community 1408"
+Cohesion: 0.22
+Nodes (8): assets, baseUrl, newCounts, blocks, components, plans, startingPrice, tiers
+
 ### Community 1409 - "Community 1409"
-Cohesion: 0.04
-Nodes (47): crosshair, BLEND_OPTIONS, DEFAULT_PROPS, EFFECT_OPTIONS, LINE_OPTIONS, SCOPE_OPTIONS, pixelSwap, DEFAULT_PROPS (+39 more)
+Cohesion: 0.22
+Nodes (8): radar, BASE, DEFAULT_PROPS, LIGHT_COLORS, MODE_OPTIONS, PRESET_OPTIONS, PRESETS, propData
 
 ### Community 1410 - "Community 1410"
 Cohesion: 0.47
@@ -7566,20 +7576,20 @@ Cohesion: 0.22
 Nodes (8): shapeGrid, DEFAULT_PROPS, DIRECTION_OPTIONS, LOOK, PRESET_OPTIONS, PRESETS, propData, SHAPE_OPTIONS
 
 ### Community 1443 - "Community 1443"
-Cohesion: 0.25
-Nodes (7): plasma, DEFAULT_PROPS, DIRECTION_OPTIONS, PRESET_OPTIONS, PRESETS, propData, SHAPE
+Cohesion: 0.29
+Nodes (6): shapeBlur, DEFAULT_PROPS, PRESET_OPTIONS, PRESETS, propData, SHAPE_OPTIONS
 
 ### Community 1444 - "Community 1444"
-Cohesion: 0.22
-Nodes (8): orb, CLASSIC_COLORS, DEFAULT_PROPS, LIGHT_COLORS, LOOK, PRESET_OPTIONS, PRESETS, propData
+Cohesion: 0.29
+Nodes (6): infiniteMenu, DEFAULT_PROPS, ITEMS, PRESET_OPTIONS, PRESETS, propData
 
 ### Community 1445 - "Community 1445"
 Cohesion: 0.11
 Nodes (17): 1. Environment Variables Specification, 2. Local Development & Operational Commands, 3.1 Step 1: Deploy Serverless GPU Worker to Modal, 3.2 Step 2: Seed Qdrant Cloud Vector Index, 3.3 Step 3: Apply Cloudflare R2 7-Day Auto-Purge Policy, 3.4 Step 4: Deploy Cloudflare Canary Router, 3.5 Step 5: AWS ECS Fargate Deployment, 3. Production Deployment Workflows (+9 more)
 
 ### Community 1446 - "Community 1446"
-Cohesion: 0.03
-Nodes (70): animatedContent, DEFAULT_PROPS, antigravity, DEFAULT_PROPS, ditherVeil, DEFAULT_PROPS, FIT_OPTIONS, PALETTE_OPTIONS (+62 more)
+Cohesion: 0.02
+Nodes (175): animatedContent, DEFAULT_PROPS, blobCursor, BLEND_OPTIONS, BlobCursorDemo(), DEFAULT_PROPS, MATERIAL_OPTIONS, fadeContent (+167 more)
 
 ### Community 1447 - "Community 1447"
 Cohesion: 0.17
@@ -7610,8 +7620,8 @@ Cohesion: 0.43
 Nodes (4): cn(), RotatingText, RotatingTextProps, RotatingTextRef
 
 ### Community 1454 - "Community 1454"
-Cohesion: 0.09
-Nodes (12): AuthController, MagicLinkRequestDto, MagicLinkRequestSchema, AuthService, mockFindFirstPass, mockFindFirstUser, mockInsertUser, req (+4 more)
+Cohesion: 0.06
+Nodes (20): AuthController, MagicLinkRequestDto, MagicLinkRequestSchema, AuthService, mockFindFirstPass, mockFindFirstUser, mockInsertUser, req (+12 more)
 
 ### Community 1455 - "Community 1455"
 Cohesion: 0.22
@@ -7674,8 +7684,8 @@ Cohesion: 0.48
 Nodes (3): BlurText(), BlurTextProps, buildKeyframes()
 
 ### Community 1470 - "Community 1470"
-Cohesion: 0.06
-Nodes (31): count, items, noun, path, pitch, count, items, noun (+23 more)
+Cohesion: 0.29
+Nodes (7): categories, text-animations, count, items, noun, path, pitch
 
 ### Community 1471 - "Community 1471"
 Cohesion: 0.29
@@ -7758,12 +7768,12 @@ Cohesion: 0.22
 Nodes (7): lanyard, ANCHOR_OPTIONS, DEFAULT_PROPS, FINISH_OPTIONS, FIT_OPTIONS, METAL_OPTIONS, ORIENTATION_OPTIONS
 
 ### Community 1491 - "Community 1491"
-Cohesion: 0.15
-Nodes (14): PHASE_COPY, PipelinePhase, PipelineProgress, mockPush, { result }, usePipelineStream(), UsePipelineStreamResult, PHASE_LABELS (+6 more)
+Cohesion: 0.16
+Nodes (13): PHASE_COPY, PipelinePhase, PipelineProgress, mockPush, { result }, usePipelineStream(), UsePipelineStreamResult, PHASE_LABELS (+5 more)
 
 ### Community 1492 - "Community 1492"
-Cohesion: 0.25
-Nodes (7): waves, DEFAULT_PROPS, PRESET_OPTIONS, PRESETS, propData, SHAPE, STYLE_OPTIONS
+Cohesion: 0.29
+Nodes (5): useExifScrubber(), getApiBaseUrl(), uploadToR2(), UploadPage(), UploadState
 
 ### Community 1494 - "Community 1494"
 Cohesion: 0.20
@@ -7846,16 +7856,16 @@ Cohesion: 0.25
 Nodes (7): noise, BLEND_OPTIONS, DEFAULT_PROPS, NoiseDemo(), PRESET_OPTIONS, PRESETS, SCENES
 
 ### Community 1515 - "Community 1515"
-Cohesion: 0.25
-Nodes (7): aurora, DEFAULT_PROPS, DIRECTION_OPTIONS, LOOK, PRESET_OPTIONS, PRESETS, propData
+Cohesion: 0.29
+Nodes (6): holdButton, ACTION_OPTIONS, ACTIONS, DEFAULT_PROPS, DIRECTION_OPTIONS, SIZE_OPTIONS
 
 ### Community 1516 - "Community 1516"
-Cohesion: 0.25
-Nodes (7): dotGrid, DEFAULT_PROPS, FEEL, PRESET_OPTIONS, PRESETS, propData, SHAPE_OPTIONS
+Cohesion: 0.29
+Nodes (3): shredder, DEFAULT_PROPS, FILES
 
 ### Community 1517 - "Community 1517"
-Cohesion: 0.08
-Nodes (25): agentKit, appUi, blocks, components, templates, plans, free, pro (+17 more)
+Cohesion: 0.33
+Nodes (6): agentKit, appUi, blocks, components, templates, free
 
 ### Community 1518 - "Community 1518"
 Cohesion: 0.22
@@ -7866,12 +7876,12 @@ Cohesion: 0.25
 Nodes (7): modelViewer, DEFAULT_PROPS, ENVIRONMENT_OPTIONS, INTRO_OPTIONS, MODEL_OPTIONS, MODELS, propData
 
 ### Community 1520 - "Community 1520"
-Cohesion: 0.25
-Nodes (7): fluxLines, DEFAULT_PROPS, FLOW_OPTIONS, LOOK, PRESET_OPTIONS, PRESETS, propData
+Cohesion: 0.29
+Nodes (6): foldText, DEFAULT_PROPS, EASE_OPTIONS, HINGE_OPTIONS, SPLIT_OPTIONS, TRIGGER_OPTIONS
 
 ### Community 1521 - "Community 1521"
-Cohesion: 0.25
-Nodes (7): accordionGallery, AccordionGalleryDemo(), DEFAULT_PROPS, easeOptions, ITEMS, orientationOptions, triggerOptions
+Cohesion: 0.29
+Nodes (6): splitFlapText, charsetOptions, DEFAULT_PROPS, PHRASE_SETS, phraseOptions, SplitFlapTextDemo()
 
 ### Community 1523 - "Community 1523"
 Cohesion: 0.33
@@ -8038,8 +8048,8 @@ Cohesion: 0.40
 Nodes (5): 8.A Token Strategy (pick one, stick to it), 8.B Do Not Prescribe Specific Colors Here, 8.C Default Mode, 8.D Test in Both Modes Before Finishing, 8. DARK MODE PROTOCOL
 
 ### Community 1575 - "Community 1575"
-Cohesion: 0.20
-Nodes (8): APPENDICES - Real Source-Backed Reference Material, Appendix A - Install Commands per Design System, Appendix C - Apple Liquid Glass: Honest Web Approximation, code:bash (# Material Web (Material 3)), code:css (.liquid-glass-web-approx {), Safer web approximation skeleton, What is NOT official, What is official
+Cohesion: 0.40
+Nodes (5): Appendix C - Apple Liquid Glass: Honest Web Approximation, code:css (.liquid-glass-web-approx {), Safer web approximation skeleton, What is NOT official, What is official
 
 ### Community 1576 - "Community 1576"
 Cohesion: 0.13
@@ -8050,16 +8060,16 @@ Cohesion: 0.13
 Nodes (14): 1. Confirmed Operational Defects & Environment Mismatches, 2. Technical Debt & Architectural Gaps, [`BUG-001`] Host Environment Python Alias Mismatch, [`BUG-002`] Modal CLI Absence in Global User PATH, [`BUG-003`] Pnpm Binary Script Invocation Syntax, code:block1 (zsh: command not found: python), code:block2 (zsh: command not found: modal), code:block3 (None of the selected packages has a "ts-node" script) (+6 more)
 
 ### Community 1578 - "Community 1578"
-Cohesion: 0.38
-Nodes (4): useScrubGesture(), PreviewSliderVertical(), roundToStep(), stepDecimals()
+Cohesion: 0.33
+Nodes (3): Testimonials(), toColumns(), TWEETS
 
 ### Community 1579 - "Community 1579"
 Cohesion: 0.25
 Nodes (6): dock, APPS, DEFAULT_PROPS, FEEL_OPTIONS, POSITION_OPTIONS, SPRINGS
 
 ### Community 1580 - "Community 1580"
-Cohesion: 0.12
-Nodes (10): silkCode, DEFAULT_PROPS, LOOK, PRESET_OPTIONS, PRESETS, propData, tearTicket, DEFAULT_PROPS (+2 more)
+Cohesion: 0.25
+Nodes (4): tearTicket, DEFAULT_PROPS, ORIENTATION_OPTIONS, SIZES
 
 ### Community 1581 - "Community 1581"
 Cohesion: 0.40
@@ -8174,8 +8184,8 @@ Cohesion: 0.16
 Nodes (11): chaikin(), contour(), EDGES, fieldToPath(), fmt(), stitch(), Field, sdCapsule() (+3 more)
 
 ### Community 1613 - "Community 1613"
-Cohesion: 0.83
-Nodes (3): createUsageExample(), generatePropsString(), injectPropsIntoUsage()
+Cohesion: 0.33
+Nodes (6): count, items, noun, path, pitch, animations
 
 ### Community 1617 - "Community 1617"
 Cohesion: 0.31
@@ -8230,8 +8240,8 @@ Cohesion: 0.67
 Nodes (3): code:css (@theme {), code:html (<div class="tablet:grid-cols-2 3xl:grid-cols-6">), Custom Breakpoints
 
 ### Community 1643 - "Community 1643"
-Cohesion: 0.25
-Nodes (7): flexCarousel, CURL_OPTIONS, DEFAULT_PROPS, FIT_OPTIONS, INTRO_OPTIONS, PRESET_OPTIONS, PRESETS
+Cohesion: 0.33
+Nodes (6): count, items, noun, path, pitch, backgrounds
 
 ### Community 1644 - "Community 1644"
 Cohesion: 0.67
@@ -8254,8 +8264,8 @@ Cohesion: 0.67
 Nodes (3): critique, argumentHint, description
 
 ### Community 1649 - "Community 1649"
-Cohesion: 0.24
-Nodes (6): BM25, BM25 ranking algorithm for text search, Lowercase, split, remove punctuation, filter short words, Build BM25 index from documents, Score all documents against query, set()
+Cohesion: 0.33
+Nodes (6): components, count, items, noun, path, pitch
 
 ### Community 1650 - "Community 1650"
 Cohesion: 0.14
@@ -8282,8 +8292,8 @@ Cohesion: 0.67
 Nodes (3): live, argumentHint, description
 
 ### Community 1656 - "Community 1656"
-Cohesion: 0.29
-Nodes (6): liquidEther, DEFAULT_PROPS, LOOK, PRESET_OPTIONS, PRESETS, propData
+Cohesion: 0.33
+Nodes (6): default, count, items, noun, path, pitch
 
 ### Community 1657 - "Community 1657"
 Cohesion: 0.67
@@ -8310,8 +8320,8 @@ Cohesion: 0.67
 Nodes (3): typeset, argumentHint, description
 
 ### Community 1730 - "Community 1730"
-Cohesion: 0.29
-Nodes (6): morphSlider, DEFAULT_PROPS, DEMO_ITEMS, EASE_OPTIONS, MorphSliderDemo(), TRANSITION_OPTIONS
+Cohesion: 0.33
+Nodes (6): pro, agentKit, appUi, blocks, components, templates
 
 ### Community 1731 - "Community 1731"
 Cohesion: 0.25
@@ -8334,8 +8344,8 @@ Cohesion: 0.29
 Nodes (9): HotspotPinData, InteractiveCanvas(), InteractiveCanvasProps, fetchProductDetail(), getCommerceRedirectUrl(), ViewPage(), ViewPageProps, CanvasState (+1 more)
 
 ### Community 1736 - "Community 1736"
-Cohesion: 0.02
-Nodes (108): aeroShards, AeroShardsDemo(), DEFAULT_PROPS, balatro, BalatroDemo(), DEFAULT_PROPS, ballpit, DEFAULT_PROPS (+100 more)
+Cohesion: 0.01
+Nodes (139): antigravity, DEFAULT_PROPS, splashCursor, DEFAULT_PROPS, aurora, DEFAULT_PROPS, DIRECTION_OPTIONS, LOOK (+131 more)
 
 ### Community 1737 - "Community 1737"
 Cohesion: 0.33
@@ -8350,8 +8360,8 @@ Cohesion: 0.28
 Nodes (7): jellyRadio, DEFAULT_PROPS, ITEM_OPTIONS, ITEM_SETS, JellyRadioDemo(), middleOf(), SIZE_OPTIONS
 
 ### Community 1743 - "Community 1743"
-Cohesion: 0.40
-Nodes (5): TestShadcnInstaller.test_add_components_no_config, excluded_lines, executed_lines, missing_lines, summary
+Cohesion: 0.33
+Nodes (6): starter, agentKit, appUi, blocks, components, templates
 
 ### Community 1746 - "Community 1746"
 Cohesion: 0.14
@@ -8366,24 +8376,24 @@ Cohesion: 0.21
 Nodes (15): captureMetrics(), CloudWatchDatapoint, CONFIG, dispatchPagerDutyIncident(), evaluateCircuitBreaker(), EvaluationResult, httpsRequest(), MetricSnapshot (+7 more)
 
 ### Community 1749 - "Community 1749"
-Cohesion: 0.06
-Nodes (17): PRO_ANNOUNCEMENT, FadeContent(), FadeContentProps, AI_CONVOS, CARDS, ROW_A, ROW_B, StarCard() (+9 more)
+Cohesion: 0.05
+Nodes (21): TOTAL_COMPONENTS, FadeContent(), FadeContentProps, AI_CONVOS, CARDS, ROW_A, ROW_B, StarCard() (+13 more)
 
 ### Community 1750 - "Community 1750"
-Cohesion: 0.29
-Nodes (8): captureAndEmit(), checkpointPayload(), maybePrefetchPage(), reportVariantMounted(), reportVariantMountFailed(), sendCheckpoint(), sendEvent(), sendSteerCheckpoint()
+Cohesion: 0.33
+Nodes (6): ultimate, agentKit, appUi, blocks, components, templates
 
 ### Community 1751 - "Community 1751"
-Cohesion: 0.08
-Nodes (15): BackgroundRenderer, BackgroundStudio(), ORDERED_BACKGROUNDS, STUDIO_BACKGROUNDS, STUDIO_LIGHT_PROPS, Controls(), PKG_MANAGERS, ANIMATION_IDS (+7 more)
+Cohesion: 0.33
+Nodes (6): showcase, agent-kit, app-ui, blocks, components, templates
 
 ### Community 1752 - "Community 1752"
 Cohesion: 0.40
-Nodes (5): TestShadcnInstaller.test_add_components_with_overwrite, excluded_lines, executed_lines, missing_lines, summary
+Nodes (5): TailwindConfigGenerator.add_colors, excluded_lines, executed_lines, missing_lines, summary
 
 ### Community 1753 - "Community 1753"
 Cohesion: 0.40
-Nodes (5): TestShadcnInstaller.test_get_installed_components_no_config, excluded_lines, executed_lines, missing_lines, summary
+Nodes (5): TailwindConfigGenerator.add_plugins, excluded_lines, executed_lines, missing_lines, summary
 
 ### Community 1754 - "Community 1754"
 Cohesion: 0.50
@@ -8402,12 +8412,12 @@ Cohesion: 0.50
 Nodes (3): payload, pins, sofaPin
 
 ### Community 1758 - "Community 1758"
-Cohesion: 0.05
-Nodes (29): MESSAGES, TOTAL_COMPONENTS, componentMetadata, VARIANTS, getToolSEO(), PAGE_METADATA, useNewSinceLastVisit(), usePageSEO() (+21 more)
+Cohesion: 0.06
+Nodes (31): DocsOverview(), RelatedComponents(), CONTROLS, DOC_SECTIONS, GetStartedLoader(), PROP_ROWS, SkeletonLoader(), animations (+23 more)
 
 ### Community 1759 - "Community 1759"
 Cohesion: 0.40
-Nodes (5): TestShadcnInstaller.test_init_custom_project_root, excluded_lines, executed_lines, missing_lines, summary
+Nodes (5): TailwindConfigGenerator.recommend_plugins, excluded_lines, executed_lines, missing_lines, summary
 
 ### Community 1760 - "Community 1760"
 Cohesion: 0.83
@@ -8418,8 +8428,8 @@ Cohesion: 0.50
 Nodes (3): dialect, entries, version
 
 ### Community 1766 - "Community 1766"
-Cohesion: 0.33
-Nodes (5): electricLogo, DEFAULT_PROPS, lightFor(), LOGOS, PALETTES
+Cohesion: 0.12
+Nodes (13): electricLogo, DEFAULT_PROPS, lightFor(), LOGOS, PALETTES, reflectiveCard, DEFAULT_PROPS, LOOK (+5 more)
 
 ### Community 1767 - "Community 1767"
 Cohesion: 0.67
@@ -8451,15 +8461,19 @@ Nodes (17): 1. Automated Test Execution Summary, 2.1 API Domain Suites (`apps/ap
 
 ### Community 1776 - "Community 1776"
 Cohesion: 0.18
-Nodes (11): ShadcnInstaller.add_all_components, TailwindConfigGenerator._generate_javascript, excluded_lines, executed_lines, missing_lines, summary, percent_covered_display, excluded_lines (+3 more)
+Nodes (11): ShadcnInstaller.add_all_components, TestShadcnInstaller.test_add_components_with_overwrite, excluded_lines, executed_lines, missing_lines, summary, percent_covered_display, excluded_lines (+3 more)
 
 ### Community 1777 - "Community 1777"
 Cohesion: 0.40
 Nodes (5): TailwindConfigGenerator.add_spacing, excluded_lines, executed_lines, missing_lines, summary
 
+### Community 1779 - "Community 1779"
+Cohesion: 0.19
+Nodes (7): ColorModeProvider(), Provider(), customTheme, drawerRecipe, tabsRecipe, toastStyles, initInputModeTracking()
+
 ### Community 1780 - "Community 1780"
-Cohesion: 0.02
-Nodes (70): blobCursor, BLEND_OPTIONS, BlobCursorDemo(), DEFAULT_PROPS, MATERIAL_OPTIONS, cursorGrid, CursorGridDemo(), DEFAULT_PROPS (+62 more)
+Cohesion: 0.18
+Nodes (9): pixelTransition, ANIMATION_OPTIONS, DEFAULT_PROPS, PATTERN_OPTIONS, PRESET_OPTIONS, PRESETS, propData, SHAPE_OPTIONS (+1 more)
 
 ### Community 1781 - "Community 1781"
 Cohesion: 0.22
@@ -8485,13 +8499,17 @@ Nodes (4): 1. Feature Completeness Table, 2. Priority Classification Rationale, 
 Cohesion: 0.40
 Nodes (5): TailwindConfigGenerator._indent_json, excluded_lines, executed_lines, missing_lines, summary
 
+### Community 1787 - "Community 1787"
+Cohesion: 0.40
+Nodes (5): TestShadcnInstaller.test_check_shadcn_config_exists, excluded_lines, executed_lines, missing_lines, summary
+
 ### Community 1788 - "Community 1788"
 Cohesion: 0.40
-Nodes (5): TailwindConfigGenerator._format_plugins, excluded_lines, executed_lines, missing_lines, summary
+Nodes (5): TestShadcnInstaller.test_check_shadcn_config_not_exists, excluded_lines, executed_lines, missing_lines, summary
 
 ### Community 1789 - "Community 1789"
 Cohesion: 0.40
-Nodes (5): TailwindConfigGenerator.__init__, excluded_lines, executed_lines, missing_lines, summary
+Nodes (5): TestShadcnInstaller.test_init_default_project_root, excluded_lines, executed_lines, missing_lines, summary
 
 ### Community 1790 - "Community 1790"
 Cohesion: 0.40
@@ -8517,25 +8535,29 @@ Nodes (5): TestShadcnInstaller.test_get_installed_components_empty, excluded_lin
 Cohesion: 0.67
 Nodes (3): delight, argumentHint, description
 
+### Community 1796 - "Community 1796"
+Cohesion: 0.50
+Nodes (4): 7. DIAL DEFINITIONS (Technical Reference), DESIGN_VARIANCE (Level 1-10), MOTION_INTENSITY (Level 1-10), VISUAL_DENSITY (Level 1-10)
+
 ## Knowledge Gaps
 - **12323 isolated node(s):** `$schema`, `ui`, `dependsOn`, `inputs`, `outputs` (+12318 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **95 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **92 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `fetch()` connect `Community 113` to `Community 8`, `Community 12`, `Community 13`, `Community 15`, `Community 277`, `Community 175`, `Community 65`, `Community 76`, `Community 77`, `Community 1749`, `Community 86`, `Community 87`, `Community 1750`, `Community 96`, `Community 98`, `Community 234`, `Community 111`, `Community 243`, `Community 121`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+- **Why does `fetch()` connect `Community 113` to `Community 96`, `Community 1`, `Community 98`, `Community 6`, `Community 8`, `Community 234`, `Community 76`, `Community 12`, `Community 13`, `Community 175`, `Community 15`, `Community 243`, `Community 1492`, `Community 1749`, `Community 277`, `Community 86`, `Community 121`, `Community 127`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Why does `CatalogSyncService` connect `Community 234` to `Community 153`?**
   _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `getStarsCount()` connect `Community 1749` to `Community 113`?**
-  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+- **Why does `scrollAgentTargetIntoView()` connect `Community 277` to `Community 1778`, `Community 86`, `Community 6`?**
+  _High betweenness centrality (0.013) - this node is a cross-community bridge._
 - **What connects `$schema`, `ui`, `dependsOn` to the rest of the system?**
   _12582 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Community 1` be split into smaller, more focused modules?**
+  _Cohesion score 0.08712121212121213 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
-- **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._
 - **Should `Community 4` be split into smaller, more focused modules?**
   _Cohesion score 0.08333333333333333 - nodes in this community are weakly interconnected._

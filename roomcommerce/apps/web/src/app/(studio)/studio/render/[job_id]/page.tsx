@@ -99,7 +99,7 @@ export default function RenderPage({ params }: RenderPageProps) {
               onClick={retry}
               className="px-5 py-2 rounded-lg bg-brand-terracotta text-white text-sm font-semibold hover:opacity-90 transition-opacity"
             >
-              Retry Connection
+              Try Again
             </button>
             <button
               onClick={() => router.push('/studio')}

@@ -102,7 +102,20 @@ export function usePipelineStream(projectIdOrJobId: string | null): UsePipelineS
             ? raw.percent
             : 0;
 
-      const creditsRestored = Boolean(raw.credits_restored ?? raw.creditsRestored);
+      const creditsRestored = Boolean(raw.credits_restored ?? raw.creditsRestored ?? raw.creditRefunded);
+
+      if (raw.code === 'WORKER_TIMEOUT') {
+        const errorMsg = raw.message || 'GPU worker exceeded 25s threshold. Your credit has been refunded.';
+        setError(errorMsg);
+        setProgress((prev) => ({
+          ...prev,
+          phase: 'FAILED',
+          message: errorMsg,
+          creditsRestored: true,
+        }));
+        eventSource.close();
+        return;
+      }
 
       if (phaseRaw === 'FAILED') {
         const errorMsg = creditsRestored
@@ -167,7 +180,16 @@ export function usePipelineStream(projectIdOrJobId: string | null): UsePipelineS
       }
     };
 
-    const handleErrorEvent = () => {
+    const handleErrorEvent = (e: any) => {
+      if (e && e.data) {
+        try {
+          const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+          handlePayload(data);
+          return;
+        } catch {
+          // ignore parse error
+        }
+      }
       // SSE connection error: don't immediately fail; HTTP polling fallback continues
       console.warn(`[usePipelineStream] SSE disconnected for ${resolvedId}; falling back to HTTP polling.`);
     };
@@ -176,6 +198,7 @@ export function usePipelineStream(projectIdOrJobId: string | null): UsePipelineS
     eventSource.addEventListener('progress', handleProgressNamed);
     eventSource.addEventListener('complete', handleCompleteNamed);
     eventSource.addEventListener('error', handleErrorEvent);
+    eventSource.addEventListener('failure', (e: any) => handleErrorEvent(e));
 
     // ── HTTP Polling Fallback (every 3 seconds) ──────────────────────────────
     const pollInterval = setInterval(async () => {

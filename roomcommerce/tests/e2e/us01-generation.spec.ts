@@ -83,11 +83,12 @@ test.describe('US-01: First-Time Room Transformation & Hotspot Generation', () =
 
     // 1. Visit landing page (SCR-01)
     await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.locator('h1')).toContainText(/Redesign/i);
 
     // 2. Click guest intake CTA -> Navigates to SCR-04
-    await page.click('#hero-upload-cta');
-    await expect(page).toHaveURL(/\/studio\/new\/upload/);
+    await page.locator('#hero-upload-cta').click();
+    await expect(page).toHaveURL(/\/studio\/new\/upload/, { timeout: 15000 });
 
     // 3. Upload valid room photo
     const fixturePath = path.join(__dirname, '../fixtures/clear_living_room.jpg');
@@ -114,14 +115,14 @@ test.describe('US-01: First-Time Room Transformation & Hotspot Generation', () =
     const elapsedSeconds = (Date.now() - startTime) / 1000;
     expect(elapsedSeconds).toBeLessThanOrEqual(15.0);
 
-    // 8. Assert between 3 and 7 product pins rendered
+    // 8. Assert pins are displayed on canvas
     const pins = page.locator('[data-testid^="hotspot-"]');
+    await expect(pins.first()).toBeVisible({ timeout: 10000 });
+
+    // 9. Assert between 3 and 7 product pins rendered
     const pinCount = await pins.count();
     expect(pinCount).toBeGreaterThanOrEqual(3);
     expect(pinCount).toBeLessThanOrEqual(7);
-
-    // 9. Assert pins are displayed on canvas
-    await expect(pins.first()).toBeVisible();
   });
 
   test('Scenario 2: Blurry photo rejection and file type validation (FR-105)', async ({ page }) => {

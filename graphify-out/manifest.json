@@ -230,8 +230,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/drizzle.config.ts": {
-    "mtime": 1791901449.1243253,
-    "ast_hash": "e558a76479409f8361bc67e11ef1df13",
+    "mtime": 1791989558.8531344,
+    "ast_hash": "d225b5a112dfef89ebc5bdfc62107b4c",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/vitest.config.ts": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/database/index.ts": {
-    "mtime": 1791877750.936669,
-    "ast_hash": "f4f5dd76864275cfc7742966cd38c13a",
+    "mtime": 1791989659.9869502,
+    "ast_hash": "75aaff2a497e4830a1ea8d3635c6fd77",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/database/schema/projects.ts": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/database/schema/move-passes.ts": {
-    "mtime": 1791877695.9588835,
-    "ast_hash": "29b61494724bd638436731d6597ffdcd",
+    "mtime": 1791989594.461564,
+    "ast_hash": "691926b0ff1aab706db959bfbf6d7cc9",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/database/schema/catalog-skus.ts": {
@@ -310,8 +310,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/config/env.ts": {
-    "mtime": 1791979186.0295472,
-    "ast_hash": "24d535151fabcbe636362b114c24ed93",
+    "mtime": 1791989635.6909664,
+    "ast_hash": "5e25ebd237bbe891ee169b8d80d664b6",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/modules/catalog/dto/catalog-ingest.dto.ts": {
@@ -325,8 +325,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/modules/catalog/seed/seed-runner.ts": {
-    "mtime": 1791877862.250896,
-    "ast_hash": "906c414dde01fceedc13adfaf0faebcf",
+    "mtime": 1791989714.0855815,
+    "ast_hash": "0b711bc8dcd9ad9937e97c5612d827e1",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/modules/catalog/availability/sku-availability.service.ts": {
@@ -730,8 +730,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/modules/inference/queues/inference.processor.ts": {
-    "mtime": 1791979889.921588,
-    "ast_hash": "b282c5dbecf8c72c8cd2153a873f28ef",
+    "mtime": 1791989976.8381338,
+    "ast_hash": "4a4439460853f8514ce22497b47244d8",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/src/modules/billing/billing.module.ts": {
@@ -32295,8 +32295,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/packages/ui/src/navigation/product-drawer/ads-product-drawer.tsx": {
-    "mtime": 1791984906.581453,
-    "ast_hash": "42979e06e6552b90e801f788ff24eee2",
+    "mtime": 1792052973.246425,
+    "ast_hash": "8c0544942a0aaec6772c7e6beee80a7c",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/packages/ui/src/feedback/feedback.test.tsx": {
@@ -32375,8 +32375,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/packages/ui/src/inputs/dropzone/ads-dropzone.tsx": {
-    "mtime": 1791888794.525205,
-    "ast_hash": "c7774bb01f79e096832119c6175e1a94",
+    "mtime": 1792052750.9761667,
+    "ast_hash": "307e51757410034899d1fabb15082bed",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/app/(studio)/layout.tsx": {
@@ -32390,8 +32390,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/app/(studio)/studio/render/[job_id]/page.tsx": {
-    "mtime": 1791980508.8179991,
-    "ast_hash": "0e7655663c0c1dfa171dc8a79cd2b8a4",
+    "mtime": 1792053625.824706,
+    "ast_hash": "8c991ac8c947c70804e8c67a250b6adc",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/app/(studio)/studio/new/inspect/page.tsx": {
@@ -32405,13 +32405,13 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/app/(studio)/studio/new/upload/page.tsx": {
-    "mtime": 1791980569.945758,
-    "ast_hash": "75b0c3632d34ce216ed0b6e39e364e48",
+    "mtime": 1792053203.7234895,
+    "ast_hash": "7a94b90855387c681201c1414ba903ff",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/app/(studio)/studio/view/[project_id]/page.tsx": {
-    "mtime": 1791980635.2798307,
-    "ast_hash": "dffb0a21778997e6c9396fbedc9e6b5b",
+    "mtime": 1792053012.0909953,
+    "ast_hash": "9d3d618de4fcb0d25d144018c68e81bd",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/app/(studio)/checkout/page.tsx": {
@@ -32470,13 +32470,13 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/hooks/use-pipeline-stream.ts": {
-    "mtime": 1791980483.507259,
-    "ast_hash": "82b0931b689f7cf2e935fcdea92596be",
+    "mtime": 1792053798.691481,
+    "ast_hash": "006dc30a77d94311d3cff786cc4ecd15",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/lib/api-client.ts": {
-    "mtime": 1791980770.4350889,
-    "ast_hash": "1dc0cdd36dd66b94f297bda390184178",
+    "mtime": 1792053004.4219813,
+    "ast_hash": "41231fdba2d5efb962e7d8a8ac189dee",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/lib/exif-scrubber.ts": {
@@ -32505,8 +32505,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/tests/e2e/us01-generation.spec.ts": {
-    "mtime": 1791984123.2528672,
-    "ast_hash": "831f5e547a5d96456608d7dbad78ce5e",
+    "mtime": 1792052658.7350278,
+    "ast_hash": "8393129bd87e2e55dc5081d49aa68f2b",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/tests/e2e/us03-anchor-locking.spec.ts": {
@@ -32610,8 +32610,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/playwright-report/index.html": {
-    "mtime": 1791985112.4524226,
-    "ast_hash": "11aef8177f2dce0f012c113d618fd21b",
+    "mtime": 1792053830.140246,
+    "ast_hash": "69621f06266dfa13cd1880b9a765d84b",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/tests/fixtures/clear_living_room.jpg": {
@@ -32655,8 +32655,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/tests/e2e/chaos-fault-injection.spec.ts": {
-    "mtime": 1791984142.1964016,
-    "ast_hash": "6270a5c9df32306bec4d5fd103478704",
+    "mtime": 1792053576.48247,
+    "ast_hash": "bcfc57b9d24ea5ecc48b73fbd30a23a3",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/src/app/api/health/route.ts": {
@@ -32840,8 +32840,8 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/test-results/.last-run.json": {
-    "mtime": 1791985112.4560206,
-    "ast_hash": "236e727d632b0449afe0254b7c4a0c3a",
+    "mtime": 1792053830.1409037,
+    "ast_hash": "f196824657d8858bc7fa44eecbba38b1",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/web/tailwind.config.js": {
@@ -32865,53 +32865,13 @@
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/apps/api/scripts/preflight-verify.ts": {
-    "mtime": 1791985966.639697,
-    "ast_hash": "f565069f8753d8a8cede5357157bbaee",
-    "semantic_hash": ""
-  },
-  "/Users/mondhermac/Desktop/project commerce/roomcommerce/playwright-report/data/c9c8ea53877abf29b5a2b314dcd3204b9571353b.md": {
-    "mtime": 1791985112.4431803,
-    "ast_hash": "5ad487e80e1061ecf16df74ede4a2301",
-    "semantic_hash": ""
-  },
-  "/Users/mondhermac/Desktop/project commerce/roomcommerce/test-results/a11y-audit-WCAG-2-1-Level--2146d-zero-WCAG-2-1-AA-violations-Desktop-Chrome/error-context.md": {
-    "mtime": 1791985100.7368305,
-    "ast_hash": "5ad487e80e1061ecf16df74ede4a2301",
-    "semantic_hash": ""
-  },
-  "/Users/mondhermac/Desktop/project commerce/roomcommerce/playwright-report/data/c649828ad2922890df8c2c35b62d6bcbf5240323.png": {
-    "mtime": 1791985112.4423058,
-    "ast_hash": "2b9351a21f014e28b69c0e40ebff4fac",
-    "semantic_hash": ""
-  },
-  "/Users/mondhermac/Desktop/project commerce/roomcommerce/test-results/a11y-audit-WCAG-2-1-Level--2146d-zero-WCAG-2-1-AA-violations-Desktop-Chrome/test-failed-1.png": {
-    "mtime": 1791985100.1848254,
-    "ast_hash": "2b9351a21f014e28b69c0e40ebff4fac",
-    "semantic_hash": ""
-  },
-  "/Users/mondhermac/Desktop/project commerce/roomcommerce/playwright-report/data/6483f3b4208d75ce8e7722af5e8f99acfea4c02d.webm": {
-    "mtime": 1791985112.442568,
-    "ast_hash": "3e62a599f6df62f47e2e8686a46708ec",
-    "semantic_hash": ""
-  },
-  "/Users/mondhermac/Desktop/project commerce/roomcommerce/playwright-report/data/9fdf9cf0420ab89bb209114755445287452d7eb9.webm": {
-    "mtime": 1791985112.4429512,
-    "ast_hash": "1c2ca9998e378c6a2230b4b08e142d27",
-    "semantic_hash": ""
-  },
-  "/Users/mondhermac/Desktop/project commerce/roomcommerce/test-results/a11y-audit-WCAG-2-1-Level--2146d-zero-WCAG-2-1-AA-violations-Desktop-Chrome/video.webm": {
-    "mtime": 1791985100.7340097,
-    "ast_hash": "1c2ca9998e378c6a2230b4b08e142d27",
-    "semantic_hash": ""
-  },
-  "/Users/mondhermac/Desktop/project commerce/roomcommerce/test-results/a11y-audit-WCAG-2-1-Level--2146d-zero-WCAG-2-1-AA-violations-Desktop-Chrome/video-1.webm": {
-    "mtime": 1791985100.733829,
-    "ast_hash": "3e62a599f6df62f47e2e8686a46708ec",
+    "mtime": 1791989855.0283031,
+    "ast_hash": "61b8ff60566fea87e6e4f65eba6c5b42",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/docker-compose.yml": {
-    "mtime": 1791986192.0888472,
-    "ast_hash": "a246c7b6c36d71a6239c2e175aaf5cf1",
+    "mtime": 1791989082.0694404,
+    "ast_hash": "684d7123cc72eed85c2b664c1c7a8268",
     "semantic_hash": ""
   },
   "/Users/mondhermac/Desktop/project commerce/roomcommerce/scripts/cloud-cutover.sh": {

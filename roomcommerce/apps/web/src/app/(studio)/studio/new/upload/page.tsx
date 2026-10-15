@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { AdsDropzone } from '@roomcommerce/ui';
 import { useExifScrubber } from '@/hooks/use-exif-scrubber';
 import { useWizardStore } from '@/stores/use-wizard-store';
-import { createProject, uploadToR2 } from '@/lib/api-client';
+import { createProject, uploadToR2, getApiBaseUrl } from '@/lib/api-client';
 
 type UploadState = 'idle' | 'scrubbing' | 'uploading' | 'done' | 'error';
 
@@ -29,14 +29,34 @@ export default function UploadPage() {
       const previewUrl = URL.createObjectURL(sanitizedBlob);
       setRawImage(file, sanitizedBlob, previewUrl);
 
-      // Step 2: Create project + get presigned R2 upload URL
+      // Step 2: Quality Gate / Inspect check (FR-105)
+      try {
+        const inspectRes = await fetch(`${getApiBaseUrl()}/api/v1/inspect`, {
+          method: 'POST',
+          body: sanitizedBlob,
+        });
+        if (inspectRes.status === 422) {
+          const errData = await inspectRes.json().catch(() => ({}));
+          throw new Error(
+            errData.message ||
+              errData.error ||
+              'This image does not appear to be an interior room. Please upload a photo of your living space.',
+          );
+        }
+      } catch (inspectErr) {
+        if (inspectErr instanceof Error && !inspectErr.message.includes('fetch')) {
+          throw inspectErr;
+        }
+      }
+
+      // Step 3: Create project + get presigned R2 upload URL
       setUploadState('uploading');
       setUploadProgress(10);
 
       const { projectId, uploadUrl } = await createProject();
       setProjectId(projectId);
 
-      // Step 3: Direct PUT to Cloudflare R2 (no API intermediary)
+      // Step 4: Direct PUT to Cloudflare R2 (no API intermediary)
       setUploadProgress(40);
       await uploadToR2(uploadUrl, sanitizedBlob);
       setUploadProgress(100);
@@ -95,6 +115,18 @@ export default function UploadPage() {
           Removing EXIF metadata from your photo…
         </p>
       )}
+
+      <div className="mt-8 flex justify-end">
+        <button
+          type="button"
+          id="upload-continue-btn"
+          disabled={uploadState !== 'done'}
+          onClick={() => router.push('/studio/new/inspect')}
+          className="px-6 py-2.5 rounded-lg bg-brand-terracotta text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+        >
+          Continue →
+        </button>
+      </div>
     </div>
   );
 }

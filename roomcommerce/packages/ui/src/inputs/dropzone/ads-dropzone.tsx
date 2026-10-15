@@ -71,6 +71,15 @@ export function AdsDropzone({
 
   return (
     <div className={cn('space-y-2', className)}>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
+        onChange={handleChange}
+        className="sr-only"
+        aria-hidden="true"
+        tabIndex={-1}
+      />
       <div
         role="button"
         tabIndex={0}
@@ -90,15 +99,6 @@ export function AdsDropzone({
           currentState === 'error' && 'border-semantic-danger bg-semantic-danger-subtle',
         )}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
-          onChange={handleChange}
-          className="sr-only"
-          aria-hidden="true"
-          tabIndex={-1}
-        />
 
         {currentState === 'uploading' ? (
           <>
