@@ -101,4 +101,39 @@ describe('AdsProductDrawer', () => {
     const img = screen.getByAltText('Japandi Lounge Chair — Walnut & Ivory Boucle');
     expect(img.getAttribute('src')).toBe('https://cdn.example.com/chair.webp');
   });
+
+  it('renders Budget & Style Alternatives section and triggers onSwapSku when clicked', () => {
+    const onSwapSku = vi.fn();
+    const MOCK_ALTS = [
+      {
+        skuId: 'alt-ikea-1',
+        title: 'POÄNG Armchair',
+        retailer: 'IKEA',
+        priceCents: 12900,
+        imageUrl: 'https://cdn.example.com/poang.webp',
+        matchScore: 0.91,
+      },
+    ];
+
+    render(
+      <AdsProductDrawer
+        isOpen={true}
+        onClose={vi.fn()}
+        product={MOCK_PRODUCT}
+        alternatives={MOCK_ALTS}
+        onSwapSku={onSwapSku}
+      />,
+    );
+
+    expect(screen.getByText(/Budget & Style Alternatives/i)).toBeTruthy();
+    expect(screen.getByText('POÄNG Armchair')).toBeTruthy();
+    expect(screen.getByText('$129.00')).toBeTruthy();
+    // MOCK_PRODUCT is 149900 cents, alt is 12900 cents => savings = 149900 - 12900 = 137000 cents ($1370)
+    expect(screen.getByText('Save $1370')).toBeTruthy();
+
+    const swapBtn = screen.getByTestId('swap-sku-btn-alt-ikea-1');
+    expect(swapBtn).toBeTruthy();
+    fireEvent.click(swapBtn);
+    expect(onSwapSku).toHaveBeenCalledWith(MOCK_ALTS[0]);
+  });
 });

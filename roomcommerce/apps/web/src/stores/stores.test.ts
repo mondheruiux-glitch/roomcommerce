@@ -150,4 +150,70 @@ describe('useCanvasStore', () => {
     act(() => useCanvasStore.getState().toggleHotspots());
     expect(useCanvasStore.getState().showHotspots).toBe(true);
   });
+
+  it('toggleCompareMode and setCompareMode update comparison state', async () => {
+    const { useCanvasStore } = await import('../stores/use-canvas-store');
+    useCanvasStore.getState().resetCanvas();
+
+    expect(useCanvasStore.getState().isCompareMode).toBe(false);
+
+    act(() => useCanvasStore.getState().toggleCompareMode());
+    expect(useCanvasStore.getState().isCompareMode).toBe(true);
+
+    act(() => useCanvasStore.getState().setCompareMode(false));
+    expect(useCanvasStore.getState().isCompareMode).toBe(false);
+  });
+
+  it('setCompareSliderPosition clamps between 0 and 100', async () => {
+    const { useCanvasStore } = await import('../stores/use-canvas-store');
+    useCanvasStore.getState().resetCanvas();
+
+    expect(useCanvasStore.getState().compareSliderPosition).toBe(50);
+
+    act(() => useCanvasStore.getState().setCompareSliderPosition(-15));
+    expect(useCanvasStore.getState().compareSliderPosition).toBe(0);
+
+    act(() => useCanvasStore.getState().setCompareSliderPosition(120));
+    expect(useCanvasStore.getState().compareSliderPosition).toBe(100);
+
+    act(() => useCanvasStore.getState().setCompareSliderPosition(37.4));
+    expect(useCanvasStore.getState().compareSliderPosition).toBe(37);
+  });
+
+  it('swapHotspotSku updates swappedHotspotSkus record and resetCanvas clears it', async () => {
+    const { useCanvasStore } = await import('../stores/use-canvas-store');
+    useCanvasStore.getState().resetCanvas();
+
+    expect(useCanvasStore.getState().swappedHotspotSkus).toEqual({});
+
+    act(() => {
+      useCanvasStore.getState().swapHotspotSku('spot-1', {
+        skuId: 'ikea-sofa-alt',
+        title: 'Kivik Minimalist Sofa',
+        retailer: 'IKEA',
+        priceCents: 39900,
+        imageUrl: 'https://example.com/kivik.webp',
+      });
+    });
+
+    const state = useCanvasStore.getState();
+    expect(state.swappedHotspotSkus['spot-1']).toEqual({
+      skuId: 'ikea-sofa-alt',
+      title: 'Kivik Minimalist Sofa',
+      retailer: 'IKEA',
+      priceCents: 39900,
+      imageUrl: 'https://example.com/kivik.webp',
+    });
+
+    act(() => {
+      useCanvasStore.getState().toggleCompareMode();
+      useCanvasStore.getState().setCompareSliderPosition(75);
+      useCanvasStore.getState().resetCanvas();
+    });
+
+    const resetState = useCanvasStore.getState();
+    expect(resetState.isCompareMode).toBe(false);
+    expect(resetState.compareSliderPosition).toBe(50);
+    expect(resetState.swappedHotspotSkus).toEqual({});
+  });
 });

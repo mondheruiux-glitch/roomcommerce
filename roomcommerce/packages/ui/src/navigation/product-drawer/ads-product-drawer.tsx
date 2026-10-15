@@ -20,11 +20,22 @@ export interface ProductDrawerData {
   isAlternative?: boolean;
 }
 
+export interface ProductAlternativeItem {
+  skuId: string;
+  title: string;
+  retailer: string;
+  priceCents: number;
+  imageUrl?: string;
+  matchScore?: number;
+}
+
 export interface AdsProductDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   product: ProductDrawerData | null;
   className?: string;
+  alternatives?: ProductAlternativeItem[];
+  onSwapSku?: (sku: { skuId: string; title: string; retailer: string; priceCents: number; imageUrl?: string }) => void;
 }
 
 /**
@@ -38,10 +49,18 @@ export interface AdsProductDrawerProps {
  * - 1:1 aspect product cutout image
  * - Metric + Imperial dual dimensions
  * - Cosine visual similarity badge
+ * - Budget & Style Alternatives Live Swapper (SCR-08A)
  * - Affiliate CTA button
  * - Mandatory FTC disclosure (BR-03)
  */
-export function AdsProductDrawer({ isOpen, onClose, product, className }: AdsProductDrawerProps) {
+export function AdsProductDrawer({
+  isOpen,
+  onClose,
+  product,
+  className,
+  alternatives,
+  onSwapSku,
+}: AdsProductDrawerProps) {
   // ESC key dismissal
   React.useEffect(() => {
     if (!isOpen) return;
@@ -186,6 +205,88 @@ export function AdsProductDrawer({ isOpen, onClose, product, className }: AdsPro
               </tbody>
             </table>
           </div>
+
+          {/* ── Budget & Style Alternatives (SCR-08A Live SKU Swapper) ── */}
+          {alternatives && alternatives.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-ink-secondary">
+                  Budget &amp; Style Alternatives
+                </h3>
+                <span className="text-[10px] font-medium text-ink-muted">Live Room Swapper</span>
+              </div>
+
+              <div className="space-y-2.5">
+                {alternatives.map((alt) => {
+                  const altPrice = new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                  }).format(alt.priceCents / 100);
+
+                  const diffCents = product.priceCents - alt.priceCents;
+                  const isSavings = diffCents > 0;
+                  const savingsText = isSavings
+                    ? `Save $${(diffCents / 100).toFixed(0)}`
+                    : diffCents < 0
+                      ? `+$${(Math.abs(diffCents) / 100).toFixed(0)}`
+                      : null;
+
+                  return (
+                    <div
+                      key={alt.skuId}
+                      data-testid={`alt-sku-card-${alt.skuId}`}
+                      className="p-3 rounded-lg border border-border-default bg-bg-surface hover:border-brand-terracotta/40 transition-colors flex items-center justify-between gap-3 shadow-xs"
+                    >
+                      {alt.imageUrl && (
+                        <div className="w-12 h-12 rounded bg-bg-subtle border border-border-default shrink-0 overflow-hidden p-1 flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={alt.imageUrl}
+                            alt={alt.title}
+                            className="w-full h-full object-contain mix-blend-multiply"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-[10px] font-mono font-semibold uppercase text-ink-secondary">
+                            {alt.retailer}
+                          </span>
+                          {savingsText && (
+                            <span
+                              className={cn(
+                                'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                                isSavings
+                                  ? 'bg-status-success/15 text-status-success'
+                                  : 'bg-bg-subtle text-ink-muted',
+                              )}
+                            >
+                              {savingsText}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs font-semibold text-ink-primary truncate" title={alt.title}>
+                          {alt.title}
+                        </p>
+                        <p className="text-xs font-mono font-bold text-ink-primary tabular-nums">
+                          {altPrice}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        data-testid={`swap-sku-btn-${alt.skuId}`}
+                        onClick={() => onSwapSku?.(alt)}
+                        className="shrink-0 text-xs px-3 py-1.5 rounded-lg bg-brand-terracotta text-white font-semibold hover:bg-brand-terracotta-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-terracotta focus-visible:ring-offset-2"
+                      >
+                        Swap into Room
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer CTA + FTC Disclosure */}

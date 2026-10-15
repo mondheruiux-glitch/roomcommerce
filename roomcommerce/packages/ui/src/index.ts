@@ -30,7 +30,7 @@ export type { AdsSkuSpecTableProps } from './data-display/spec-table/ads-sku-spe
 
 // Navigation
 export { AdsProductDrawer } from './navigation/product-drawer/ads-product-drawer';
-export type { AdsProductDrawerProps, ProductDrawerData } from './navigation/product-drawer/ads-product-drawer';
+export type { AdsProductDrawerProps, ProductDrawerData, ProductAlternativeItem } from './navigation/product-drawer/ads-product-drawer';
 
 // Lib
 export { cn } from './lib/utils';

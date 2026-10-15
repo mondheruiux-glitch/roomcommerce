@@ -196,6 +196,7 @@ export async function triggerRender(
 export interface ProjectData {
   id: string;
   renderUrl: string | null;
+  rawImageUrl?: string | null;
   status: 'PENDING' | 'PROCESSING' | 'COMPLETE' | 'COMPLETED' | 'FAILED';
   isFreeUser: boolean;
   createdAt: string;
@@ -219,6 +220,7 @@ export async function fetchProject(projectId: string): Promise<ProjectData> {
   return {
     id: data.id ?? projectId,
     renderUrl: data.renderUrl ?? data.render_url ?? data.renderedImageUrl ?? data.rendered_image_url ?? null,
+    rawImageUrl: data.rawImageUrl ?? data.raw_image_url ?? data.rawImage ?? data.raw_image ?? null,
     status: data.status,
     isFreeUser: data.isFreeUser ?? data.is_free_user ?? false,
     createdAt: data.createdAt ?? data.created_at ?? new Date().toISOString(),
@@ -314,6 +316,33 @@ export async function fetchProductDetail(productId: string): Promise<ProductDeta
 
 export function getCommerceRedirectUrl(productId: string): string {
   return `${API_BASE}/api/v1/commerce/redirect/${productId}`;
+}
+
+export interface AlternativeSkuItem {
+  skuId: string;
+  title: string;
+  retailer: string;
+  priceCents: number;
+  imageUrl?: string;
+  matchScore?: number;
+}
+
+export async function fetchProductAlternatives(productId: string): Promise<AlternativeSkuItem[]> {
+  try {
+    const raw = await apiFetch<any>(`/api/v1/catalog/products/${productId}/alternatives`);
+    const data = raw.data ?? raw;
+    const list = Array.isArray(data) ? data : (data?.alternatives ?? []);
+    return list.map((item: any) => ({
+      skuId: item.id ?? item.skuId ?? item.productId ?? item.matchedSkuId,
+      title: item.title ?? 'Alternative Option',
+      retailer: item.retailer ?? item.retailerName ?? 'Retailer Partner',
+      priceCents: item.priceCents ?? item.price_cents ?? 0,
+      imageUrl: item.imageUrl ?? item.image_url ?? '',
+      matchScore: item.similarityScore ?? item.matchScore ?? 0.88,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 // ── Upload to Cloudflare R2 ──────────────────────────────────────────────────
