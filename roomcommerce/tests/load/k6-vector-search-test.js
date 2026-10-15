@@ -115,13 +115,19 @@ export default function () {
       min_similarity: 0.75,
     });
 
-    const t0 = Date.now();
     const searchRes = http.post(CATALOG_SEARCH_ENDPOINT, searchPayload, JSON_HEADERS);
-    const elapsed = Date.now() - t0;
 
-    vectorSearchLatency.add(elapsed);
+    // Use k6's built-in accurate HTTP timer (avoids JS event-loop jitter from Date.now()).
+    // timings.duration = total round-trip; timings.waiting = TTFB (pure server time).
+    const httpDuration = searchRes.timings.duration;
+    vectorSearchLatency.add(httpDuration);
 
-    const searchOk = check(searchRes, {
+    // ── HTTP success check (feeds vector_search_errors rate metric) ─────────
+    // IMPORTANT: Only genuine HTTP failures (non-200, missing/malformed body)
+    // count as errors. Latency violations are tracked separately via the
+    // vector_search_latency_ms trend threshold — conflating them inflates the
+    // error rate and masks the real failure mode.
+    const httpOk = check(searchRes, {
       '[NFR-03] Vector search status 200': (r) => r.status === 200,
       '[NFR-03] Returns array of products': (r) => {
         try {
@@ -147,10 +153,16 @@ export default function () {
           return false;
         }
       },
-      '[NFR-03] Latency ≤ 80ms wall-clock': () => elapsed <= 80,
     });
 
-    vectorSearchErrors.add(!searchOk);
+    // Informational latency check — recorded in summary but does NOT affect
+    // the vector_search_errors rate threshold.
+    check(searchRes, {
+      '[NFR-03] Latency ≤ 80ms (HTTP duration)': () => httpDuration <= 80,
+    });
+
+    // Only count genuine HTTP-level failures as errors (not latency breaches).
+    vectorSearchErrors.add(!httpOk);
   });
 
   group('Product Embedding Lookup (Read-Only)', () => {
