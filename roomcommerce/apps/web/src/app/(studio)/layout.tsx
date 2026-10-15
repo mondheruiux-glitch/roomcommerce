@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { StudioNavLink } from '@/components/nav/studio-nav-link';
 
 export const metadata: Metadata = {
   title: 'Studio',
@@ -16,28 +17,18 @@ export default function StudioLayout({ children }: { children: React.ReactNode }
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link
             href="/"
-            className="text-xl font-extrabold text-brand-terracotta-hover tracking-tight"
+            className="text-xl font-extrabold text-brand-terracotta tracking-tight hover:opacity-85 transition-opacity"
           >
             RoomCommerce
           </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/studio"
-              className="text-sm font-medium text-ink-secondary hover:text-ink-primary transition-colors"
-            >
-              My Rooms
-            </Link>
+          <div className="flex items-center gap-1">
+            <StudioNavLink href="/studio">My Rooms</StudioNavLink>
+            <StudioNavLink href="/account">Account</StudioNavLink>
             <Link
               href="/studio/new/upload"
-              className="px-4 py-1.5 rounded-lg bg-brand-terracotta text-white text-sm font-semibold hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-terracotta focus-visible:ring-offset-2"
+              className="ml-2 px-4 py-1.5 rounded-lg bg-brand-terracotta text-white text-sm font-semibold hover:bg-brand-terracotta-hover transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-terracotta focus-visible:ring-offset-2"
             >
               New Room
-            </Link>
-            <Link
-              href="/account"
-              className="text-sm font-medium text-ink-muted hover:text-ink-primary transition-colors"
-            >
-              Account
             </Link>
           </div>
         </div>

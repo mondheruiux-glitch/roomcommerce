@@ -7,8 +7,10 @@ import { WayfairStockAdapter } from './sync/adapters/wayfair.adapter.js';
 import { TargetStockAdapter } from './sync/adapters/target.adapter.js';
 import { IkeaStockAdapter } from './sync/adapters/ikea.adapter.js';
 import { CompositeStockCheckerAdapter } from './sync/adapters/composite-stock-checker.adapter.js';
+import { CatalogController } from './catalog.controller.js';
 
 @Module({
+  controllers: [CatalogController],
   providers: [
     VectorRetrievalService,
     QdrantInitService,

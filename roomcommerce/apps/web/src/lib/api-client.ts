@@ -238,8 +238,12 @@ export interface ProjectListResponse {
   projects: ProjectData[];
 }
 
-export function fetchProjects(): Promise<ProjectListResponse> {
-  return apiFetch<ProjectListResponse>('/api/v1/projects');
+export async function fetchProjects(): Promise<ProjectListResponse> {
+  const res = await apiFetch<any>('/api/v1/projects');
+  if (Array.isArray(res)) return { projects: res };
+  if (Array.isArray(res?.data)) return { projects: res.data };
+  if (Array.isArray(res?.projects)) return { projects: res.projects };
+  return { projects: [] };
 }
 
 // ── Commerce ────────────────────────────────────────────────────────────────

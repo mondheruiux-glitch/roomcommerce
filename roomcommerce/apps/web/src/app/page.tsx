@@ -11,7 +11,7 @@ export default function LandingPage() {
   return (
     <main className="flex-1 flex flex-col">
       {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <section className="flex-1 flex flex-col items-center justify-center px-6 py-24 text-center">
+      <section className="flex-1 flex flex-col items-center justify-center px-6 py-24 text-center animate-fade-up">
         <span className="inline-block px-3 py-1 rounded-full bg-brand-terracotta-subtle text-brand-terracotta-hover text-xs font-semibold tracking-wide uppercase mb-6">
           AI Interior Redesign
         </span>
@@ -31,7 +31,7 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/studio/new/upload"
-            className="px-8 py-4 rounded-lg bg-brand-terracotta text-white font-semibold text-base hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-terracotta focus-visible:ring-offset-2"
+            className="px-8 py-4 rounded-lg bg-brand-terracotta text-white font-semibold text-base hover:bg-brand-terracotta-hover transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-terracotta focus-visible:ring-offset-2"
             id="hero-upload-cta"
           >
             Upload Your Room →

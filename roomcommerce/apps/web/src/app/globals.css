@@ -20,14 +20,21 @@
     --border-default: 220 13% 90%;
     --border-strong: 220 13% 75%;
 
-    /* Brand — Terracotta */
-    --brand-terracotta: 15 70% 50%;
-    --brand-terracotta-subtle: 15 70% 95%;
+    /* Brand — Terracotta (HSL equivalents of #B85D3A / #984B2E / #F7EBE6) */
+    --brand-terracotta: 15 53% 47%;
+    --brand-terracotta-hover: 15 54% 38%;
+    --brand-terracotta-subtle: 15 56% 94%;
+
+    /* Brand — Olive */
+    --brand-olive: 70 25% 35%;
 
     /* Status */
     --status-success: 145 63% 42%;
     --status-warning: 38 92% 50%;
     --status-danger: 0 72% 51%;
+
+    /* Focus ring — single token, consistent across all interactive elements */
+    --focus-ring: 15 53% 47%;
   }
 
   *,
@@ -47,6 +54,13 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Consistent focus ring across all focusable elements */
+  :focus-visible {
+    outline: 2px solid hsl(var(--focus-ring));
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
   /* Touch-action: none for canvas containers to prevent pull-to-refresh / native zoom */
   [data-canvas-viewport] {
     touch-action: none;
@@ -54,6 +68,28 @@
     user-select: none;
     overscroll-behavior: none;
   }
+}
+
+/* ── Keyframe animations ─────────────────────────────────────────────────────── */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 hsl(var(--brand-terracotta) / 0.4); }
+  50%       { box-shadow: 0 0 0 8px hsl(var(--brand-terracotta) / 0);  }
 }
 
 @layer utilities {
@@ -75,5 +111,43 @@
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border-width: 0;
+  }
+
+  /* Page-level entrance animation — apply to top-level page containers */
+  .animate-fade-up {
+    animation: fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-fade-up-delay-1 {
+    animation: fade-up 0.45s 0.08s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-fade-up-delay-2 {
+    animation: fade-up 0.45s 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-fade-up-delay-3 {
+    animation: fade-up 0.45s 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease both;
+  }
+
+  /* Terracotta pulse ring for active hotspot pins */
+  .animate-pulse-ring {
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
+
+  /* Disable all animations for users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-up,
+    .animate-fade-up-delay-1,
+    .animate-fade-up-delay-2,
+    .animate-fade-up-delay-3,
+    .animate-fade-in,
+    .animate-pulse-ring {
+      animation: none;
+    }
   }
 }

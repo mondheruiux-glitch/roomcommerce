@@ -5,6 +5,9 @@ import { AdsDropzone } from '@roomcommerce/ui';
 import { useExifScrubber } from '@/hooks/use-exif-scrubber';
 import { useWizardStore } from '@/stores/use-wizard-store';
 import { createProject, uploadToR2, getApiBaseUrl } from '@/lib/api-client';
+import { WizardProgress } from '@/components/wizard/wizard-progress';
+
+const WIZARD_STEPS = ['Upload', 'Review', 'Configure'];
 
 type UploadState = 'idle' | 'scrubbing' | 'uploading' | 'done' | 'error';
 
@@ -75,15 +78,8 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      {/* ── Wizard step indicator ────────────────────────────────────── */}
-      <div className="flex items-center gap-2 mb-8" aria-label="Upload wizard — step 1 of 3">
-        <StepBadge step={1} label="Upload" active />
-        <StepDivider />
-        <StepBadge step={2} label="Review" />
-        <StepDivider />
-        <StepBadge step={3} label="Configure" />
-      </div>
+    <div className="max-w-2xl mx-auto px-4 py-12 animate-fade-up">
+      <WizardProgress currentStep={1} steps={WIZARD_STEPS} ariaLabel="Upload wizard — step 1 of 3" />
 
       <h1 className="text-2xl font-bold text-ink-primary mb-2">Upload Your Room Photo</h1>
       <p className="text-ink-secondary text-sm mb-8">
@@ -101,17 +97,28 @@ export default function UploadPage() {
       </div>
 
       {errorMessage && (
-        <p
+        <div
           role="alert"
           data-testid="quality-error-alert"
-          className="mt-4 text-sm text-status-danger font-medium"
+          className="mt-4 flex items-start gap-2.5 p-3 rounded-lg bg-status-danger/8 border border-status-danger/20"
         >
-          {errorMessage}
-        </p>
+          <span className="text-status-danger mt-0.5 shrink-0" aria-hidden="true">⚠</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-status-danger font-medium">{errorMessage}</p>
+            <button
+              type="button"
+              onClick={() => { setErrorMessage(null); setUploadState('idle'); }}
+              className="mt-1 text-xs text-status-danger/70 underline hover:text-status-danger transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
       )}
 
       {uploadState === 'scrubbing' && (
-        <p className="mt-4 text-sm text-ink-muted">
+        <p className="mt-4 text-sm text-ink-muted flex items-center gap-2">
+          <span className="inline-block w-3 h-3 rounded-full border-2 border-brand-terracotta border-t-transparent animate-spin" aria-hidden="true" />
           Removing EXIF metadata from your photo…
         </p>
       )}
@@ -122,7 +129,7 @@ export default function UploadPage() {
           id="upload-continue-btn"
           disabled={uploadState !== 'done'}
           onClick={() => router.push('/studio/new/inspect')}
-          className="px-6 py-2.5 rounded-lg bg-brand-terracotta text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-opacity"
+          className="px-6 py-2.5 rounded-lg bg-brand-terracotta text-white font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:bg-brand-terracotta-hover transition-colors"
         >
           Continue →
         </button>
@@ -131,34 +138,4 @@ export default function UploadPage() {
   );
 }
 
-function StepBadge({
-  step,
-  label,
-  active = false,
-}: {
-  step: number;
-  label: string;
-  active?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span
-        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-          active
-            ? 'bg-brand-terracotta text-white'
-            : 'bg-border-default text-ink-muted'
-        }`}
-        aria-current={active ? 'step' : undefined}
-      >
-        {step}
-      </span>
-      <span className={`text-sm font-medium ${active ? 'text-ink-primary' : 'text-ink-muted'}`}>
-        {label}
-      </span>
-    </div>
-  );
-}
 
-function StepDivider() {
-  return <div className="flex-1 h-px bg-border-default mx-1" aria-hidden="true" />;
-}

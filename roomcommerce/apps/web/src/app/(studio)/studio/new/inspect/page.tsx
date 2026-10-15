@@ -2,6 +2,9 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { useWizardStore } from '@/stores/use-wizard-store';
+import { WizardProgress } from '@/components/wizard/wizard-progress';
+
+const WIZARD_STEPS = ['Upload', 'Review', 'Configure'];
 
 const DETECTED_ITEMS = [
   { category: 'sofa', label: 'Sofa', description: 'Center living room seating' },
@@ -24,15 +27,8 @@ export default function InspectPage() {
   if (!previewUrl) return null;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      {/* ── Wizard step indicator ────────────────────────────────────── */}
-      <div className="flex items-center gap-2 mb-8" aria-label="Upload wizard — step 2 of 3">
-        <StepBadge step={1} label="Upload" completed />
-        <StepDivider />
-        <StepBadge step={2} label="Review" active />
-        <StepDivider />
-        <StepBadge step={3} label="Configure" />
-      </div>
+    <div className="max-w-2xl mx-auto px-4 py-12 animate-fade-up">
+      <WizardProgress currentStep={2} steps={WIZARD_STEPS} ariaLabel="Upload wizard — step 2 of 3" />
 
       <h1 className="text-2xl font-bold text-ink-primary mb-2">Quality Review & Anchor Locking</h1>
       <p className="text-ink-secondary text-sm mb-8">
@@ -150,41 +146,4 @@ export default function InspectPage() {
   );
 }
 
-function StepBadge({
-  step,
-  label,
-  active = false,
-  completed = false,
-}: {
-  step: number;
-  label: string;
-  active?: boolean;
-  completed?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span
-        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-          completed
-            ? 'bg-status-success text-white'
-            : active
-              ? 'bg-brand-terracotta text-white'
-              : 'border border-border-default text-ink-muted'
-        }`}
-      >
-        {completed ? '✓' : step}
-      </span>
-      <span
-        className={`text-xs font-medium ${
-          active ? 'text-ink-primary font-semibold' : 'text-ink-muted'
-        }`}
-      >
-        {label}
-      </span>
-    </div>
-  );
-}
 
-function StepDivider() {
-  return <div className="flex-1 h-px bg-border-default max-w-[40px]" />;
-}

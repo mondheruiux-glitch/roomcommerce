@@ -8,6 +8,9 @@ import {
 import { StylePresetEnum } from '@roomcommerce/contracts';
 import { useWizardStore } from '@/stores/use-wizard-store';
 import { triggerRender } from '@/lib/api-client';
+import { WizardProgress } from '@/components/wizard/wizard-progress';
+
+const WIZARD_STEPS = ['Upload', 'Review', 'Configure'];
 
 export default function ConfigurePage() {
   const router = useRouter();
@@ -56,15 +59,8 @@ export default function ConfigurePage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      {/* ── Wizard step indicator ────────────────────────────────────── */}
-      <div className="flex items-center gap-2 mb-8" aria-label="Upload wizard — step 3 of 3">
-        <StepBadge step={1} label="Upload" completed />
-        <StepDivider />
-        <StepBadge step={2} label="Review" completed />
-        <StepDivider />
-        <StepBadge step={3} label="Configure" active />
-      </div>
+    <div className="max-w-2xl mx-auto px-4 py-12 animate-fade-up">
+      <WizardProgress currentStep={3} steps={WIZARD_STEPS} ariaLabel="Upload wizard — step 3 of 3" />
 
       <h1 className="text-2xl font-bold text-ink-primary mb-2">Style & Budget</h1>
       <p className="text-ink-secondary text-sm mb-8">
@@ -117,38 +113,4 @@ export default function ConfigurePage() {
   );
 }
 
-function StepBadge({
-  step,
-  label,
-  active = false,
-  completed = false,
-}: {
-  step: number;
-  label: string;
-  active?: boolean;
-  completed?: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <span
-        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-          completed
-            ? 'bg-status-success text-white'
-            : active
-              ? 'bg-brand-terracotta text-white'
-              : 'bg-border-default text-ink-muted'
-        }`}
-        aria-current={active ? 'step' : undefined}
-      >
-        {completed ? '✓' : step}
-      </span>
-      <span className={`text-sm font-medium ${active || completed ? 'text-ink-primary' : 'text-ink-muted'}`}>
-        {label}
-      </span>
-    </div>
-  );
-}
 
-function StepDivider() {
-  return <div className="flex-1 h-px bg-border-default mx-1" aria-hidden="true" />;
-}
