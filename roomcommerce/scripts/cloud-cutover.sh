@@ -17,6 +17,39 @@
 
 set -euo pipefail
 
+# ── Load .env (mirror dotenv resolution used by preflight-verify.ts) ─────────
+# Priority order (last wins, same as dotenv cascade):
+#   1. {repo-root}/.env     — monorepo-wide defaults
+#   2. apps/api/.env        — API-specific overrides
+#
+# 'set -a' causes every variable assignment to be auto-exported so that all
+# Phase 2 / Phase 3 checks that read ${VAR:-} see the values. Without this,
+# preflight (Node.js / dotenv) was loading .env but this bash script was not,
+# producing false [FAIL] for QDRANT_URL and CLOUDFLARE_R2_ACCOUNT_ID even
+# though the values existed.
+#
+# CI / production: if no .env file exists, variables are expected to be
+# injected by the runner (SSM, Secrets Manager, GitHub env) — no error raised.
+
+# Resolve the repo root relative to this script's location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")"; pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.."; pwd)"
+
+load_dotenv() {
+  local env_file="$1"
+  if [ -f "$env_file" ]; then
+    # Export every assignment; skip comment lines and blank lines
+    set -a
+    # shellcheck source=/dev/null
+    source "$env_file"
+    set +a
+    echo -e "  \033[0;36m[ENV]\033[0m   Loaded: ${env_file}"
+  fi
+}
+
+load_dotenv "${REPO_ROOT}/.env"
+load_dotenv "${REPO_ROOT}/apps/api/.env"
+
 # ── Colour helpers ────────────────────────────────────────────────────────────
 RESET='\033[0m'; BOLD='\033[1m'
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; CYAN='\033[0;36m'
